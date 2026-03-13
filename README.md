@@ -33,7 +33,7 @@ GXChat is built using the latest and most powerful technologies:
 
 Ready to join the revolution? Download GXChat for your preferred platform:
 
-* **Mobile App (Android & iOS):** [Download Now](https://gxchatindia.vercel.app)
+* **Mobile App (Android & iOS):** [Download GxChat India](https://gxchatindia.vercel.app)
 * **Desktop Version (Win & Mac):** [Open In Chrome](https://gxchatindia.vercel.app)
 * **Web Version In Browser:** [Open GxChat India Web](https://gxchatindia.vercel.com)
 * **Official Website of GTech:** [Visit Gothwad Technologies](https://gothwadtechnologies.com)
