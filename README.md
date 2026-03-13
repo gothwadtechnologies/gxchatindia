@@ -1,4 +1,4 @@
-# 🚀 GXChat - India's Own Secure Messenger
+# GxChat India - Secure Messenger
 
 ![Made In India](https://img.shields.io/badge/Made%20In-India-orange?style=for-the-badge) 
 ![Atmanirbhar Bharat](https://img.shields.io/badge/Atmanirbhar-Bharat-blue?style=for-the-badge)
