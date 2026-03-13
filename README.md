@@ -4,7 +4,7 @@
 ![Atmanirbhar Bharat](https://img.shields.io/badge/Atmanirbhar-Bharat-blue?style=for-the-badge)
 ![Secure](https://img.shields.io/badge/Security-Enterprise--Grade-green?style=for-the-badge)
 
-**GXChat** is a next-generation communication platform developed by **Gothwad Technologies**. Built with the vision of **Atmanirbhar Bharat**, GXChat ensures that India's data stays secure and independent. It’s a complete, feature-rich messaging solution designed for high performance and ultimate privacy. 🔒
+**GXChat** is a next-generation communication platform developed by **Gothwad Technologies**. Built with the vision of **Atmanirbhar Bharat**, GXChat ensures that India's data stays secure and independent. It’s a complete, feature-rich messaging solution designed for high performance and ultimate privacy. 
 
 ---
 
@@ -40,10 +40,3 @@ Ready to join the revolution? Download GXChat for your preferred platform:
 
 ---
 
-## 🚀 How to Setup (For AI Developers)
-
-Since we are using a hybrid environment with AI assistance:
-
-1. **Clone the repo:**
-   ```bash
-   git clone [https://github.com/gothwad-apps/gxchat.git](https://github.com/gothwad-apps/gxchat.git)
