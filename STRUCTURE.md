@@ -1,12 +1,11 @@
 # GX Chat India - Project Architecture
-**Founder:** Pawan Gothwad (Gothwad Technologies)
 **Tech Stack:** Flutter, Firebase, TypeScript (Cloud Functions)
 
 ---
 
 ## Folder Structure
 
-gx_chat_india/
+GXCHATINDIA/
 ├── lib/
 │   ├── core/              # Constants, Themes, & Common Utils
 │   │   ├── constants/        # App colors, Strings, API keys
@@ -18,19 +17,19 @@ gx_chat_india/
 │   │   └── repositories/     # Logic to handle data flow
 │   │
 │   ├── presentation/      # UI Layer (The "Face")
-│   │  ├── screens/          # Login, Chat, Profile, Home
-│   │  └── widgets/          # Custom Buttons, Chat Bubbles
+│   │   ├── screens/          # Login, Chat, Profile, Home
+│   │   └── widgets/          # Custom Buttons, Chat Bubbles
 │   │
 │   ├── services/          # App Services
-│   │  ├── auth_service.dart # Firebase Auth logic
-│   │  ├── chat_service.dart # Firestore real-time messaging
-│   │  └── push_notif.dart   # Firebase Cloud Messaging
+│   │   ├── auth_service.dart # Firebase Auth logic
+│   │   ├── chat_service.dart # Firestore real-time messaging
+│   │   └── push_notif.dart   # Firebase Cloud Messaging
 │   │
 │   └── main.dart          # Entry point of the app
 │
 ├── firebase/              # Firebase Studio & Rules
-│  ├── firestore.rules       # Security rules for DB
-│  └── storage.rules         # Media upload rules
+│   ├── firestore.rules       # Security rules for DB
+│   └── storage.rules         # Media upload rules
 │
 ├── assets/                # Images, Fonts, & Icons
 ├── pubspec.yaml           # Flutter Dependencies
