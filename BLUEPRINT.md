@@ -1,0 +1,42 @@
+# GxChat India - Secure Messenger
+
+![Made In India](https://img.shields.io/badge/Made%20In-India-orange?style=for-the-badge) 
+![Atmanirbhar Bharat](https://img.shields.io/badge/Atmanirbhar-Bharat-blue?style=for-the-badge)
+![Secure](https://img.shields.io/badge/Security-Enterprise--Grade-green?style=for-the-badge)
+
+**GXChat** is a next-generation communication platform developed by **Gothwad Technologies**. Built with the vision of **Atmanirbhar Bharat**, GXChat ensures that India's data stays secure and independent. It’s a complete, feature-rich messaging solution designed for high performance and ultimate privacy. 
+
+---
+
+## Key Features
+
+* **Proudly Indian:** Built from scratch to support local tech independence.
+* **Unmatched Security:** Self-hosted servers and end-to-end reliability.
+* **Cross-Platform:** Seamlessly switch between Mobile, Desktop, and Web.
+* **High Speed:** Optimized with Vite and Vercel for lag-free chatting.
+* **Hybrid Storage:** Powered by AWS, Firebase, and Supabase for real-time syncing.
+
+---
+
+## Tech Stack
+
+GXChat is built using the latest and most powerful technologies:
+
+- **Frontend:** Flutter, TypeScript, Vite, HTML5, CSS3, JavaScript
+- **Backend/DB:** Firebase Studio, Supabase, Self-hosted Servers
+- **Cloud/Hosting:** AWS (Storage), Vercel (Web Hosting)
+- **Version Control:** GitHub
+
+---
+
+## Download & Links
+
+Ready to join the revolution? Download GXChat for your preferred platform:
+
+* **Mobile App (Android & iOS):** [Download GxChat India](https://gxchatindia.vercel.app)
+* **Desktop Version (Win & Mac):** [Open In Chrome](https://gxchatindia.vercel.app)
+* **Web Version In Browser:** [Open GxChat India Web](https://gxchatindia.vercel.com)
+* **Official Website of GTech:** [Visit Gothwad Technologies](https://gothwadtechnologies.com)
+
+---
+
