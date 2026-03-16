@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 
 export default function TopNav() {
   return (
-    <div className="w-full bg-sky-500 px-4 h-16 flex justify-between items-center z-50 shrink-0 shadow-md">
+    <div className="w-full bg-[#00B0FF] px-4 h-16 flex justify-between items-center z-50 shrink-0 shadow-md">
       <div className="flex items-center gap-3">
-        <div className="p-2 hover:bg-sky-600 rounded-full transition-colors cursor-pointer">
+        <div className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
           <Camera size={24} className="text-white" />
         </div>
         <Link to="/" className="flex items-center gap-2">
@@ -20,13 +20,13 @@ export default function TopNav() {
         </Link>
       </div>
       <div className="flex items-center gap-2">
-        <Link to="/notifications" className="p-2 hover:bg-sky-600 rounded-full transition-colors cursor-pointer">
+        <Link to="/notifications" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
           <Bell size={22} className="text-white" />
         </Link>
-        <Link to="/settings" className="p-2 hover:bg-sky-600 rounded-full transition-colors cursor-pointer">
+        <Link to="/settings" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
           <Settings size={22} className="text-white" />
         </Link>
-        <div className="p-2 hover:bg-sky-600 rounded-full transition-colors cursor-pointer">
+        <div className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
           <MoreVertical size={22} className="text-white" />
         </div>
       </div>
