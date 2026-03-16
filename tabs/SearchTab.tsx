@@ -13,6 +13,8 @@ export default function SearchTab() {
   const [recommendedUsers, setRecommendedUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [visibleCount, setVisibleCount] = useState(3);
+  const maxVisible = 9;
 
   const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
@@ -32,11 +34,11 @@ export default function SearchTab() {
           .filter((user: any) => !user.hideFromSearch); // Filter out hidden users
         setUsers(allUsersList);
 
-        // Fetch top 3 newest users (recent)
+        // Fetch up to 9 newest users (recent)
         const recentQuery = query(
           usersRef, 
           orderBy("createdAt", "desc"),
-          limit(10) // Fetch more to filter
+          limit(15) // Fetch more to filter
         );
         const recentSnapshot = await getDocs(recentQuery);
         const recentList = recentSnapshot.docs
@@ -45,7 +47,7 @@ export default function SearchTab() {
             ...(doc.data() as any)
           }))
           .filter((user: any) => user.uid !== auth.currentUser?.uid && !user.hideFromSearch)
-          .slice(0, 3);
+          .slice(0, maxVisible);
         
         setRecommendedUsers(recentList);
 
@@ -63,6 +65,10 @@ export default function SearchTab() {
     user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleViewMore = () => {
+    setVisibleCount(prev => Math.min(prev + 3, maxVisible));
+  };
 
   return (
     <div className="h-full flex flex-col bg-zinc-50 overflow-hidden font-sans">
@@ -165,70 +171,73 @@ export default function SearchTab() {
               exit={{ opacity: 0 }}
               className="px-4 mt-6 pb-24"
             >
-              {/* Recent Users - Now exactly 3 */}
+              {/* Suggested for you Section */}
               <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-orange-100 rounded-lg">
-                      <Sparkles size={14} className="text-orange-600" />
-                    </div>
-                    <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">New Members</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col">
+                    <h3 className="text-lg font-black text-zinc-800 tracking-tight">Suggested for you</h3>
+                    <div className="h-1 w-12 bg-sky-500 rounded-full mt-1"></div>
                   </div>
+                  <Users size={20} className="text-sky-500 opacity-50" />
                 </div>
                 
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-4">
                   {loading ? (
                     <div className="flex justify-center p-10 bg-white rounded-3xl border border-zinc-100">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                     </div>
                   ) : recommendedUsers.length > 0 ? (
-                    recommendedUsers.map((user, index) => (
-                      <motion.div 
-                        whileHover={{ x: 4 }}
-                        onClick={() => navigate(`/user/${user.uid}`)}
-                        key={user.uid} 
-                        className="flex items-center gap-4 p-4 bg-white border border-zinc-100 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer"
-                      >
-                        <div className="relative">
-                          <img 
-                            src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} 
-                            className="w-14 h-14 rounded-full object-cover border-2 border-zinc-50 shadow-sm"
-                            referrerPolicy="no-referrer"
-                          />
-                          {index === 0 && (
-                            <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm">
-                              NEW
+                    <>
+                      {recommendedUsers.slice(0, visibleCount).map((user) => (
+                        <motion.div 
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          onClick={() => navigate(`/user/${user.uid}`)}
+                          key={user.uid} 
+                          className="flex items-center gap-3 p-3 bg-sky-500 rounded-2xl shadow-md shadow-sky-100 transition-all cursor-pointer border border-white/10"
+                        >
+                          <div className="relative shrink-0">
+                            <img 
+                              src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} 
+                              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              <h4 className="text-[14px] font-black text-white leading-tight break-words">
+                                {user.fullName || 'GxChat Member'}
+                              </h4>
+                              <ShieldCheck size={12} className="text-white fill-white/20 shrink-0" />
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-[15px] font-black text-zinc-900 tracking-tight">{user.username}</h4>
-                          <p className="text-[11px] font-medium text-zinc-500">{user.fullName || 'GxChat Member'}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/chat/${user.uid}`);
-                            }}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-all"
-                          >
-                            Chat
-                          </button>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/user/${user.uid}`);
-                            }}
-                            className="px-3 py-1.5 bg-zinc-100 text-zinc-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-zinc-200 transition-all"
-                          >
-                            View
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))
+                            <p className="text-[11px] font-bold text-sky-100 truncate opacity-90">@{user.username}</p>
+                          </div>
+                          <div className="flex items-center shrink-0">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/user/${user.uid}`);
+                              }}
+                              className="px-4 py-2 bg-white text-sky-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-sky-50 transition-all active:scale-95"
+                            >
+                              Follow
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))}
+                      
+                      {visibleCount < recommendedUsers.length && (
+                        <button 
+                          onClick={handleViewMore}
+                          className="mt-2 py-4 flex items-center justify-center gap-2 bg-white border border-zinc-100 rounded-2xl text-xs font-black text-sky-600 uppercase tracking-widest shadow-sm hover:bg-sky-50 transition-all active:scale-95"
+                        >
+                          View More Members
+                          <ArrowRight size={14} />
+                        </button>
+                      )}
+                    </>
                   ) : (
-                    <p className="p-10 text-center text-xs text-zinc-400 bg-white rounded-3xl border border-dashed border-zinc-200">No recent users found.</p>
+                    <p className="p-10 text-center text-xs text-zinc-400 bg-white rounded-3xl border border-dashed border-zinc-200">No suggestions found.</p>
                   )}
                 </div>
               </div>
