@@ -1,0 +1,10 @@
+{
+  "name": "GxChat India V 1.0.0",
+  "description": "A deep Instagram clone for India with social features, real-time messaging, and media sharing.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation",
+    "notifications"
+  ]
+}
