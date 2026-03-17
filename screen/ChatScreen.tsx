@@ -6,8 +6,11 @@ import {
   Video, 
   Mic, 
   Image as ImageIcon, 
-  Heart, 
   Send, 
+  Plus,
+  Camera,
+  Volume2,
+  VolumeX,
   Trash2, 
   UserX, 
   AlertTriangle, 
@@ -18,21 +21,25 @@ import {
   Forward,
   Edit2,
   Trash,
-  X
+  X,
+  User,
+  Check,
+  CheckCheck,
+  FileText,
+  Link as LinkIcon
 } from 'lucide-react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../server/firebase.ts';
 import { 
   collection, 
   addDoc, 
   query, 
   where, 
-  orderBy, 
   onSnapshot, 
   serverTimestamp,
   doc,
-  getDoc,
   updateDoc,
+  deleteDoc,
   getDocs,
   writeBatch
 } from 'firebase/firestore';
@@ -46,18 +53,48 @@ export default function ChatScreen() {
   const [newMessage, setNewMessage] = useState('');
   const [receiver, setReceiver] = useState<any>(null);
   const [showOptions, setShowOptions] = useState(false);
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const [editingMessage, setEditingMessage] = useState<any>(null);
   const [replyingTo, setReplyingTo] = useState<any>(null);
-  const [activeMessageMenu, setActiveMessageMenu] = useState<string | null>(null);
+  const [activeMessageMenu, setActiveMessageMenu] = useState<any | null>(null);
+  const [menuPosition, setMenuPosition] = useState<'top' | 'bottom'>('top');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
+  const plusMenuRef = useRef<HTMLDivElement>(null);
 
   const chatId = [auth.currentUser?.uid, receiverId].sort().join('_');
+
+  const formatLastSeen = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    
+    const isToday = date.toDateString() === now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    if (isToday) {
+      return `last seen at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+    } else if (isYesterday) {
+      return 'last seen at Yesterday';
+    } else {
+      const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+      if (date.getFullYear() !== now.getFullYear()) {
+        options.year = 'numeric';
+      }
+      return `last seen at ${date.toLocaleDateString('en-GB', options)}`;
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) {
         setShowOptions(false);
+      }
+      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
+        setShowPlusMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -144,6 +181,20 @@ export default function ChatScreen() {
       }
       setNewMessage('');
       setReplyingTo(null);
+
+      // Send Notification
+      if (receiver?.fcmTokens && receiver.fcmTokens.length > 0) {
+        fetch('/api/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tokens: receiver.fcmTokens,
+            title: `New message from ${auth.currentUser?.displayName || 'GxChat User'}`,
+            body: newMessage,
+            data: { chatId, senderId: auth.currentUser?.uid }
+          })
+        }).catch(err => console.error('Notification error:', err));
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -151,10 +202,7 @@ export default function ChatScreen() {
 
   const deleteMessage = async (msgId: string) => {
     try {
-      await updateDoc(doc(db, "messages", msgId), {
-        text: "🚫 This message was deleted",
-        isDeleted: true
-      });
+      await deleteDoc(doc(db, "messages", msgId));
       setActiveMessageMenu(null);
     } catch (error) {
       console.error("Error deleting message:", error);
@@ -181,29 +229,35 @@ export default function ChatScreen() {
     }
   };
 
+  const deleteChat = async () => {
+    if (!window.confirm("Delete this chat? This action cannot be undone.")) return;
+    await clearChat();
+    navigate('/');
+  };
+
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden relative">
+    <div className="flex flex-col h-full w-full bg-[#efe7dd] overflow-hidden relative">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-sky-500 z-50 shadow-md">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="hover:bg-sky-600 p-2 rounded-full transition-colors">
-            <ArrowLeft size={24} className="text-white" />
+      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+        <div className="flex items-center gap-2">
+          <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-1.5 rounded-full transition-colors">
+            <ArrowLeft size={22} className="text-white" />
           </button>
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/user/${receiverId}`)}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/user/${receiverId}`)}>
             <div className="relative">
               <img 
                 src={receiver?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`} 
-                className="w-10 h-10 rounded-full object-cover border border-sky-300 shadow-sm"
+                className="w-9 h-9 rounded-full object-cover border border-white/20 shadow-sm"
                 referrerPolicy="no-referrer"
               />
               {receiver?.isOnline && (
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-sky-500 rounded-full"></div>
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#00B0FF] rounded-full"></div>
               )}
             </div>
             <div className="flex flex-col">
-              <h2 className="text-sm font-black text-white tracking-tight uppercase">{receiver?.fullName || 'GxChat User'}</h2>
-              <span className="text-[8px] text-sky-200 font-bold uppercase tracking-widest">
-                {receiver?.isOnline ? 'Online' : 'Offline'}
+              <h2 className="text-[14px] font-bold text-white leading-tight">{receiver?.fullName || 'GxChat User'}</h2>
+              <span className="text-[10px] text-white/80 font-medium">
+                {receiver?.isOnline ? 'online' : formatLastSeen(receiver?.lastSeen)}
               </span>
             </div>
           </div>
@@ -211,20 +265,20 @@ export default function ChatScreen() {
         <div className="flex items-center gap-1">
           <button 
             onClick={() => navigate(`/call/${receiverId}?type=video`)}
-            className="p-2 hover:bg-sky-600 rounded-full transition-colors"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
           >
             <Video size={20} className="text-white" />
           </button>
           <button 
             onClick={() => navigate(`/call/${receiverId}?type=voice`)}
-            className="p-2 hover:bg-sky-600 rounded-full transition-colors"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
           >
             <Phone size={18} className="text-white" />
           </button>
           <div className="relative" ref={optionsRef}>
             <button 
               onClick={() => setShowOptions(!showOptions)}
-              className="p-2 hover:bg-sky-600 rounded-full transition-colors"
+              className="p-2 hover:bg-white/10 rounded-full transition-colors"
             >
               <MoreVertical size={22} className="text-white" />
             </button>
@@ -236,26 +290,26 @@ export default function ChatScreen() {
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-zinc-100 py-2 z-[100] overflow-hidden"
+                  className="absolute right-0 mt-2 w-44 bg-[#00B0FF] rounded-xl shadow-2xl border border-white/10 py-1 z-[100] overflow-hidden"
                 >
-                  <button onClick={() => navigate(`/user/${receiverId}`)} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-3">
-                    <Info size={16} className="text-zinc-400" /> View Profile
+                  <button onClick={() => navigate(`/user/${receiverId}`)} className="w-full px-4 py-3 text-left text-[14px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <User size={18} className="text-white/80" /> View Profile
                   </button>
-                  <button onClick={clearChat} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-3">
-                    <Trash2 size={16} className="text-zinc-400" /> Clear Chat
+                  <button className="w-full px-4 py-3 text-left text-[14px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <EyeOff size={18} className="text-white/80" /> Hide Chat
                   </button>
-                  <button className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-3">
-                    <EyeOff size={16} className="text-zinc-400" /> Hide Chat
+                  <button onClick={() => setIsMuted(!isMuted)} className="w-full px-4 py-3 text-left text-[14px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    {isMuted ? <Volume2 size={18} className="text-white/80" /> : <VolumeX size={18} className="text-white/80" />}
+                    {isMuted ? 'Unmute' : 'Mute'}
                   </button>
-                  <button className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-3">
-                    <Lock size={16} className="text-zinc-400" /> Lock Chat
+                  <button onClick={deleteChat} className="w-full px-4 py-3 text-left text-[14px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <Trash size={18} className="text-white/80" /> Delete Chat
                   </button>
-                  <div className="h-[1px] bg-zinc-100 my-1"></div>
-                  <button className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-3">
-                    <UserX size={16} /> Block User
+                  <button className="w-full px-4 py-3 text-left text-[14px] font-bold text-white hover:bg-white/10 flex items-center gap-3 border-t border-white/10 transition-colors">
+                    <UserX size={18} className="text-white/80" /> Block User
                   </button>
-                  <button className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-3">
-                    <AlertTriangle size={16} /> Report
+                  <button className="w-full px-4 py-3 text-left text-[14px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <AlertTriangle size={18} className="text-white/80" /> Report
                   </button>
                 </motion.div>
               )}
@@ -265,107 +319,88 @@ export default function ChatScreen() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#efe7de] relative no-scrollbar" onClick={() => setActiveMessageMenu(null)}>
-        {/* Subtle WhatsApp-style pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'url("https://i.pinimg.com/originals/ab/ab/60/abab60fec0a3699933390f77239082f0.png")', backgroundSize: '400px' }}></div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#efe7dd] relative no-scrollbar" onClick={() => setActiveMessageMenu(null)}>
+        {/* WhatsApp-style pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")', backgroundSize: '400px' }}></div>
         
-        <div className="relative z-10 space-y-6">
-          {messages.map((msg) => {
+        <div className="relative z-10 flex flex-col gap-1">
+          {messages.map((msg, index) => {
             const isMe = msg.senderId === auth.currentUser?.uid;
+            const prevMsg = index > 0 ? messages[index - 1] : null;
+            const isSameSender = prevMsg?.senderId === msg.senderId;
+            
             return (
               <div 
                 key={msg.id} 
-                className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} ${!isSameSender ? 'mt-2' : 'mt-0.5'}`}
               >
-                {/* Message Bubble Container */}
-                <div className={`flex flex-col max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
-                  {/* Reply Context */}
-                  {msg.replyTo && (
-                    <div className={`text-[11px] px-3 py-1 rounded-t-xl bg-black/5 border-l-4 border-sky-500 mb-[-8px] z-0 opacity-70 ${isMe ? 'mr-2' : 'ml-2'}`}>
-                      <p className="truncate max-w-[150px] italic">
-                        {msg.replyTo.senderId === auth.currentUser?.uid ? 'You' : receiver?.fullName}: {msg.replyTo.text}
-                      </p>
+                <div className="relative group max-w-[85%]">
+                  {/* Tail for the first message in a sequence */}
+                  {!isSameSender && (
+                    <div className={`absolute top-0 w-3 h-3 ${isMe ? '-right-2 bg-white' : '-left-2 bg-white'}`} 
+                         style={{ clipPath: isMe ? 'polygon(0 0, 0 100%, 100% 0)' : 'polygon(100% 0, 100% 100%, 0 0)' }}>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 group relative">
-                    {/* Sent Message Actions (Left Side) */}
-                    {isMe && (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); setReplyingTo(msg); }} className="p-1.5 hover:bg-black/5 rounded-full text-zinc-400">
-                          <Reply size={14} />
-                        </button>
-                        <div className="relative">
-                          <button onClick={(e) => { e.stopPropagation(); setActiveMessageMenu(activeMessageMenu === msg.id ? null : msg.id); }} className="p-1.5 hover:bg-black/5 rounded-full text-zinc-400">
-                            <MoreVertical size={14} />
-                          </button>
-                          {activeMessageMenu === msg.id && (
-                            <div className="absolute bottom-full right-0 mb-2 w-32 bg-white rounded-xl shadow-xl border border-zinc-100 py-1 z-[100]">
-                              {!msg.isDeleted && (
-                                <>
-                                  <button onClick={() => startEdit(msg)} className="w-full px-3 py-1.5 text-left text-[12px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-2">
-                                    <Edit2 size={12} /> Edit
-                                  </button>
-                                  <button className="w-full px-3 py-1.5 text-left text-[12px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-2">
-                                    <Forward size={12} /> Forward
-                                  </button>
-                                  <button onClick={() => deleteMessage(msg.id)} className="w-full px-3 py-1.5 text-left text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                    <Trash size={12} /> Delete
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                  <div 
+                    className={`px-2.5 py-1.5 rounded-lg shadow-sm relative ${
+                      activeMessageMenu === msg.id ? 'z-50' : 'z-10'
+                    } ${
+                      isMe 
+                        ? 'bg-white text-[#303030]' 
+                        : 'bg-white text-[#303030]'
+                    }`}
+                  >
+                    {/* Reply Context */}
+                    {msg.replyTo && (
+                      <div className="mb-1 p-1.5 rounded bg-black/5 border-l-4 border-emerald-500 text-[12px]">
+                        <p className="font-bold text-emerald-700 text-[10px]">
+                          {msg.replyTo.senderId === auth.currentUser?.uid ? 'You' : receiver?.fullName}
+                        </p>
+                        <p className="truncate text-zinc-600 italic">{msg.replyTo.text}</p>
                       </div>
                     )}
 
-                    <div 
-                      className={`px-4 py-2 rounded-2xl text-[15px] shadow-sm relative z-10 ${
-                        isMe 
-                          ? 'bg-sky-500 text-white rounded-tr-none' 
-                          : 'bg-white text-zinc-800 rounded-tl-none border border-zinc-200/50'
-                      } ${msg.isDeleted ? 'italic opacity-60' : ''}`}
-                    >
-                      <p className="leading-relaxed break-words">{msg.text}</p>
-                      <div className={`flex items-center gap-1 mt-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                        <span className={`text-[9px] ${isMe ? 'text-sky-100' : 'text-zinc-400'}`}>
-                          {msg.timestamp?.toDate() ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                          {msg.isEdited && ' (edited)'}
+                    <div className="flex flex-col min-w-[60px]">
+                      <p className="text-[14.5px] leading-snug break-words whitespace-pre-wrap">{msg.text}</p>
+                      <div className="flex items-center justify-end gap-1 mt-0.5 -mr-1">
+                        <span className="text-[10px] text-zinc-500 font-medium">
+                          {msg.timestamp?.toDate() ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''}
+                          {msg.isEdited && ' • edited'}
                         </span>
                         {isMe && (
-                          <div className="flex">
-                            <div className={`w-3 h-3 ${msg.isRead ? 'text-white' : 'text-sky-200'}`}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            </div>
+                          <div className="flex ml-0.5">
+                            {msg.isRead ? (
+                              <CheckCheck size={14} className="text-blue-500" />
+                            ) : (
+                              <Check size={14} className="text-zinc-400" />
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* Received Message Actions (Right Side) */}
-                    {!isMe && (
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="relative">
-                          <button onClick={(e) => { e.stopPropagation(); setActiveMessageMenu(activeMessageMenu === msg.id ? null : msg.id); }} className="p-1.5 hover:bg-black/5 rounded-full text-zinc-400">
-                            <MoreVertical size={14} />
-                          </button>
-                          {activeMessageMenu === msg.id && (
-                            <div className="absolute bottom-full left-0 mb-2 w-32 bg-white rounded-xl shadow-xl border border-zinc-100 py-1 z-[100]">
-                              <button className="w-full px-3 py-1.5 text-left text-[12px] font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-2">
-                                <Forward size={12} /> Forward
-                              </button>
-                              <button className="w-full px-3 py-1.5 text-left text-[12px] font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                <AlertTriangle size={12} /> Report
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); setReplyingTo(msg); }} className="p-1.5 hover:bg-black/5 rounded-full text-zinc-400">
-                          <Reply size={14} />
+                    {/* Message Actions (Hover) */}
+                    <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 z-0 ${isMe ? 'right-full mr-2' : 'left-full ml-2'}`}>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setReplyingTo(msg); }}
+                        className="p-1.5 hover:bg-black/5 rounded-full text-zinc-400 transition-colors"
+                        title="Reply"
+                      >
+                        <Reply size={16} />
+                      </button>
+                      <div className="relative">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setActiveMessageMenu(activeMessageMenu?.id === msg.id ? null : msg); 
+                          }} 
+                          className="p-1.5 hover:bg-black/5 rounded-full text-zinc-400 transition-colors"
+                        >
+                          <MoreVertical size={16} />
                         </button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -376,53 +411,149 @@ export default function ChatScreen() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 p-4 border-t border-zinc-100 bg-white z-50">
+      <div className="shrink-0 bg-[#00B0FF] p-1.5 pb-3 z-50 shadow-[0_-4px_20px_rgba(0,176,255,0.15)] relative">
+        {/* Fixed Message Action Menu (Opens above send button) */}
+        <AnimatePresence>
+          {activeMessageMenu && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="absolute bottom-full right-4 mb-3 w-40 bg-[#00B0FF] rounded-xl shadow-2xl border border-white/10 py-1 z-[100] overflow-hidden"
+            >
+              <div className="px-3 py-1.5 border-b border-white/10 mb-1">
+                <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Message Options</p>
+              </div>
+              <>
+                {activeMessageMenu.senderId === auth.currentUser?.uid && (
+                  <button 
+                    onClick={() => { startEdit(activeMessageMenu); setActiveMessageMenu(null); }} 
+                    className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                  >
+                    <Edit2 size={16} className="text-white/80" /> Edit
+                  </button>
+                )}
+                <button 
+                  onClick={() => { setReplyingTo(activeMessageMenu); setActiveMessageMenu(null); }}
+                  className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                >
+                  <Reply size={16} className="text-white/80" /> Reply
+                </button>
+                <button 
+                  onClick={() => setActiveMessageMenu(null)}
+                  className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                >
+                  <Forward size={16} className="text-white/80" /> Forward
+                </button>
+                {activeMessageMenu.senderId === auth.currentUser?.uid && (
+                  <button 
+                    onClick={() => { deleteMessage(activeMessageMenu.id); setActiveMessageMenu(null); }} 
+                    className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                  >
+                    <Trash size={16} className="text-white/80" /> Delete
+                  </button>
+                )}
+              </>
+              <button 
+                onClick={() => setActiveMessageMenu(null)}
+                className="w-full px-4 py-2 text-center text-[11px] font-bold text-white/50 hover:text-white transition-colors mt-1"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Reply Preview */}
         {replyingTo && (
-          <div className="mb-3 p-2 bg-zinc-50 rounded-xl border-l-4 border-sky-500 flex items-center justify-between animate-in slide-in-from-bottom-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-sky-600 uppercase">Replying to {replyingTo.senderId === auth.currentUser?.uid ? 'yourself' : receiver?.fullName}</p>
-              <p className="text-xs text-zinc-500 truncate">{replyingTo.text}</p>
+          <div className="mb-1.5 mx-1.5 p-1.5 bg-white/10 backdrop-blur-md rounded-lg border-l-4 border-white flex items-center justify-between shadow-sm">
+            <div className="flex-1 min-w-0 px-2">
+              <p className="text-[10px] font-bold text-white">Replying to {replyingTo.senderId === auth.currentUser?.uid ? 'yourself' : receiver?.fullName}</p>
+              <p className="text-[12px] text-white/80 truncate">{replyingTo.text}</p>
             </div>
-            <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-zinc-200 rounded-full">
-              <X size={16} className="text-zinc-400" />
+            <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+              <X size={14} className="text-white" />
             </button>
           </div>
         )}
 
         {/* Edit Preview */}
         {editingMessage && (
-          <div className="mb-3 p-2 bg-sky-50 rounded-xl border-l-4 border-sky-500 flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-sky-600 uppercase">Editing message</p>
-              <p className="text-xs text-zinc-500 truncate">{editingMessage.text}</p>
+          <div className="mb-1.5 mx-1.5 p-1.5 bg-white/10 backdrop-blur-md rounded-lg border-l-4 border-white flex items-center justify-between shadow-sm">
+            <div className="flex-1 min-w-0 px-2">
+              <p className="text-[10px] font-bold text-white">Editing message</p>
+              <p className="text-[12px] text-white/80 truncate">{editingMessage.text}</p>
             </div>
-            <button onClick={() => { setEditingMessage(null); setNewMessage(''); }} className="p-1 hover:bg-sky-200 rounded-full">
-              <X size={16} className="text-zinc-400" />
+            <button onClick={() => { setEditingMessage(null); setNewMessage(''); }} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+              <X size={14} className="text-white" />
             </button>
           </div>
         )}
 
-        <form onSubmit={handleSendMessage} className="flex items-center gap-3">
-          <div className="flex items-center gap-3 bg-zinc-100 rounded-full px-4 py-2 flex-1">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 px-1">
+          <div className="relative" ref={plusMenuRef}>
+            <button 
+              type="button" 
+              onClick={() => setShowPlusMenu(!showPlusMenu)}
+              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+            >
+              <Plus size={24} />
+            </button>
+
+            {/* Plus Menu (Attachment Menu) */}
+            <AnimatePresence>
+              {showPlusMenu && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  className="absolute bottom-full left-0 mb-3 w-40 bg-[#00B0FF] rounded-xl shadow-2xl border border-white/10 py-1 z-[100] overflow-hidden"
+                >
+                  <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+                      <Mic size={16} />
+                    </div>
+                    Microphone
+                  </button>
+                  <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+                      <ImageIcon size={16} />
+                    </div>
+                    Media
+                  </button>
+                  <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+                      <FileText size={16} />
+                    </div>
+                    Files
+                  </button>
+                  <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">
+                      <LinkIcon size={16} />
+                    </div>
+                    Links
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex-1 bg-white rounded-full px-4 py-1.5 flex items-center shadow-inner min-w-0">
             <input 
               type="text" 
-              placeholder={editingMessage ? "Edit message..." : "Message..."}
+              placeholder="Type a message"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1 bg-transparent text-sm focus:outline-none"
+              className="flex-1 bg-transparent text-[16px] focus:outline-none text-zinc-800 py-1"
             />
-            <div className="flex items-center gap-3 text-zinc-500">
-              <ImageIcon size={20} className="cursor-pointer hover:text-zinc-800" />
-              <Mic size={20} className="cursor-pointer hover:text-zinc-800" />
-            </div>
           </div>
+
           <button 
             type="submit"
             disabled={!newMessage.trim()}
-            className="bg-sky-500 p-2.5 rounded-full text-white disabled:opacity-50 transition-opacity shadow-lg shadow-sky-500/20"
+            className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-[#00B0FF] disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
           >
-            <Send size={20} />
+            <Send size={20} className="ml-0.5" />
           </button>
         </form>
       </div>
