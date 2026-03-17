@@ -24,6 +24,20 @@ import AdminDashboard from '../admin/AdminDashboard.tsx';
 import CreatePostScreen from '../screen/CreatePostScreen.tsx';
 import NotificationsScreen from '../screen/NotificationsScreen.tsx';
 import UserProfileScreen from '../screen/UserProfileScreen.tsx';
+import FollowListScreen from '../screen/FollowListScreen.tsx';
+import PrivacySettingsScreen from '../screen/PrivacySettingsScreen.tsx';
+import AppPreferencesScreen from '../screen/AppPreferencesScreen.tsx';
+import AccountSettingsScreen from '../screen/AccountSettingsScreen.tsx';
+import AppLockScreen from '../screen/AppLockScreen.tsx';
+import SetupLockScreen from '../screen/SetupLockScreen.tsx';
+import VerifyLockScreen from '../screen/VerifyLockScreen.tsx';
+import NotificationsSettingsScreen from '../screen/NotificationsSettingsScreen.tsx';
+import HelpScreen from '../screen/HelpScreen.tsx';
+import AppInfoScreen from '../screen/AppInfoScreen.tsx';
+import GlobalLockScreen from '../screen/GlobalLockScreen.tsx';
+import { LockService } from '../src/services/LockService.ts';
+import { ThemeProvider } from './context/ThemeContext.tsx';
+import NotificationHandler from './components/NotificationHandler.tsx';
 import { useNavigate } from 'react-router-dom';
 
 function CallListener() {
@@ -107,6 +121,7 @@ export default function App() {
   const [userData, setUserData] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [splashLoading, setSplashLoading] = useState(true);
+  const [isUnlocked, setIsUnlocked] = useState(!LockService.getLockData().isEnabled);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -149,7 +164,7 @@ export default function App() {
 
     const timer = setTimeout(() => {
       setSplashLoading(false);
-    }, 3000);
+    }, 2000);
 
     return () => {
       unsubscribe();
@@ -188,6 +203,10 @@ export default function App() {
               referrerPolicy="no-referrer"
             />
             <h1 className="text-3xl font-bold italic font-serif text-zinc-800">GxChat India</h1>
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-zinc-100 border-t-[#00B0FF] rounded-full animate-spin"></div>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Loading...</span>
+            </div>
           </div>
           <div className="pb-12 flex flex-col items-center gap-1">
             <span className="text-zinc-400 text-sm font-medium">from</span>
@@ -199,16 +218,22 @@ export default function App() {
     );
   }
 
+  if (!isUnlocked) {
+    return <GlobalLockScreen onUnlock={() => setIsUnlocked(true)} />;
+  }
+
   // Guard Logic
   const needsVerification = user && !user.emailVerified && !user.providerData.some((p: any) => p.providerId === 'google.com');
   const needsProfileCompletion = user && !userData && !authLoading;
 
   return (
-    <Router>
-      <div className="h-[100dvh] bg-zinc-50 flex justify-center overflow-hidden">
+    <ThemeProvider>
+      <Router>
+        <div className="h-[100dvh] bg-[var(--bg-main)] flex justify-center overflow-hidden">
         {/* Centered Mobile Layout for all screens */}
-        <div className="w-full max-w-[450px] h-full bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)] relative overflow-hidden flex flex-col">
+        <div className="w-full max-w-[450px] h-full bg-[var(--bg-card)] shadow-[0_0_40px_rgba(0,0,0,0.05)] relative overflow-hidden flex flex-col">
           <CallListener />
+          {user && <NotificationHandler />}
           <div className="flex-1 h-full relative overflow-hidden">
             <Routes>
             <Route path="/" element={
@@ -235,16 +260,27 @@ export default function App() {
             <Route path="/profile" element={user ? <ProfileTab /> : <Navigate to="/login" />} />
             <Route path="/notifications" element={user ? <NotificationsScreen /> : <Navigate to="/login" />} />
             <Route path="/edit-profile" element={user ? <EditProfileScreen /> : <Navigate to="/login" />} />
+            <Route path="/privacy-settings" element={user ? <PrivacySettingsScreen /> : <Navigate to="/login" />} />
+            <Route path="/app-preferences" element={user ? <AppPreferencesScreen /> : <Navigate to="/login" />} />
+            <Route path="/account-settings" element={user ? <AccountSettingsScreen /> : <Navigate to="/login" />} />
+            <Route path="/app-lock" element={user ? <AppLockScreen /> : <Navigate to="/login" />} />
+            <Route path="/setup-lock/:type" element={user ? <SetupLockScreen /> : <Navigate to="/login" />} />
+            <Route path="/verify-lock" element={user ? <VerifyLockScreen /> : <Navigate to="/login" />} />
+            <Route path="/notifications-settings" element={user ? <NotificationsSettingsScreen /> : <Navigate to="/login" />} />
+            <Route path="/help" element={user ? <HelpScreen /> : <Navigate to="/login" />} />
+            <Route path="/app-info" element={user ? <AppInfoScreen /> : <Navigate to="/login" />} />
             <Route path="/login" element={!user ? <LoginScreen /> : <Navigate to="/" />} />
             <Route path="/signup" element={!user ? <SignupScreen /> : <Navigate to="/" />} />
             <Route path="/messages" element={user ? <MessagesListScreen /> : <Navigate to="/login" />} />
             <Route path="/chat/:id" element={user ? <ChatScreen /> : <Navigate to="/login" />} />
             <Route path="/user/:id" element={user ? <UserProfileScreen /> : <Navigate to="/login" />} />
+            <Route path="/user/:id/:type" element={user ? <FollowListScreen /> : <Navigate to="/login" />} />
             <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" />} />
           </Routes>
         </div>
       </div>
     </div>
     </Router>
+    </ThemeProvider>
   );
 }

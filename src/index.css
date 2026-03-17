@@ -7,8 +7,30 @@
 }
 
 @layer base {
+  :root {
+    --bg-main: #f4f4f5; /* zinc-100 */
+    --bg-card: #ffffff;
+    --bg-chat: #efe7de;
+    --text-primary: #000000;
+    --text-secondary: #71717a; /* zinc-500 */
+    --border-color: rgba(0, 0, 0, 0.05);
+    --accent-color: #10b981; /* emerald-500 */
+  }
+
+  [data-theme='dark'] {
+    --bg-main: #09090b; /* zinc-950 */
+    --bg-card: #18181b; /* zinc-900 */
+    --bg-chat: #0c0c0e;
+    --text-primary: #ffffff;
+    --text-secondary: #a1a1aa; /* zinc-400 */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --accent-color: #10b981;
+  }
+
   body {
-    @apply bg-zinc-100 text-black antialiased;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    @apply antialiased;
     font-family: var(--font-sans);
   }
 }
