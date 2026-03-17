@@ -19,58 +19,35 @@ import {
   Users,
   UserPlus,
   ExternalLink,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 import BottomNav from '../components/BottomNav.tsx';
 import TopNav from '../components/TopNav.tsx';
 import { auth, db } from '../server/firebase.ts';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function ProfileTab() {
   const [userData, setUserData] = useState<any>(null);
-  const [hideFromSearch, setHideFromSearch] = useState(false);
-  const [hidePhoto, setHidePhoto] = useState(false);
-  const [appLock, setAppLock] = useState(false);
-  const [dontSaveChat, setDontSaveChat] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const navigate = useNavigate();
 
   const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (auth.currentUser) {
-        const docRef = doc(db, "users", auth.currentUser.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setUserData(data);
-          setHideFromSearch(data.hideFromSearch || false);
-          setHidePhoto(data.hidePhoto || false);
-          setAppLock(data.appLock || false);
-          setDontSaveChat(data.dontSaveChat || false);
-        }
-      }
-    };
-    fetchUserData();
-  }, []);
-
-  const handleTogglePrivacy = async (field: string, value: boolean) => {
     if (!auth.currentUser) return;
-    try {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      await updateDoc(userRef, { [field]: value });
-      if (field === 'hideFromSearch') setHideFromSearch(value);
-      if (field === 'hidePhoto') setHidePhoto(value);
-      if (field === 'appLock') setAppLock(value);
-      if (field === 'dontSaveChat') setDontSaveChat(value);
-      setUserData({ ...userData, [field]: value });
-    } catch (error) {
-      console.error("Error updating privacy setting:", error);
-    }
-  };
+
+    const docRef = doc(db, "users", auth.currentUser.uid);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setUserData(docSnap.data());
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const getAccountAge = () => {
     if (!userData?.createdAt) return "7 days on GxChat"; // Default fallback
@@ -86,6 +63,8 @@ export default function ProfileTab() {
     const created = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
     return created.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   };
+
+  const hidePhoto = userData?.hidePhoto || false;
 
   return (
     <div className="h-full flex flex-col bg-[#F8F9FA] overflow-hidden font-sans">
@@ -118,9 +97,21 @@ export default function ProfileTab() {
                   <CheckCircle2 size={14} className="text-sky-500 fill-sky-500 text-white" />
                 </div>
                 <p className="text-zinc-400 font-bold text-xs">@{userData?.username || 'username'}</p>
-                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
-                  <ShieldCheck size={10} />
-                  <span className="text-[9px] font-black uppercase tracking-wider">Official Member</span>
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
+                    <ShieldCheck size={10} />
+                    <span className="text-[9px] font-black uppercase tracking-wider">Official Member</span>
+                  </div>
+                  <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border ${
+                    userData?.profileType === 'private' 
+                    ? 'bg-zinc-900 text-white border-zinc-800' 
+                    : 'bg-blue-50 text-blue-600 border-blue-100'
+                  }`}>
+                    {userData?.profileType === 'private' ? <Lock size={10} /> : <Globe size={10} />}
+                    <span className="text-[9px] font-black uppercase tracking-wider">
+                      {userData?.profileType === 'private' ? 'Private' : 'Public'}
+                    </span>
+                  </div>
                 </div>
               </div>
               <button 
@@ -149,20 +140,26 @@ export default function ProfileTab() {
             <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">GxChat Age</p>
             <p className="text-xs font-black text-zinc-900">{getAccountAge()}</p>
           </div>
-          <div className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm">
+          <button 
+            onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
+            className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm text-left active:scale-95 transition-all"
+          >
             <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 mb-3">
               <Users size={16} />
             </div>
             <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Followers</p>
-            <p className="text-xs font-black text-zinc-900">{userData?.followersCount || 0}</p>
-          </div>
-          <div className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm">
+            <p className="text-xs font-black text-zinc-900">{userData?.followers?.length || 0}</p>
+          </button>
+          <button 
+            onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
+            className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm text-left active:scale-95 transition-all"
+          >
             <div className="w-8 h-8 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500 mb-3">
               <UserPlus size={16} />
             </div>
             <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Following</p>
-            <p className="text-xs font-black text-zinc-900">{userData?.followingCount || 0}</p>
-          </div>
+            <p className="text-xs font-black text-zinc-900">{userData?.following?.length || 0}</p>
+          </button>
         </div>
 
         {/* About Me Section */}
@@ -177,99 +174,6 @@ export default function ProfileTab() {
             <p className="text-xs text-zinc-600 leading-relaxed font-medium">
               {userData?.bio || "No bio added yet. Tell the world about yourself!"}
             </p>
-          </div>
-        </div>
-
-        {/* Privacy Settings */}
-        <div className="px-4 mt-4">
-          <div className="bg-white p-4 rounded-2xl border border-zinc-100 shadow-sm">
-            <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-4">Privacy Settings</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-zinc-50 rounded-xl flex items-center justify-center text-zinc-400">
-                    <EyeOff size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-zinc-900 uppercase tracking-tight">Hide from search</p>
-                    <p className="text-[9px] text-zinc-400 font-bold">Others won't find you in search</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleTogglePrivacy('hideFromSearch', !hideFromSearch)}
-                  className={`w-10 h-5 rounded-full transition-all relative ${hideFromSearch ? 'bg-sky-500' : 'bg-zinc-200'}`}
-                >
-                  <motion.div 
-                    animate={{ x: hideFromSearch ? 20 : 4 }}
-                    className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-zinc-50 rounded-xl flex items-center justify-center text-zinc-400">
-                    <UserCircle size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-zinc-900 uppercase tracking-tight">Private Photo</p>
-                    <p className="text-[9px] text-zinc-400 font-bold">Hide your photo from everyone</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleTogglePrivacy('hidePhoto', !hidePhoto)}
-                  className={`w-10 h-5 rounded-full transition-all relative ${hidePhoto ? 'bg-sky-500' : 'bg-zinc-200'}`}
-                >
-                  <motion.div 
-                    animate={{ x: hidePhoto ? 20 : 4 }}
-                    className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-zinc-50 rounded-xl flex items-center justify-center text-zinc-400">
-                    <Lock size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-zinc-900 uppercase tracking-tight">App Lock</p>
-                    <p className="text-[9px] text-zinc-400 font-bold">Secure your app with a PIN</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleTogglePrivacy('appLock', !appLock)}
-                  className={`w-10 h-5 rounded-full transition-all relative ${appLock ? 'bg-sky-500' : 'bg-zinc-200'}`}
-                >
-                  <motion.div 
-                    animate={{ x: appLock ? 20 : 4 }}
-                    className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-zinc-50 rounded-xl flex items-center justify-center text-zinc-400">
-                    <Database size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-zinc-900 uppercase tracking-tight">Don't save chat data</p>
-                    <p className="text-[9px] text-zinc-400 font-bold">Auto-delete chat history</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => handleTogglePrivacy('dontSaveChat', !dontSaveChat)}
-                  className={`w-10 h-5 rounded-full transition-all relative ${dontSaveChat ? 'bg-sky-500' : 'bg-zinc-200'}`}
-                >
-                  <motion.div 
-                    animate={{ x: dontSaveChat ? 20 : 4 }}
-                    className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
-                  />
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 

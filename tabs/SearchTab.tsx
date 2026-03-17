@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, where, doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { auth, db } from '../server/firebase.ts';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
@@ -14,6 +14,8 @@ export default function SearchTab() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleCount, setVisibleCount] = useState(3);
+  const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const [followLoading, setFollowLoading] = useState<string | null>(null);
   const maxVisible = 9;
 
   const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -59,7 +61,47 @@ export default function SearchTab() {
     };
 
     fetchUsers();
+
+    // Listen to current user data for following list
+    let unsubscribeMe: any;
+    if (auth.currentUser) {
+      unsubscribeMe = onSnapshot(doc(db, "users", auth.currentUser.uid), (docSnap) => {
+        if (docSnap.exists()) {
+          setCurrentUserData(docSnap.data());
+        }
+      });
+    }
+
+    return () => {
+      if (unsubscribeMe) unsubscribeMe();
+    };
   }, []);
+
+  const handleToggleFollow = async (e: React.MouseEvent, targetId: string) => {
+    e.stopPropagation();
+    if (!auth.currentUser || !targetId || followLoading) return;
+    
+    setFollowLoading(targetId);
+    try {
+      const isFollowing = currentUserData?.following?.includes(targetId);
+      const myDocRef = doc(db, "users", auth.currentUser.uid);
+      const targetDocRef = doc(db, "users", targetId);
+      
+      // Update my following list
+      await updateDoc(myDocRef, {
+        following: !isFollowing ? arrayUnion(targetId) : arrayRemove(targetId)
+      });
+      
+      // Update target user's followers list
+      await updateDoc(targetDocRef, {
+        followers: !isFollowing ? arrayUnion(auth.currentUser.uid) : arrayRemove(auth.currentUser.uid)
+      });
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+    } finally {
+      setFollowLoading(null);
+    }
+  };
 
   const filteredUsers = users.filter(user => 
     user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -108,45 +150,43 @@ export default function SearchTab() {
                 <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{filteredUsers.length} Found</span>
               </div>
               
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-4">
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map(user => (
                     <motion.div 
-                      layout
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
                       onClick={() => navigate(`/user/${user.uid}`)}
                       key={user.uid} 
-                      className="flex items-center gap-4 p-3 bg-white border border-zinc-100 rounded-2xl hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
+                      className="flex items-center gap-3 p-3 bg-sky-500 rounded-2xl shadow-md shadow-sky-100 transition-all cursor-pointer border border-white/10"
                     >
-                      <div className="relative">
+                      <div className="relative shrink-0">
                         <img 
                           src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} 
-                          className="w-12 h-12 rounded-full object-cover border border-zinc-100"
+                          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-bold text-zinc-900 group-hover:text-blue-600 transition-colors">{user.username}</h4>
-                        <p className="text-[11px] text-zinc-500">{user.fullName}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <h4 className="text-[14px] font-black text-white leading-tight break-words">
+                            {user.fullName || 'GxChat Member'}
+                          </h4>
+                          <ShieldCheck size={12} className="text-white fill-white/20 shrink-0" />
+                        </div>
+                        <p className="text-[11px] font-bold text-sky-100 truncate opacity-90">@{user.username}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center shrink-0">
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/chat/${user.uid}`);
-                          }}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm hover:bg-blue-700 transition-all"
+                          onClick={(e) => handleToggleFollow(e, user.uid)}
+                          disabled={followLoading === user.uid}
+                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all active:scale-95 ${
+                            currentUserData?.following?.includes(user.uid)
+                            ? 'bg-sky-600 text-white border border-white/20'
+                            : 'bg-white text-sky-600 hover:bg-sky-50'
+                          }`}
                         >
-                          Chat
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/user/${user.uid}`);
-                          }}
-                          className="px-3 py-1.5 bg-zinc-100 text-zinc-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-zinc-200 transition-all"
-                        >
-                          View
+                          {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
                         </button>
                       </div>
                     </motion.div>
@@ -214,13 +254,15 @@ export default function SearchTab() {
                           </div>
                           <div className="flex items-center shrink-0">
                             <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/user/${user.uid}`);
-                              }}
-                              className="px-4 py-2 bg-white text-sky-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-sky-50 transition-all active:scale-95"
+                              onClick={(e) => handleToggleFollow(e, user.uid)}
+                              disabled={followLoading === user.uid}
+                              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm transition-all active:scale-95 ${
+                                currentUserData?.following?.includes(user.uid)
+                                ? 'bg-sky-600 text-white border border-white/20'
+                                : 'bg-white text-sky-600 hover:bg-sky-50'
+                              }`}
                             >
-                              Follow
+                              {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
                             </button>
                           </div>
                         </motion.div>
