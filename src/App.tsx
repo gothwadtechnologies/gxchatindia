@@ -8,6 +8,7 @@ import ProfileTab from '../tabs/ProfileTab.tsx';
 import EditProfileScreen from '../screen/EditProfileScreen.tsx';
 import StatusTab from '../tabs/StatusTab.tsx';
 import CallsTab from '../tabs/CallsTab.tsx';
+import CameraTab from '../tabs/CameraTab.tsx';
 import SettingsScreen from '../screen/SettingsScreen.tsx';
 import LoginScreen from '../user/LoginScreen.tsx';
 import SignupScreen from '../user/SignupScreen.tsx';
@@ -36,6 +37,7 @@ import HelpScreen from '../screen/HelpScreen.tsx';
 import AppInfoScreen from '../screen/AppInfoScreen.tsx';
 import GlobalLockScreen from '../screen/GlobalLockScreen.tsx';
 import { LockService } from '../src/services/LockService.ts';
+import { CacheService } from '../src/services/CacheService.ts';
 import { ThemeProvider } from './context/ThemeContext.tsx';
 import NotificationHandler from './components/NotificationHandler.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -124,6 +126,7 @@ export default function App() {
   const [isUnlocked, setIsUnlocked] = useState(!LockService.getLockData().isEnabled);
 
   useEffect(() => {
+    CacheService.clearOldCache();
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -253,6 +256,7 @@ export default function App() {
             <Route path="/status" element={user ? <StatusTab /> : <Navigate to="/login" />} />
             <Route path="/explore" element={user ? <SearchTab /> : <Navigate to="/login" />} />
             <Route path="/calls" element={user ? <CallsTab /> : <Navigate to="/login" />} />
+            <Route path="/camera" element={user ? <CameraTab /> : <Navigate to="/login" />} />
             <Route path="/call/:id" element={user ? <CallScreen /> : <Navigate to="/login" />} />
             <Route path="/settings" element={user ? <SettingsScreen /> : <Navigate to="/login" />} />
             <Route path="/reels" element={user ? <ReelsScreen /> : <Navigate to="/login" />} />
