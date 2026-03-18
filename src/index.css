@@ -30,8 +30,12 @@
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
-    @apply antialiased;
+    @apply antialiased overflow-x-hidden;
     font-family: var(--font-sans);
+  }
+
+  html {
+    @apply overflow-x-hidden;
   }
 }
 

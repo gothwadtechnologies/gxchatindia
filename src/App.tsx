@@ -16,7 +16,8 @@ import VerifyEmailScreen from '../user/VerifyEmailScreen.tsx';
 import CompleteProfileScreen from '../user/CompleteProfileScreen.tsx';
 import MessagesListScreen from '../screen/MessagesListScreen.tsx';
 import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../server/firebase.ts';
+import { db, rtdb } from '../server/firebase.ts';
+import { ref, onValue, set, onDisconnect, serverTimestamp as rtdbTimestamp } from 'firebase/database';
 import { Phone, Video, PhoneOff, Check } from 'lucide-react';
 import CallScreen from '../screen/CallScreen.tsx';
 import ChatScreen from '../screen/ChatScreen.tsx';
@@ -134,7 +135,36 @@ export default function App() {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           setUserData(userDoc.data());
-          // Set user as online
+          
+          // RTDB Presence
+          const statusRef = ref(rtdb, `/status/${currentUser.uid}`);
+          const connectedRef = ref(rtdb, '.info/connected');
+
+          onValue(connectedRef, (snap) => {
+            if (snap.val() === false) return;
+
+            onDisconnect(statusRef).set({
+              state: 'offline',
+              last_changed: rtdbTimestamp(),
+            }).then(() => {
+              set(statusRef, {
+                state: 'online',
+                last_changed: rtdbTimestamp(),
+              });
+            });
+          });
+
+          onValue(statusRef, (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+              updateDoc(userDocRef, {
+                isOnline: val.state === 'online',
+                lastSeen: serverTimestamp()
+              });
+            }
+          });
+
+          // Sync Firestore online status
           await updateDoc(userDocRef, {
             isOnline: true,
             lastSeen: serverTimestamp()
