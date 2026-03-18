@@ -26,7 +26,7 @@ export default function MessagesListScreen() {
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const allMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      const allMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) })) as any[];
       
       // Filter messages involving the current user
       const myMsgs = allMsgs.filter(m => m.senderId === auth.currentUser?.uid || m.receiverId === auth.currentUser?.uid);
@@ -34,15 +34,19 @@ export default function MessagesListScreen() {
       // Group by chatId
       const chatGroups: { [key: string]: any } = {};
       myMsgs.forEach(msg => {
-        if (!chatGroups[msg.chatId] || (msg.timestamp?.seconds || 0) > (chatGroups[msg.chatId].timestamp?.seconds || 0)) {
+        const msgTime = toDate(msg.timestamp)?.getTime() || Date.now();
+        const existingTime = toDate(chatGroups[msg.chatId]?.timestamp)?.getTime() || 0;
+        if (!chatGroups[msg.chatId] || msgTime > existingTime) {
           chatGroups[msg.chatId] = msg;
         }
       });
 
       // Convert to array and sort by time
-      const sortedChats = Object.values(chatGroups).sort((a, b) => 
-        (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)
-      );
+      const sortedChats = Object.values(chatGroups).sort((a, b) => {
+        const timeA = toDate(a.timestamp)?.getTime() || Date.now();
+        const timeB = toDate(b.timestamp)?.getTime() || Date.now();
+        return timeB - timeA;
+      });
 
       // Fetch user details for each chat
       const chatList = await Promise.all(sortedChats.map(async (chat) => {

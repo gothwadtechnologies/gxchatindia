@@ -9,7 +9,8 @@ import {
   MessageSquareOff,
   MessageCircle,
   Reply,
-  MoreVertical
+  MoreVertical,
+  Trash
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -19,8 +20,9 @@ import {
   ChatEditPreview, 
   ChatPlusMenu 
 } from '../src/components/ChatUIComponents';
-import { auth, db } from '../server/firebase.ts';
-import { toDate } from '../src/utils/dateUtils.ts';
+import { auth, db, rtdb } from '../server/firebase.ts';
+import { ref, onValue, update } from 'firebase/database';
+import { toDate, formatLastSeen } from '../src/utils/dateUtils.ts';
 import { 
   collection, 
   addDoc, 
@@ -34,11 +36,64 @@ import {
   getDocs,
   writeBatch,
   orderBy,
-  limit
+  limit,
+  getDoc,
+  setDoc
 } from 'firebase/firestore';
 
 import { motion, AnimatePresence } from 'motion/react';
 import { CacheService } from '../src/services/CacheService.ts';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 export default function ChatScreen() {
   const { id: receiverId } = useParams();
@@ -53,13 +108,17 @@ export default function ChatScreen() {
   const [showOptions, setShowOptions] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [editingMessage, setEditingMessage] = useState<any>(null);
   const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [editingMessage, setEditingMessage] = useState<any | null>(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState<any | null>(null);
   const [visibleButtonsId, setVisibleButtonsId] = useState<string | null>(null);
   const [lastTap, setLastTap] = useState<{id: string, time: number}>({id: '', time: 0});
   const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const [receiverStatus, setReceiverStatus] = useState<'online' | 'offline'>('offline');
+  const [isSending, setIsSending] = useState(false);
   const [menuPosition, setMenuPosition] = useState<'top' | 'bottom'>('top');
+  const [receiverActiveChatId, setReceiverActiveChatId] = useState<string | null>(null);
+  const [receiverLastSeen, setReceiverLastSeen] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
@@ -70,8 +129,11 @@ export default function ChatScreen() {
 
   // Scroll to bottom helper
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = 'smooth') => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior
+      });
     }
   }, []);
 
@@ -108,7 +170,6 @@ export default function ChatScreen() {
     }).catch(async (err) => {
       // If doc doesn't exist, create it
       if (err.code === 'not-found') {
-        const { setDoc } = await import('firebase/firestore');
         await setDoc(myTypingRef, {
           isTyping: typing,
           timestamp: serverTimestamp()
@@ -135,28 +196,11 @@ export default function ChatScreen() {
     }, 3000);
   };
 
-  const formatLastSeen = (timestamp: any) => {
-    const date = toDate(timestamp);
-    if (!date) return '';
-    const now = new Date();
-    
-    const isToday = date.toDateString() === now.toDateString();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-
-    if (isToday) {
-      return `last seen at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`;
-    } else if (isYesterday) {
-      return 'last seen at Yesterday';
-    } else {
-      const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-      if (date.getFullYear() !== now.getFullYear()) {
-        options.year = 'numeric';
-      }
-      return `last seen at ${date.toLocaleDateString('en-GB', options)}`;
+  useEffect(() => {
+    if (isOtherTyping) {
+      scrollToBottom('smooth');
     }
-  };
+  }, [isOtherTyping, scrollToBottom]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -172,12 +216,13 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
-    if (!receiverId) return;
+    if (!receiverId || !auth.currentUser) return;
 
-    // Load from local storage first
     const localKey = `msgs_${chatId}`;
+    // Load from local storage first
     const savedMsgs = JSON.parse(localStorage.getItem(localKey) || '[]');
     setMessages(savedMsgs);
+    setLoading(false);
 
     // Use Cache for receiver info
     const cachedReceiver = CacheService.getUser(receiverId);
@@ -194,39 +239,57 @@ export default function ChatScreen() {
       }
     });
 
+    // Listen for receiver RTDB status
+    const statusRef = ref(rtdb, `/status/${receiverId}`);
+    const statusUnsubscribe = onValue(statusRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        setReceiverStatus(val.state);
+        setReceiverActiveChatId(val.activeChatId || null);
+        setReceiverLastSeen(val.last_changed || null);
+      } else {
+        setReceiverStatus('offline');
+        setReceiverActiveChatId(null);
+        setReceiverLastSeen(null);
+      }
+    });
+
+    // Set my active chat ID in RTDB
+    if (auth.currentUser) {
+      const myStatusRef = ref(rtdb, `/status/${auth.currentUser.uid}`);
+      update(myStatusRef, { activeChatId: receiverId }).catch(err => console.error("Error updating activeChatId:", err));
+    }
+
     // Listen for messages - We query by chatId and sort in memory to avoid needing a composite index
-    // Actually, to support pagination effectively, we should use orderBy and limit.
-    // We'll use a dynamic limit to handle "load more"
+    // We fetch all messages for this chat (since we keep it at 50 max in Firebase)
     const q = query(
       collection(db, "messages"),
-      where("chatId", "==", chatId),
-      orderBy("timestamp", "desc"),
-      limit(messageLimit)
+      where("chatId", "==", chatId)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setLoading(false);
       setLoadingMore(false);
       
-      if (snapshot.metadata.fromCache && snapshot.docs.length === 0) return;
-
       const firestoreMsgs = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data({ serverTimestamps: 'estimate' })
       })) as any[];
       
-      // If we got fewer messages than the limit, we've reached the end
-      if (firestoreMsgs.length < messageLimit) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
+      // Handle removals explicitly
+      const removedIds = snapshot.docChanges()
+        .filter(change => change.type === 'removed')
+        .map(change => change.doc.id);
 
       // Merge with local messages efficiently
       setMessages(prev => {
         const msgMap = new Map();
-        // Add existing messages to map
+        // Add existing messages to map (from local storage)
         prev.forEach(m => msgMap.set(m.id, m));
+        
+        // Remove messages that were explicitly removed in this snapshot
+        removedIds.forEach(id => msgMap.delete(id));
+        
         // Update/Add firestore messages
         firestoreMsgs.forEach(fMsg => msgMap.set(fMsg.id, fMsg));
 
@@ -234,13 +297,13 @@ export default function ChatScreen() {
 
         // Sort by timestamp ascending for display
         merged.sort((a, b) => {
-          const timeA = toDate(a.timestamp)?.getTime() || 0;
-          const timeB = toDate(b.timestamp)?.getTime() || 0;
+          const timeA = toDate(a.timestamp)?.getTime() || Date.now();
+          const timeB = toDate(b.timestamp)?.getTime() || Date.now();
           return timeA - timeB;
         });
 
-        // Save back to local storage
-        const limitedLocal = merged.slice(-500);
+        // Save back to local storage (up to 5000 messages)
+        const limitedLocal = merged.slice(-5000);
         if (JSON.stringify(limitedLocal) !== localStorage.getItem(localKey)) {
           localStorage.setItem(localKey, JSON.stringify(limitedLocal));
         }
@@ -266,33 +329,44 @@ export default function ChatScreen() {
         unreadMsgs.forEach(msgDoc => {
           batch.update(msgDoc.ref, { isRead: true });
         });
-        batch.commit();
+        batch.commit().catch(err => handleFirestoreError(err, OperationType.WRITE, 'messages'));
       }
     }, (error) => {
-      console.error("Firestore query error:", error);
+      handleFirestoreError(error, OperationType.LIST, 'messages');
     });
 
     return () => {
       receiverUnsubscribe();
+      statusUnsubscribe();
       unsubscribe();
+      // Clear my active chat ID
+      if (auth.currentUser) {
+        const myStatusRef = ref(rtdb, `/status/${auth.currentUser.uid}`);
+        update(myStatusRef, { activeChatId: null }).catch(err => console.error("Error clearing activeChatId:", err));
+      }
     };
   }, [receiverId, chatId, scrollToBottom, messageLimit]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
-    if (target.scrollTop === 0 && hasMore && !loadingMore && !loading) {
+    // If we scroll to top and we have more messages in our local state than what we are showing
+    if (target.scrollTop === 0 && messages.length > messageLimit && !loadingMore && !loading) {
       setLoadingMore(true);
       // Store current height to maintain scroll position after loading
       const currentHeight = target.scrollHeight;
       
-      setMessageLimit(prev => prev + 15);
-
-      // After messages update, adjust scroll
+      // Load 15 more from local state
       setTimeout(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight - currentHeight;
-        }
-      }, 500);
+        setMessageLimit(prev => Math.min(prev + 15, messages.length));
+        setLoadingMore(false);
+
+        // After messages update, adjust scroll
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight - currentHeight;
+          }
+        }, 100);
+      }, 800); // Animation delay
     }
   };
 
@@ -313,21 +387,35 @@ export default function ChatScreen() {
     }
   }, [messages, scrollToBottom]);
 
+  // Scroll to bottom when other user starts typing
+  useEffect(() => {
+    if (isOtherTyping) {
+      // Small delay to let the animation start and layout adjust
+      const timeout = setTimeout(() => {
+        scrollToBottom('smooth');
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isOtherTyping, scrollToBottom]);
+
   const handleMessageTap = React.useCallback((e: React.MouseEvent | React.TouchEvent, msg: any) => {
-    if (e.cancelable) e.preventDefault();
+    // Prevent default only if it's a touch event to avoid double-tap zoom
+    if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
     e.stopPropagation();
+    
     const now = Date.now();
     if (lastTap.id === msg.id && now - lastTap.time < 300) {
-      // Double tap: Open the full options menu
-      setActiveMessageMenu(activeMessageMenu?.id === msg.id ? null : msg);
+      // Double tap: Quick Reply
+      setReplyingTo(msg);
       setVisibleButtonsId(null);
       setLastTap({id: '', time: 0});
+      if (window.navigator.vibrate) window.navigator.vibrate(10);
     } else {
-      // Single tap: Show the quick action buttons (Reply/More)
+      // Single tap: Show quick actions
       setLastTap({id: msg.id, time: now});
       setVisibleButtonsId(visibleButtonsId === msg.id ? null : msg.id);
     }
-  }, [lastTap, activeMessageMenu, visibleButtonsId]);
+  }, [lastTap, visibleButtonsId]);
 
   const handleSendMessage = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,12 +430,14 @@ export default function ChatScreen() {
     setEditingMessage(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
+    setIsSending(true);
     try {
       if (editMsg) {
-        await updateDoc(doc(db, "messages", editMsg.id), {
+        const msgRef = doc(db, "messages", editMsg.id);
+        await updateDoc(msgRef, {
           text: textToSend,
           isEdited: true
-        });
+        }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `messages/${editMsg.id}`));
       } else {
         await addDoc(collection(db, "messages"), {
           chatId,
@@ -357,29 +447,35 @@ export default function ChatScreen() {
           timestamp: serverTimestamp(),
           isRead: false,
           replyTo: replyContext
-        });
+        }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'messages'));
 
-        // Cleanup: Keep only 500 messages in Firebase for this chat
-        // We query by chatId and sort in memory to avoid needing a composite index
-        const q = query(
-          collection(db, "messages"),
-          where("chatId", "==", chatId)
-        );
-        const snapshot = await getDocs(q);
-        if (snapshot.size > 500) {
-          const allMsgs = snapshot.docs.map(d => ({ ref: d.ref, ...d.data() })) as any[];
-          // Sort by timestamp descending
-          allMsgs.sort((a, b) => {
-            const timeA = toDate(a.timestamp)?.getTime() || 0;
-            const timeB = toDate(b.timestamp)?.getTime() || 0;
-            return timeB - timeA;
-          });
+        // Cleanup: Keep only 50 messages in Firebase for this chat (Run in background)
+        setTimeout(async () => {
+          try {
+            const q = query(
+              collection(db, "messages"),
+              where("chatId", "==", chatId)
+            );
+            const snapshot = await getDocs(q);
+            if (snapshot.size > 50) {
+              const allMsgs = snapshot.docs.map(d => ({ ref: d.ref, ...d.data() })) as any[];
+              // Sort by timestamp descending (newest first)
+              allMsgs.sort((a, b) => {
+                const timeA = toDate(a.timestamp)?.getTime() || Date.now();
+                const timeB = toDate(b.timestamp)?.getTime() || Date.now();
+                return timeB - timeA;
+              });
 
-          const batch = writeBatch(db);
-          const docsToDelete = allMsgs.slice(500);
-          docsToDelete.forEach(d => batch.delete(d.ref));
-          await batch.commit();
-        }
+              const batch = writeBatch(db);
+              // Keep the newest 50 messages, delete the rest
+              const docsToDelete = allMsgs.slice(50);
+              docsToDelete.forEach(d => batch.delete(d.ref));
+              await batch.commit().catch(err => handleFirestoreError(err, OperationType.DELETE, 'messages_cleanup'));
+            }
+          } catch (err) {
+            console.error("Cleanup error:", err);
+          }
+        }, 1000);
       }
 
       // Send Notification
@@ -397,12 +493,16 @@ export default function ChatScreen() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
+    } finally {
+      setIsSending(false);
     }
   }, [newMessage, editingMessage, replyingTo, chatId, receiverId, receiver]);
 
   const deleteMessage = React.useCallback(async (msgId: string) => {
     try {
-      await deleteDoc(doc(db, "messages", msgId));
+      console.log("Attempting to delete message:", msgId);
+      await deleteDoc(doc(db, "messages", msgId)).catch(err => handleFirestoreError(err, OperationType.DELETE, `messages/${msgId}`));
+      console.log("Message deleted successfully from Firestore");
       setActiveMessageMenu(null);
     } catch (error) {
       console.error("Error deleting message:", error);
@@ -449,7 +549,7 @@ export default function ChatScreen() {
       <ChatHeader 
         receiver={receiver}
         receiverId={receiverId}
-        formatLastSeen={formatLastSeen}
+        formatLastSeen={() => formatLastSeen(receiverLastSeen || receiver?.lastSeen)}
         showOptions={showOptions}
         setShowOptions={setShowOptions}
         isMuted={isMuted}
@@ -457,13 +557,16 @@ export default function ChatScreen() {
         deleteChat={deleteChat}
         optionsRef={optionsRef}
         isTyping={isOtherTyping}
+        receiverStatus={receiverStatus}
+        receiverActiveChatId={receiverActiveChatId}
+        currentUserId={auth.currentUser?.uid}
       />
 
       {/* Messages */}
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#efe7dd] relative no-scrollbar" 
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 bg-[#efe7dd] relative no-scrollbar touch-pan-y" 
         onClick={() => { setActiveMessageMenu(null); setVisibleButtonsId(null); }}
       >
         {/* WhatsApp-style pattern overlay */}
@@ -490,10 +593,11 @@ export default function ChatScreen() {
               <p className="text-sm font-bold text-zinc-500">No messages yet</p>
               <p className="text-[11px] text-zinc-400 mt-1">Say hi to start the conversation!</p>
             </div>
-          ) : (
-            messages.map((msg, index) => {
+          ) : (() => {
+            const currentMessages = messages.slice(-messageLimit);
+            return currentMessages.map((msg, index) => {
               const isMe = msg.senderId === auth.currentUser?.uid;
-              const prevMsg = index > 0 ? messages[index - 1] : null;
+              const prevMsg = index > 0 ? currentMessages[index - 1] : null;
               const isSameSender = prevMsg?.senderId === msg.senderId;
               
               return (
@@ -501,7 +605,7 @@ export default function ChatScreen() {
                   key={msg.id} 
                   className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} ${!isSameSender ? 'mt-2' : 'mt-0.5'}`}
                 >
-                  <div className="relative group max-w-[85%]">
+                  <div className="relative group max-w-[70%]">
                     {/* Tail for the first message in a sequence */}
                     {!isSameSender && (
                       <div className={`absolute top-0 w-3 h-3 ${isMe ? '-right-2 bg-white' : '-left-2 bg-white'}`} 
@@ -517,14 +621,31 @@ export default function ChatScreen() {
                       dragTransition={{ bounceStiffness: 1500, bounceDamping: 60 }}
                       onDragStart={(e) => e.stopPropagation()}
                       onDrag={(_, info) => {
-                        // Trigger reply on right swipe (positive x)
-                        if (info.offset.x > 60 && replyingTo?.id !== msg.id) {
-                          setReplyingTo(msg);
-                        }
-                        // Trigger options menu on left swipe (negative x)
-                        if (info.offset.x < -60 && activeMessageMenu?.id !== msg.id) {
-                          setActiveMessageMenu(msg);
-                          setVisibleButtonsId(null);
+                        // Received Message (Left side)
+                        if (!isMe) {
+                          // Left to Right (L->R) -> Reply
+                          if (info.offset.x > 70 && replyingTo?.id !== msg.id) {
+                            setReplyingTo(msg);
+                            if (window.navigator.vibrate) window.navigator.vibrate(10);
+                          }
+                          // Right to Left (R->L) -> Options
+                          if (info.offset.x < -70 && activeMessageMenu?.id !== msg.id) {
+                            setActiveMessageMenu(msg);
+                            if (window.navigator.vibrate) window.navigator.vibrate(10);
+                          }
+                        } 
+                        // Sent Message (Right side)
+                        else {
+                          // Right to Left (R->L) -> Reply
+                          if (info.offset.x < -70 && replyingTo?.id !== msg.id) {
+                            setReplyingTo(msg);
+                            if (window.navigator.vibrate) window.navigator.vibrate(10);
+                          }
+                          // Left to Right (L->R) -> Options
+                          if (info.offset.x > 70 && activeMessageMenu?.id !== msg.id) {
+                            setActiveMessageMenu(msg);
+                            if (window.navigator.vibrate) window.navigator.vibrate(10);
+                          }
                         }
                       }}
                       onClick={(e) => handleMessageTap(e, msg)}
@@ -557,6 +678,8 @@ export default function ChatScreen() {
                             <div className="flex ml-0.5">
                               {msg.isRead ? (
                                 <CheckCheck size={14} className="text-blue-500" />
+                              ) : receiverStatus === 'online' ? (
+                                <CheckCheck size={14} className="text-zinc-400" />
                               ) : (
                                 <Check size={14} className="text-zinc-400" />
                               )}
@@ -567,14 +690,14 @@ export default function ChatScreen() {
                     </motion.div>
 
                     {/* Message Actions (Reply & Three Dots) - Visible on hover or when menu is active */}
-                    <div className={`absolute top-1/2 -translate-y-1/2 transition-opacity flex items-center gap-1.5 z-20 ${isMe ? 'right-full mr-2' : 'left-full ml-2'} ${activeMessageMenu?.id === msg.id || visibleButtonsId === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                    <div className={`absolute top-1/2 -translate-y-1/2 transition-all duration-200 flex items-center gap-1 whitespace-nowrap z-20 ${isMe ? 'right-full mr-2' : 'left-full ml-2'} ${activeMessageMenu?.id === msg.id || visibleButtonsId === msg.id ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto'}`}>
                       <button 
                         onClick={(e) => { 
                           e.stopPropagation(); 
                           setReplyingTo(msg);
                           setVisibleButtonsId(null);
                         }} 
-                        className="p-1.5 bg-white/80 hover:bg-white rounded-full text-[#00B0FF] shadow-sm border border-zinc-100 transition-all active:scale-90"
+                        className="p-1.5 bg-white hover:bg-zinc-50 rounded-full text-[#00B0FF] shadow-md border border-zinc-100 transition-all active:scale-90"
                         title="Reply"
                       >
                         <Reply size={14} />
@@ -585,7 +708,7 @@ export default function ChatScreen() {
                           setActiveMessageMenu(activeMessageMenu?.id === msg.id ? null : msg); 
                           setVisibleButtonsId(null);
                         }} 
-                        className="p-1.5 bg-white/80 hover:bg-white rounded-full text-[#00B0FF] shadow-sm border border-zinc-100 transition-all active:scale-90"
+                        className="p-1.5 bg-white hover:bg-zinc-50 rounded-full text-[#00B0FF] shadow-md border border-zinc-100 transition-all active:scale-90"
                         title="More options"
                       >
                         <MoreVertical size={14} />
@@ -594,8 +717,8 @@ export default function ChatScreen() {
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
           
           {/* Typing Indicator */}
           <AnimatePresence>
@@ -639,16 +762,9 @@ export default function ChatScreen() {
         <ChatMessageMenu 
           activeMessageMenu={activeMessageMenu}
           setActiveMessageMenu={setActiveMessageMenu}
+          setReplyingTo={setReplyingTo}
           startEdit={startEdit}
-          setReplyingTo={setReplyingTo}
           deleteMessage={deleteMessage}
-          currentUserUid={auth.currentUser?.uid}
-        />
-
-        <ChatReplyPreview 
-          replyingTo={replyingTo}
-          setReplyingTo={setReplyingTo}
-          receiver={receiver}
           currentUserUid={auth.currentUser?.uid}
         />
 
@@ -656,6 +772,13 @@ export default function ChatScreen() {
           editingMessage={editingMessage}
           setEditingMessage={setEditingMessage}
           setNewMessage={setNewMessage}
+        />
+
+        <ChatReplyPreview 
+          replyingTo={replyingTo}
+          setReplyingTo={setReplyingTo}
+          receiver={receiver}
+          currentUserUid={auth.currentUser?.uid}
         />
 
         <form onSubmit={handleSendMessage} className="flex items-center gap-2 px-1">
@@ -690,10 +813,10 @@ export default function ChatScreen() {
 
           <button 
             type="submit"
-            disabled={!newMessage.trim()}
+            disabled={!newMessage.trim() || isSending}
             className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-[#00B0FF] disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
           >
-            <Send size={20} className="ml-0.5" />
+            {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
           </button>
         </form>
       </div>
