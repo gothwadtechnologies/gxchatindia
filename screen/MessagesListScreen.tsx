@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, ArrowLeft, Edit, MessageCircle, MoreVertical } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth, db } from '../server/firebase.ts';
+import { toDate } from '../src/utils/dateUtils.ts';
 import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
 
 export default function MessagesListScreen() {
@@ -62,7 +63,7 @@ export default function MessagesListScreen() {
           user: userData?.username || 'Unknown User',
           fullName: userData?.fullName || '',
           lastMsg: chat.text,
-          time: chat.timestamp?.toDate() ? formatTime(chat.timestamp.toDate()) : 'Recently',
+          time: toDate(chat.timestamp) ? formatTime(toDate(chat.timestamp)) : 'Recently',
           avatar: userData?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
           unread: unreadCount > 0,
           unreadCount

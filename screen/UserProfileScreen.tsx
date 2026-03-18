@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../server/firebase.ts';
+import { toDate } from '../src/utils/dateUtils.ts';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, onSnapshot } from 'firebase/firestore';
 
 export default function UserProfileScreen() {
@@ -112,8 +113,8 @@ export default function UserProfileScreen() {
 
   // Calculate account age (mock logic for now, using createdAt if available)
   const getAccountAge = () => {
-    if (!user?.createdAt) return "New Member";
-    const created = user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+    const created = toDate(user?.createdAt);
+    if (!created) return "New Member";
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - created.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -126,14 +127,14 @@ export default function UserProfileScreen() {
   };
 
   const getJoinedDate = () => {
-    if (!user?.createdAt) return "Unknown";
-    const created = user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
+    const created = toDate(user?.createdAt);
+    if (!created) return "Unknown";
     return created.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
   const formatLastSeen = (timestamp: any) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = toDate(timestamp);
+    if (!date) return '';
     const now = new Date();
     
     const isToday = date.toDateString() === now.toDateString();
