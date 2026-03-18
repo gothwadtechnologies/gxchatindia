@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc, limit, orderBy } from 'firebase/firestore';
 import { auth, db } from '../server/firebase.ts';
+import { toDate } from '../src/utils/dateUtils.ts';
 import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Edit, Plus, MessageCircle } from 'lucide-react';
+import { Search, Edit, Plus, MessageCircle, MoreVertical } from 'lucide-react';
+import { CacheService } from '../src/services/CacheService.ts';
 
 export default function ChatsTab() {
   const navigate = useNavigate();
@@ -15,38 +17,49 @@ export default function ChatsTab() {
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    // Query messages where user is involved
-    const q = query(
+    // Optimized query: Fetch messages involving the user
+    // We'll use two queries to get messages where user is sender or receiver
+    // We remove orderBy and limit to avoid needing composite indexes
+    const qSender = query(
       collection(db, "messages"),
-      where("chatId", ">=", ""), 
+      where("senderId", "==", auth.currentUser.uid)
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const allMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
-      
-      // Filter messages involving the current user
-      const myMsgs = allMsgs.filter(m => m.senderId === auth.currentUser?.uid || m.receiverId === auth.currentUser?.uid);
+    const qReceiver = query(
+      collection(db, "messages"),
+      where("receiverId", "==", auth.currentUser.uid)
+    );
 
-      // Group by chatId
+    const processMessages = async (snapshot1: any, snapshot2: any) => {
+      const allMsgs = [
+        ...snapshot1.docs.map((d: any) => ({ id: d.id, ...d.data() })),
+        ...snapshot2.docs.map((d: any) => ({ id: d.id, ...d.data() }))
+      ];
+
+      // Group by chatId and keep the latest message
       const chatGroups: { [key: string]: any } = {};
-      myMsgs.forEach(msg => {
+      allMsgs.forEach(msg => {
         if (!chatGroups[msg.chatId] || (msg.timestamp?.seconds || 0) > (chatGroups[msg.chatId].timestamp?.seconds || 0)) {
           chatGroups[msg.chatId] = msg;
         }
       });
 
-      // Convert to array and sort by time
+      // Sort by time descending and limit to 100 recent chats
       const sortedChats = Object.values(chatGroups).sort((a, b) => 
         (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)
-      );
+      ).slice(0, 100);
 
-      // Fetch user details for each chat
       const chatList = await Promise.all(sortedChats.map(async (chat) => {
         const otherUserId = chat.senderId === auth.currentUser?.uid ? chat.receiverId : chat.senderId;
-        const userDoc = await getDoc(doc(db, "users", otherUserId));
-        const userData = userDoc.exists() ? userDoc.data() : null;
         
-        // Count unread messages from this user
+        // Try cache first
+        let userData: any = CacheService.getUser(otherUserId);
+        if (!userData) {
+          const userDoc = await getDoc(doc(db, "users", otherUserId));
+          userData = userDoc.exists() ? userDoc.data() : null;
+          if (userData) CacheService.saveUser(otherUserId, userData);
+        }
+        
         const unreadCount = allMsgs.filter(m => 
           m.chatId === chat.chatId && 
           m.receiverId === auth.currentUser?.uid && 
@@ -60,7 +73,7 @@ export default function ChatsTab() {
           username: userData?.username || '',
           fullName: userData?.fullName || '',
           lastMsg: chat.text,
-          time: chat.timestamp?.toDate() ? formatTime(chat.timestamp.toDate()) : 'Recently',
+          time: toDate(chat.timestamp) ? formatTime(toDate(chat.timestamp)) : 'Recently',
           avatar: userData?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
           unread: unreadCount > 0,
           unreadCount,
@@ -70,9 +83,25 @@ export default function ChatsTab() {
 
       setConversations(chatList);
       setLoading(false);
+    };
+
+    let snap1: any = { docs: [] };
+    let snap2: any = { docs: [] };
+
+    const unsub1 = onSnapshot(qSender, (s) => {
+      snap1 = s;
+      processMessages(snap1, snap2);
     });
 
-    return () => unsubscribe();
+    const unsub2 = onSnapshot(qReceiver, (s) => {
+      snap2 = s;
+      processMessages(snap1, snap2);
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+    };
   }, []);
 
   const formatTime = (date: Date) => {
@@ -95,8 +124,8 @@ export default function ChatsTab() {
       
       <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
         {/* Search Bar */}
-        <div className="px-4 py-3">
-          <div className="relative">
+        <div className="px-4 py-3 flex items-center gap-2">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
             <input 
               type="text" 
@@ -106,13 +135,30 @@ export default function ChatsTab() {
               className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-main)] rounded-2xl text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-sky-500/20 transition-all"
             />
           </div>
+          <button className="p-2 hover:bg-[var(--bg-main)] rounded-full text-[var(--text-secondary)] transition-all active:scale-90">
+            <MoreVertical size={20} />
+          </button>
         </div>
 
-        {/* Chat List Title */}
-        <div className="px-4 py-2 flex justify-between items-center">
-          <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Recent Chats</h2>
-          <div className="flex gap-4 text-sky-500 text-xs font-bold uppercase tracking-wider">
-            <span className="cursor-pointer hover:underline">Edit</span>
+        {/* Chat List Filters */}
+        <div className="px-4 py-2 flex items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar flex-1">
+            <button className="px-3 py-1.5 bg-sky-100 text-sky-600 rounded-full text-[13px] font-bold whitespace-nowrap transition-all active:scale-95">
+              All
+            </button>
+            <button className="px-3 py-1.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-full text-[13px] font-bold whitespace-nowrap transition-all active:scale-95">
+              Chats
+            </button>
+            <button className="px-3 py-1.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-full text-[13px] font-bold whitespace-nowrap transition-all active:scale-95">
+              Groups
+            </button>
+            <button className="px-3 py-1.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-full text-[13px] font-bold whitespace-nowrap transition-all active:scale-95">
+              Requests
+            </button>
+            <button className="px-3 py-1.5 bg-[var(--bg-main)] text-[var(--text-secondary)] rounded-full text-[13px] font-bold whitespace-nowrap transition-all active:scale-95 flex items-center gap-2">
+              <Plus size={16} />
+              Edit
+            </button>
           </div>
         </div>
 

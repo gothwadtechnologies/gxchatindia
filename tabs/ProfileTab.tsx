@@ -25,6 +25,7 @@ import {
 import BottomNav from '../components/BottomNav.tsx';
 import TopNav from '../components/TopNav.tsx';
 import { auth, db } from '../server/firebase.ts';
+import { toDate } from '../src/utils/dateUtils.ts';
 import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -50,8 +51,8 @@ export default function ProfileTab() {
   }, []);
 
   const getAccountAge = () => {
-    if (!userData?.createdAt) return "7 days on GxChat"; // Default fallback
-    const created = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
+    const created = toDate(userData?.createdAt);
+    if (!created) return "7 days on GxChat"; // Default fallback
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - created.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -59,8 +60,8 @@ export default function ProfileTab() {
   };
 
   const getJoinedDate = () => {
-    if (!userData?.createdAt) return "9 March 2026"; // Default fallback
-    const created = userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt);
+    const created = toDate(userData?.createdAt);
+    if (!created) return "9 March 2026"; // Default fallback
     return created.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 

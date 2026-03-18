@@ -3,6 +3,7 @@ import TopNav from '../components/TopNav.tsx';
 import BottomNav from '../components/BottomNav.tsx';
 import { Phone, Video, Plus, Search, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { auth, db } from '../server/firebase.ts';
+import { toDate } from '../src/utils/dateUtils.ts';
 import { collection, query, where, onSnapshot, getDoc, doc, orderBy } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 
@@ -27,8 +28,8 @@ export default function CallsTab() {
         const isReceiver = data.receiverId === auth.currentUser?.uid;
         return (isCaller || isReceiver) && data.status === 'ended';
       }).sort((a: any, b: any) => {
-        const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
-        const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+        const timeA = toDate(a.timestamp)?.getTime() || 0;
+        const timeB = toDate(b.timestamp)?.getTime() || 0;
         return timeB - timeA;
       });
 
@@ -45,7 +46,7 @@ export default function CallsTab() {
           avatar: userData?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
           type: data.type,
           isIncoming: !isCaller,
-          time: data.timestamp?.toDate() ? new Date(data.timestamp.toDate()).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'
+          time: toDate(data.timestamp) ? new Date(toDate(data.timestamp)!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'
         };
       }));
 
