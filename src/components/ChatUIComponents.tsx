@@ -17,9 +17,9 @@ import {
   FileText,
   Link as LinkIcon,
   X,
-  Edit2,
   Reply,
-  Forward
+  Forward,
+  Edit2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,6 +34,9 @@ interface ChatHeaderProps {
   deleteChat: () => void;
   optionsRef: React.RefObject<HTMLDivElement | null>;
   isTyping?: boolean;
+  receiverStatus?: 'online' | 'offline';
+  receiverActiveChatId?: string | null;
+  currentUserId?: string;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -46,9 +49,26 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   setIsMuted,
   deleteChat,
   optionsRef,
-  isTyping
+  isTyping,
+  receiverStatus,
+  receiverActiveChatId,
+  currentUserId
 }) => {
   const navigate = useNavigate();
+  const isOnline = receiverStatus === 'online';
+
+  const getStatusText = () => {
+    if (isTyping) return 'online - typing';
+    if (!isOnline) return formatLastSeen(receiver?.lastSeen);
+    
+    if (receiverActiveChatId === currentUserId) {
+      return 'online - for you';
+    } else if (receiverActiveChatId) {
+      return 'online - for other';
+    }
+    
+    return 'online';
+  };
   
   return (
     <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
@@ -63,20 +83,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               className="w-9 h-9 rounded-full object-cover border border-white/20 shadow-sm"
               referrerPolicy="no-referrer"
             />
-            {receiver?.isOnline && (
+            {isOnline && (
               <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#00B0FF] rounded-full"></div>
             )}
           </div>
           <div className="flex flex-col">
             <h2 className="text-[14px] font-bold text-white leading-tight">{receiver?.fullName || 'GxChat User'}</h2>
             <span className="text-[10px] text-white/80 font-medium">
-              {isTyping ? (
-                <span className="flex items-center gap-1">
-                  {receiver?.isOnline ? 'online - ' : ''}typing...
-                </span>
-              ) : (
-                receiver?.isOnline ? 'online' : formatLastSeen(receiver?.lastSeen)
-              )}
+              {getStatusText()}
             </span>
           </div>
         </div>
@@ -134,29 +148,31 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 export const ChatMessageMenu: React.FC<{
   activeMessageMenu: any;
   setActiveMessageMenu: (msg: any) => void;
-  startEdit: (msg: any) => void;
   setReplyingTo: (msg: any) => void;
+  startEdit: (msg: any) => void;
   deleteMessage: (id: string) => void;
   currentUserUid: string | undefined;
-}> = ({ activeMessageMenu, setActiveMessageMenu, startEdit, setReplyingTo, deleteMessage, currentUserUid }) => {
+}> = ({ activeMessageMenu, setActiveMessageMenu, setReplyingTo, startEdit, deleteMessage, currentUserUid }) => {
   if (!activeMessageMenu) return null;
+  const isMe = activeMessageMenu.senderId === currentUserUid;
+
   return (
     <div className="absolute bottom-full right-4 mb-3 w-40 bg-[#00B0FF] rounded-xl shadow-2xl border border-white/10 py-1 z-[100] overflow-hidden">
       <div className="px-3 py-1.5 border-b border-white/10 mb-1">
         <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Message Options</p>
       </div>
-      {activeMessageMenu.senderId === currentUserUid && (
+      <button onClick={() => { setReplyingTo(activeMessageMenu); setActiveMessageMenu(null); }} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+        <Reply size={16} className="text-white/80" /> Reply
+      </button>
+      {isMe && (
         <button onClick={() => startEdit(activeMessageMenu)} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
           <Edit2 size={16} className="text-white/80" /> Edit
         </button>
       )}
-      <button onClick={() => { setReplyingTo(activeMessageMenu); setActiveMessageMenu(null); }} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
-        <Reply size={16} className="text-white/80" /> Reply
-      </button>
       <button onClick={() => setActiveMessageMenu(null)} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
         <Forward size={16} className="text-white/80" /> Forward
       </button>
-      {activeMessageMenu.senderId === currentUserUid && (
+      {isMe && (
         <button onClick={() => deleteMessage(activeMessageMenu.id)} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
           <Trash size={16} className="text-white/80" /> Delete
         </button>
@@ -176,13 +192,23 @@ export const ChatReplyPreview: React.FC<{
 }> = ({ replyingTo, setReplyingTo, receiver, currentUserUid }) => {
   if (!replyingTo) return null;
   return (
-    <div className="mb-1.5 mx-1.5 p-1.5 bg-white/10 backdrop-blur-md rounded-lg border-l-4 border-white flex items-center justify-between shadow-sm">
-      <div className="flex-1 min-w-0 px-2">
-        <p className="text-[10px] font-bold text-white">Replying to {replyingTo.senderId === currentUserUid ? 'yourself' : receiver?.fullName}</p>
-        <p className="text-[12px] text-white/80 truncate">{replyingTo.text}</p>
+    <div className="mb-2 mx-2 p-2 bg-white/15 backdrop-blur-lg rounded-xl border-l-[6px] border-emerald-400 flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+      <div className="flex items-center gap-3 flex-1 min-w-0 px-2">
+        <div className="p-1.5 bg-white/20 rounded-full">
+          <Reply size={14} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-black text-white uppercase tracking-widest opacity-80">
+            Replying to {replyingTo.senderId === currentUserUid ? 'yourself' : receiver?.fullName}
+          </p>
+          <p className="text-[13px] text-white font-medium truncate italic">"{replyingTo.text}"</p>
+        </div>
       </div>
-      <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-        <X size={14} className="text-white" />
+      <button 
+        onClick={() => setReplyingTo(null)} 
+        className="p-1.5 hover:bg-white/20 rounded-full transition-all active:scale-90"
+      >
+        <X size={18} className="text-white" />
       </button>
     </div>
   );
@@ -195,13 +221,21 @@ export const ChatEditPreview: React.FC<{
 }> = ({ editingMessage, setEditingMessage, setNewMessage }) => {
   if (!editingMessage) return null;
   return (
-    <div className="mb-1.5 mx-1.5 p-1.5 bg-white/10 backdrop-blur-md rounded-lg border-l-4 border-white flex items-center justify-between shadow-sm">
-      <div className="flex-1 min-w-0 px-2">
-        <p className="text-[10px] font-bold text-white">Editing message</p>
-        <p className="text-[12px] text-white/80 truncate">{editingMessage.text}</p>
+    <div className="mb-2 mx-2 p-2 bg-white/15 backdrop-blur-lg rounded-xl border-l-[6px] border-white flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+      <div className="flex items-center gap-3 flex-1 min-w-0 px-2">
+        <div className="p-1.5 bg-white/20 rounded-full">
+          <Edit2 size={14} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-black text-white uppercase tracking-widest opacity-80">Editing Message</p>
+          <p className="text-[13px] text-white font-medium truncate italic">"{editingMessage.text}"</p>
+        </div>
       </div>
-      <button onClick={() => { setEditingMessage(null); setNewMessage(''); }} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-        <X size={14} className="text-white" />
+      <button 
+        onClick={() => { setEditingMessage(null); setNewMessage(''); }} 
+        className="p-1.5 hover:bg-white/20 rounded-full transition-all active:scale-90"
+      >
+        <X size={18} className="text-white" />
       </button>
     </div>
   );
