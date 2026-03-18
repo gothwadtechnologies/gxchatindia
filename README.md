@@ -1,41 +1,20 @@
-# GxChat India - Secure Messenger
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-![Made In India](https://img.shields.io/badge/Made%20In-India-orange?style=for-the-badge) 
-![Atmanirbhar Bharat](https://img.shields.io/badge/Atmanirbhar-Bharat-blue?style=for-the-badge)
-![Secure](https://img.shields.io/badge/Security-Enterprise--Grade-green?style=for-the-badge)
+# Run and deploy your AI Studio app
 
-**GXChat** is a next-generation communication platform developed by **Gothwad Technologies**. Built with the vision of **Atmanirbhar Bharat**, GXChat ensures that India's data stays secure and independent. It’s a complete, feature-rich messaging solution designed for high performance and ultimate privacy. 
+This contains everything you need to run your app locally.
 
----
+View your app in AI Studio: https://ai.studio/apps/2db0e405-e126-45c9-8650-d9e3711dccad
 
-## Key Features
+## Run Locally
 
-* **Proudly Indian:** Built from scratch to support local tech independence.
-* **Unmatched Security:** Self-hosted servers and end-to-end reliability.
-* **Cross-Platform:** Seamlessly switch between Mobile, Desktop, and Web.
-* **High Speed:** Optimized with Vite and Vercel for lag-free chatting.
-* **Hybrid Storage:** Powered by AWS, Firebase, and Supabase for real-time syncing.
+**Prerequisites:**  Node.js
 
----
 
-## Tech Stack
-
-GXChat is built using the latest and most powerful technologies:
-
-- **Frontend:** Flutter, TypeScript, Vite, HTML5, CSS3, JavaScript
-- **Backend/DB:** Firebase Studio, Supabase, Self-hosted Servers
-- **Cloud/Hosting:** AWS (Storage), Vercel (Web Hosting)
-- **Version Control:** GitHub
-
----
-
-## Download & Links
-
-Ready to join the revolution? Download GXChat for your preferred platform:
-
-* **Mobile App (Android & iOS):** [Download GxChat India](https://gxchatindia.vercel.app)
-* **Desktop Version (Win & Mac):** [Open In Chrome](https://gxchatindia.vercel.app)
-* **Web Version In Browser:** [Open GxChat India Web](https://gxchatindia.vercel.com)
-* **Official Website of GTech:** [Visit Gothwad Technologies](https://gothwadtechnologies.com)
-
----
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
