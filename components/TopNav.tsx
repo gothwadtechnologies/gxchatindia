@@ -6,9 +6,9 @@ export default function TopNav() {
   return (
     <div className="w-full bg-[#00B0FF] px-4 h-16 flex justify-between items-center z-50 shrink-0 shadow-md">
       <div className="flex items-center gap-3">
-        <div className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+        <Link to="/camera" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
           <Camera size={24} className="text-white" />
-        </div>
+        </Link>
         <Link to="/" className="flex items-center gap-2">
           <img 
             src="https://i.ibb.co/4RFKFmPR/file-00000000bf907207abbf3e9db6cfe8a1.png" 
@@ -26,9 +26,6 @@ export default function TopNav() {
         <Link to="/settings" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
           <Settings size={22} className="text-white" />
         </Link>
-        <div className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-          <MoreVertical size={22} className="text-white" />
-        </div>
       </div>
     </div>
   );
