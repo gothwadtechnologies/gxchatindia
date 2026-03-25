@@ -63,10 +63,8 @@ export function formatLastSeen(timestamp: any): string {
   } else if (isYesterday) {
     return 'last seen at Yesterday';
   } else {
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    if (date.getFullYear() !== now.getFullYear()) {
-      options.year = 'numeric';
-    }
-    return `last seen at ${date.toLocaleDateString('en-GB', options)}`;
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    const formattedDate = date.toLocaleDateString('en-GB', options); // e.g., "1 Oct 2024"
+    return `last seen at ${formattedDate}`;
   }
 }

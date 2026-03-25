@@ -14,11 +14,16 @@ export interface CachedUser {
 const USER_CACHE_KEY = 'gx_user_cache';
 const CACHE_EXPIRY = 1000 * 60 * 60; // 1 hour
 
+// Memory cache to avoid excessive localStorage reads
+let memoryCache: Record<string, CachedUser> | null = null;
+
 export const CacheService = {
   getUsers: (): Record<string, CachedUser> => {
+    if (memoryCache) return memoryCache;
     try {
       const data = localStorage.getItem(USER_CACHE_KEY);
-      return data ? JSON.parse(data) : {};
+      memoryCache = data ? JSON.parse(data) : {};
+      return memoryCache || {};
     } catch (e) {
       return {};
     }
@@ -40,7 +45,13 @@ export const CacheService = {
       uid,
       timestamp: Date.now()
     };
-    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
+    memoryCache = cache;
+    // Debounce localStorage write or just do it once per save
+    try {
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {
+      console.error('Cache save error:', e);
+    }
   },
 
   clearOldCache: () => {
@@ -54,6 +65,7 @@ export const CacheService = {
       }
     });
     if (changed) {
+      memoryCache = cache;
       localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
     }
   }

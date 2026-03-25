@@ -19,7 +19,8 @@ import {
   X,
   Reply,
   Forward,
-  Edit2
+  Edit2,
+  Smile
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -145,6 +146,30 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   );
 };
 
+export const ChatMessageReactions: React.FC<{
+  onReact: (emoji: string) => void;
+  onClose: () => void;
+  position: 'left' | 'right';
+}> = ({ onReact, onClose, position }) => {
+  const emojis = ['❤️', '😂', '😮', '😢', '🔥', '👍'];
+  return (
+    <div 
+      className={`absolute bottom-full mb-2 flex items-center gap-1 bg-[#00B0FF] rounded-full shadow-xl border border-white/20 p-1 z-[110] animate-in zoom-in-95 duration-150 ${position === 'right' ? 'right-0' : 'left-0'}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {emojis.map((emoji) => (
+        <button
+          key={emoji}
+          onClick={() => { onReact(emoji); onClose(); }}
+          className="w-9 h-9 flex items-center justify-center hover:bg-white/20 rounded-full transition-all active:scale-125 text-xl"
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 export const ChatMessageMenu: React.FC<{
   activeMessageMenu: any;
   setActiveMessageMenu: (msg: any) => void;
@@ -152,7 +177,8 @@ export const ChatMessageMenu: React.FC<{
   startEdit: (msg: any) => void;
   deleteMessage: (id: string) => void;
   currentUserUid: string | undefined;
-}> = ({ activeMessageMenu, setActiveMessageMenu, setReplyingTo, startEdit, deleteMessage, currentUserUid }) => {
+  setShowReactionPicker: (msg: any) => void;
+}> = ({ activeMessageMenu, setActiveMessageMenu, setReplyingTo, startEdit, deleteMessage, currentUserUid, setShowReactionPicker }) => {
   if (!activeMessageMenu) return null;
   const isMe = activeMessageMenu.senderId === currentUserUid;
 
@@ -161,6 +187,9 @@ export const ChatMessageMenu: React.FC<{
       <div className="px-3 py-1.5 border-b border-white/10 mb-1">
         <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Message Options</p>
       </div>
+      <button onClick={() => { setShowReactionPicker(activeMessageMenu); setActiveMessageMenu(null); }} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
+        <Smile size={16} className="text-white/80" /> React
+      </button>
       <button onClick={() => { setReplyingTo(activeMessageMenu); setActiveMessageMenu(null); }} className="w-full px-4 py-2.5 text-left text-[13px] font-bold text-white hover:bg-white/10 flex items-center gap-3 transition-colors">
         <Reply size={16} className="text-white/80" /> Reply
       </button>

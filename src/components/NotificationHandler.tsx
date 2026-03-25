@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { messaging, auth, db } from '../../server/firebase.ts';
+import { messaging, auth, db } from '../services/firebase.ts';
 import { getToken, onMessage } from 'firebase/messaging';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 

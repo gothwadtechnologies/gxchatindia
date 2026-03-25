@@ -15,17 +15,23 @@
    - One-on-one private chats.
    - Real-time updates using Firestore `onSnapshot`.
    - Read receipts (blue ticks).
-   - Push notifications (using Browser Notification API).
-   - Grouping messages by conversation on the Home screen.
+   - Typing indicators (Live feedback).
+   - Message actions: Reply, Edit, Hard Delete.
+   - Push notifications (using FCM via Express API).
 
 3. **Social Networking**:
    - **Explore**: Search for users by name or username.
-   - **User Profiles**: View other users' details and start chats.
+   - **User Profiles**: View other users' details, follow/unfollow, and start chats.
    - **Reels**: Short-form video content feed.
-   - **Posts**: Create and view social media posts (Images, Captions).
+   - **Posts**: Create and view social media posts (Images, Captions, Likes).
    - **Stories/Status**: Share temporary updates.
 
-4. **Admin Features**:
+4. **Security & Performance**:
+   - **App Lock**: Global PIN/Password protection.
+   - **Caching**: Local storage caching for user data and messages to reduce Firestore reads.
+   - **Presence**: Real-time online/offline status tracking.
+
+5. **Admin Features**:
    - **Admin Dashboard**: View total users, active posts, and reports.
 
 ## Tech Stack
@@ -34,8 +40,8 @@
 - **Backend/Database**: 
   - **Firebase Auth**: User authentication.
   - **Cloud Firestore**: Primary database for users, messages, and posts.
-  - **Firebase Realtime Database**: Used for real-time presence or specific sync tasks.
-  - **Express**: Node.js server for hosting and potential API extensions.
+  - **Firebase Realtime Database**: Presence tracking.
+  - **Express**: Node.js server for FCM notifications and static hosting.
 - **Icons**: Lucide React.
 - **Animations**: Motion (Framer Motion).
 
@@ -50,6 +56,9 @@
 - `bio`: string
 - `hideFromSearch`: boolean
 - `hidePhoto`: boolean
+- `isOnline`: boolean
+- `lastSeen`: timestamp
+- `fcmTokens`: array of strings
 - `createdAt`: timestamp
 
 ### `messages` Collection
@@ -59,6 +68,8 @@
 - `text`: string
 - `timestamp`: timestamp
 - `isRead`: boolean
+- `isEdited`: boolean
+- `replyTo`: object { id, text, senderId }
 
 ### `posts` Collection
 - `authorId`: string
@@ -67,8 +78,13 @@
 - `likes`: array of UIDs
 - `createdAt`: timestamp
 
+### `typing` Collection
+- `chatId_userId`: document ID
+- `isTyping`: boolean
+- `timestamp`: timestamp
+
 ## Design Principles
 - **Mobile-First**: Centered layout optimized for mobile devices (max-width 450px).
-- **Modern UI**: Clean zinc-based palette with sky-blue accents.
-- **Performance**: Use of local storage for caching user data and optimized Firestore queries.
+- **Modern UI**: Clean zinc-based palette with emerald and sky-blue accents.
+- **Performance**: Heavy use of caching and optimized Firestore queries.
 - **Accessibility**: High contrast text and intuitive navigation.
