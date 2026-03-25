@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# GxChat India
 
-# Run and deploy your AI Studio app
+GxChat India is a high-performance, real-time messaging application designed for seamless communication. It combines the best features of modern messaging apps with a clean, intuitive interface and robust security.
 
-This contains everything you need to run your app locally.
+## Key Features
 
-View your app in AI Studio: https://ai.studio/apps/2db0e405-e126-45c9-8650-d9e3711dccad
+- **Real-time Chat**: Instant message delivery and read receipts.
+- **Typing Indicators**: Live "Typing..." feedback for a more interactive experience.
+- **Message Management**: Edit, reply, and hard-delete messages for complete control.
+- **App Security**: Global App Lock with PIN or Password protection.
+- **User Profiles**: Custom profiles with bio, status, and online/offline indicators.
+- **Responsive Layout**: Optimized for mobile devices with a centered, modern design.
+- **Branded Experience**: Custom splash screen and consistent GxChat India branding.
 
-## Run Locally
+## Technology Stack
 
-**Prerequisites:**  Node.js
+- **Frontend**: React 18+, Vite, TypeScript.
+- **Styling**: Tailwind CSS for modern, utility-first UI design.
+- **Backend**: Firebase (Firestore, Auth) for real-time data and security.
+- **Animations**: Framer Motion (motion/react) for smooth transitions and interactions.
+- **Icons**: Lucide React for consistent and crisp iconography.
 
+## Vision
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+GxChat India aims to provide a secure, fast, and reliable communication platform for users across India and beyond, focusing on privacy and user experience.
+
+---
+Made in India with ❤️ by Gothwad Technologies.
