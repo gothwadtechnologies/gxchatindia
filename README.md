@@ -57,4 +57,4 @@ GxChat India is a comprehensive, high-performance social media and real-time mes
    ```
 
 ---
-Developed with ❤️ by Gothwad Technologies. Thank You 
+Developed with ❤️ by Gothwad Technologies.
