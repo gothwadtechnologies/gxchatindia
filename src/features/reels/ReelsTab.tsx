@@ -12,9 +12,11 @@ export default function ReelsTab() {
   const renderView = () => {
     switch (activeFilter) {
       case 'Status':
-        return <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 gap-4">
-          <CircleDashed size={48} />
-          <p className="text-sm font-bold uppercase tracking-widest">No Status Updates</p>
+        return <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-secondary)] gap-6">
+          <div className="w-20 h-20 bg-zinc-50 dark:bg-zinc-900 rounded-full flex items-center justify-center border border-[var(--border-color)]">
+            <CircleDashed size={40} strokeWidth={1.5} />
+          </div>
+          <p className="text-[11px] font-black uppercase tracking-widest">No Status Updates</p>
         </div>;
       case 'Reels':
         return <ReelsView />;
@@ -33,12 +35,12 @@ export default function ReelsTab() {
 
       {/* Floating Actions (Only for Stories) */}
       {activeFilter === 'Stories' && (
-        <div className="absolute bottom-24 right-6 flex flex-col gap-3 z-40">
-          <button className="p-3 bg-white text-zinc-600 rounded-full shadow-lg border border-zinc-100">
+        <div className="absolute bottom-24 right-6 flex flex-col gap-4 z-40">
+          <button className="p-3 bg-[var(--bg-card)] text-[var(--text-primary)] rounded-full shadow-xl border border-[var(--border-color)] active:scale-95 transition-all">
             <Edit size={20} />
           </button>
-          <button className="p-4 bg-blue-600 text-white rounded-full shadow-xl">
-            <Camera size={24} />
+          <button className="p-4 bg-[var(--text-primary)] text-[var(--bg-card)] rounded-full shadow-2xl active:scale-95 transition-all">
+            <Camera size={24} strokeWidth={2.5} />
           </button>
         </div>
       )}
