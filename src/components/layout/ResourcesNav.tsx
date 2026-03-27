@@ -67,8 +67,8 @@ export default function ResourcesNav({ tab }: ResourcesNavProps) {
   const filters = tabFilters[tab] || [];
 
   return (
-    <div className="w-full bg-[#0099FF] px-1 h-9 flex items-center justify-between shadow-[0_4px_15px_rgba(0,153,255,0.1)] shrink-0 z-40 border-b border-white/10">
-      <div className="flex w-full justify-around items-center h-full">
+    <div className="w-full bg-transparent px-2 h-14 flex items-center shrink-0 z-40">
+      <div className="flex gap-1.5 w-full">
         {filters.map((filter) => {
           const isActive = activeFilter.toLowerCase() === filter.id.toLowerCase();
           const Icon = filter.icon;
@@ -78,18 +78,16 @@ export default function ResourcesNav({ tab }: ResourcesNavProps) {
               key={filter.id}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveFilter(tab, filter.id)}
-              className="flex-1 flex flex-col items-center justify-center transition-all duration-300"
-            >
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition-all duration-300 ${
+              className={`flex-1 flex items-center justify-center gap-1 px-1 py-2.5 rounded-xl transition-all duration-300 border min-w-0 ${
                 isActive 
-                  ? 'bg-white text-[#0099FF] shadow-sm' 
-                  : 'text-white/80 hover:bg-white/10 hover:text-white'
-              }`}>
-                <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={`text-[9px] font-black uppercase tracking-tight whitespace-nowrap`}>
-                  {filter.label}
-                </span>
-              </div>
+                  ? 'bg-white text-[#9333ea] border-white shadow-md' 
+                  : 'bg-black/5 text-black/60 border-transparent hover:text-black hover:bg-black/10'
+              }`}
+            >
+              <Icon size={14} strokeWidth={isActive ? 3 : 2} className="shrink-0" />
+              <span className="text-[9px] font-bold uppercase tracking-tighter truncate">
+                {filter.label}
+              </span>
             </motion.button>
           );
         })}
