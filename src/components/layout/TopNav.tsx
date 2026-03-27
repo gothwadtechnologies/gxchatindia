@@ -9,28 +9,28 @@ export default function TopNav() {
   const { searchTerm, setSearchTerm, isSearchOpen, setIsSearchOpen } = useSearch();
 
   return (
-    <div className="w-full bg-[#00B0FF] px-4 h-13 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-[0_8px_30px_rgba(0,176,255,0.2)]">
+    <div className="w-full bg-gradient-to-r from-[#4f46e5] via-[#9333ea] to-[#ec4899] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
       <AnimatePresence>
         {isSearchOpen ? (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#00B0FF] flex items-center px-4 z-50"
+            className="absolute inset-0 bg-[#4f46e5] flex items-center px-4 z-50"
           >
-            <div className="flex-1 flex items-center bg-white/20 rounded-2xl px-4 py-2">
-              <Search size={20} className="text-white/80 mr-3" />
+            <div className="flex-1 flex items-center bg-white/10 rounded-full px-4 py-1.5 border border-white/10">
+              <Search size={18} className="text-white/60 mr-3" />
               <input 
                 autoFocus
                 type="text" 
                 placeholder="Search..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/60 text-sm font-bold"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40 text-sm font-medium"
               />
               {searchTerm && (
                 <button onClick={() => setSearchTerm('')}>
-                  <X size={20} className="text-white/80" />
+                  <X size={18} className="text-white/60" />
                 </button>
               )}
             </div>
@@ -39,7 +39,7 @@ export default function TopNav() {
                 setIsSearchOpen(false);
                 setSearchTerm('');
               }}
-              className="ml-4 text-white text-xs font-black uppercase tracking-widest"
+              className="ml-4 text-white text-sm font-bold"
             >
               Cancel
             </button>
@@ -47,8 +47,10 @@ export default function TopNav() {
         ) : (
           <>
             <div className="flex items-center">
-              <Link to="/" className="flex items-center">
-                <h1 className="text-2xl font-black tracking-tighter italic font-serif text-white">{APP_CONFIG.NAME}</h1>
+              <Link to="/" className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-white tracking-tighter italic">
+                  GxChat India
+                </h1>
               </Link>
             </div>
             <div className="flex items-center gap-1">
@@ -56,13 +58,13 @@ export default function TopNav() {
                 onClick={() => setIsSearchOpen(true)}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
               >
-                <Search size={22} className="text-white" />
+                <Search size={22} className="text-white/80" />
               </button>
               <Link to="/notifications" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-                <Bell size={22} className="text-white" />
+                <Bell size={22} className="text-white/80" />
               </Link>
               <Link to="/settings" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-                <Settings size={22} className="text-white" />
+                <Settings size={22} className="text-white/80" />
               </Link>
             </div>
           </>
