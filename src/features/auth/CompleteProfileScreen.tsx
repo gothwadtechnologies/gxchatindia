@@ -66,108 +66,127 @@ export default function CompleteProfileScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-8 bg-white">
-      <div className="w-full max-w-sm space-y-8">
-        <div className="text-center space-y-2">
+    <div className="h-full overflow-y-auto bg-[#f8faff] flex flex-col items-center relative">
+      {/* Dynamic Multi-color Gradient Background */}
+      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#4f46e5] via-[#9333ea] to-[#ec4899] opacity-95"></div>
+      
+      <div className="w-full max-w-[450px] px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
+        {/* Branding Area */}
+        <div className="flex flex-col items-center mb-10 text-white">
           <img 
             src={APP_CONFIG.LOGO_URL} 
             alt={`${APP_CONFIG.NAME} Logo`} 
-            className="w-20 h-20 mx-auto mb-4 object-contain"
+            className="w-16 h-16 mb-4 object-contain brightness-0 invert"
             referrerPolicy="no-referrer"
           />
-          <h1 className="text-3xl font-bold italic font-serif text-zinc-800">{APP_CONFIG.NAME}</h1>
-          <p className="text-zinc-500 text-sm">Set up your profile to continue.</p>
+          <h1 className="text-2xl font-black tracking-tighter italic">GxChat India</h1>
         </div>
 
-        <form onSubmit={handleComplete} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Full Name</label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Full Name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all"
-                required
-              />
-            </div>
+        {/* Main Card */}
+        <div className="w-full bg-white rounded-[40px] shadow-2xl shadow-indigo-100/50 px-8 py-10 flex flex-col">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Complete Your Profile.</h2>
+            <p className="text-zinc-500 text-sm font-medium">Set up your identity to continue.</p>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Username</label>
-            <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all"
-                required
-              />
+          <form onSubmit={handleComplete} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 ml-1">Full Name</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
+                  <User size={18} />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-zinc-400"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Set Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="New Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-12 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all"
-                required
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 ml-1">Username</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
+                  <AtSign size={18} />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Choose a username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-zinc-400"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-zinc-500 uppercase ml-1">Confirm Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 transition-all"
-                required
-              />
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 ml-1">Set Password</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
+                  <Lock size={18} />
+                </div>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="New Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-12 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-zinc-400"
+                  required
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {error && <p className="text-red-500 text-xs text-center bg-red-50 py-2 rounded-lg">{error}</p>}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 ml-1">Confirm Password</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
+                  <Lock size={18} />
+                </div>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-zinc-400"
+                  required
+                />
+              </div>
+            </div>
 
-          <button 
-            type="submit"
-            disabled={loading || !username || !password}
-            className="w-full bg-zinc-900 text-white font-bold py-3 rounded-xl hover:bg-zinc-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? 'Saving...' : (
-              <>
-                Complete Setup
-                <Check size={18} />
-              </>
-            )}
-          </button>
-        </form>
-      </div>
+            {error && <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">{error}</p>}
 
-      <div className="mt-auto pb-8 flex flex-col items-center gap-1">
-        <span className="text-zinc-400 text-sm font-medium">from</span>
-        <span className="text-zinc-800 font-bold tracking-widest uppercase text-xs">Gothwad technologies</span>
-        <span className="text-zinc-400 text-[10px] uppercase tracking-tighter mt-1">made in india</span>
+            <button 
+              type="submit"
+              disabled={loading || !username || !password}
+              className="w-full bg-indigo-600 text-white text-sm font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98]"
+            >
+              {loading ? 'Saving...' : (
+                <>
+                  <span>Complete Setup</span>
+                  <Check size={18} />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-auto pt-10 pb-6 flex flex-col items-center gap-1">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">© 2026 GxChat India</span>
+          <span className="text-[9px] font-medium text-zinc-300 uppercase tracking-[0.2em]">from Gothwad technologies</span>
+        </div>
       </div>
     </div>
   );
