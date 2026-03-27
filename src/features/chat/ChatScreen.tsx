@@ -47,7 +47,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CacheService } from '../../services/CacheService.ts';
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined;
+const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
 enum OperationType {
   CREATE = 'create',
@@ -99,6 +100,8 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
+
+import { storage } from '../../services/StorageService';
 
 export default function ChatScreen() {
   const { id: receiverId } = useParams();
@@ -226,7 +229,15 @@ export default function ChatScreen() {
 
     const localKey = `msgs_${chatId}`;
     // Load from local storage first
-    const savedMsgs = JSON.parse(localStorage.getItem(localKey) || '[]');
+    let savedMsgs = [];
+    const data = storage.getItem(localKey);
+    if (data) {
+      try {
+        savedMsgs = JSON.parse(data);
+      } catch (e) {
+        console.warn('Error parsing cached messages');
+      }
+    }
     setMessages(savedMsgs);
     setLoading(false);
 
@@ -430,9 +441,7 @@ export default function ChatScreen() {
         // Save back to local storage (up to 5000 messages)
         const limitedLocal = merged.slice(-5000);
         const localKey = `msgs_${chatId}`;
-        if (JSON.stringify(limitedLocal) !== localStorage.getItem(localKey)) {
-          localStorage.setItem(localKey, JSON.stringify(limitedLocal));
-        }
+        storage.setItem(localKey, JSON.stringify(limitedLocal));
         
         return limitedLocal;
       });
@@ -621,7 +630,7 @@ export default function ChatScreen() {
   }, [clearChat, navigate]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#efe7dd] overflow-hidden relative">
+    <div className="flex flex-col h-full w-full bg-[var(--bg-main)] overflow-hidden relative">
       {/* Header */}
       <ChatHeader 
         receiver={receiver}
@@ -643,29 +652,29 @@ export default function ChatScreen() {
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 bg-[#efe7dd] relative no-scrollbar touch-pan-y" 
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 bg-[var(--bg-main)] relative no-scrollbar touch-pan-y" 
         onClick={() => { setActiveMessageMenu(null); setVisibleButtonsId(null); }}
       >
         {/* WhatsApp-style pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")', backgroundSize: '400px' }}></div>
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")', backgroundSize: '400px' }}></div>
         
         <div className="relative z-10 flex flex-col gap-1">
           {loadingMore && (
             <div className="flex flex-col items-center justify-center py-4 gap-2">
-              <Loader2 size={20} className="text-[#00B0FF] animate-spin" />
-              <p className="text-[9px] font-bold text-[#00B0FF] uppercase tracking-widest">Loading older messages...</p>
+              <Loader2 size={20} className="text-[var(--primary)] animate-spin" />
+              <p className="text-[9px] font-bold text-[var(--primary)] uppercase tracking-widest">Loading older messages...</p>
             </div>
           )}
 
           {loading && messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-10 h-10 border-4 border-[#00B0FF]/20 border-t-[#00B0FF] rounded-full animate-spin" />
-              <p className="text-[10px] font-black text-[#00B0FF] uppercase tracking-[0.2em] animate-pulse">Loading Messages...</p>
+              <div className="w-10 h-10 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
+              <p className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.2em] animate-pulse">Loading Messages...</p>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center px-10">
               <div className="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center mb-4 shadow-sm">
-                <MessageCircle size={32} className="text-[#00B0FF]/40" />
+                <MessageCircle size={32} className="text-[var(--primary)]/40" />
               </div>
               <p className="text-sm font-bold text-zinc-500">No messages yet</p>
               <p className="text-[11px] text-zinc-400 mt-1">Say hi to start the conversation!</p>
@@ -685,7 +694,7 @@ export default function ChatScreen() {
                   <div className="relative group max-w-[70%]">
                     {/* Tail for the first message in a sequence */}
                     {!isSameSender && (
-                      <div className={`absolute top-0 w-3 h-3 ${isMe ? '-right-2 bg-white' : '-left-2 bg-white'}`} 
+                      <div className={`absolute top-0 w-3 h-3 ${isMe ? '-right-2 bg-[var(--bubble-own)]' : '-left-2 bg-[var(--bubble-other)]'}`} 
                            style={{ clipPath: isMe ? 'polygon(0 0, 0 100%, 100% 0)' : 'polygon(100% 0, 100% 100%, 0 0)' }}>
                       </div>
                     )}
@@ -730,8 +739,8 @@ export default function ChatScreen() {
                         activeMessageMenu?.id === msg.id ? 'z-50' : 'z-10'
                       } ${
                         isMe 
-                          ? 'bg-white text-[#303030]' 
-                          : 'bg-white text-[#303030]'
+                          ? 'bg-[var(--bubble-own)] text-[#303030]' 
+                          : 'bg-[var(--bubble-other)] text-[#303030]'
                       }`}
                     >
                       {/* Reaction Picker on Click */}
@@ -745,8 +754,8 @@ export default function ChatScreen() {
 
                       {/* Reply Context */}
                       {msg.replyTo && (
-                        <div className="mb-1 p-1.5 rounded bg-black/5 border-l-4 border-emerald-500 text-[12px]">
-                          <p className="font-bold text-emerald-700 text-[10px]">
+                        <div className="mb-1 p-1.5 rounded bg-black/5 border-l-4 border-[var(--primary)] text-[12px]">
+                          <p className="font-bold text-[var(--primary)] text-[10px]">
                             {msg.replyTo.senderId === auth.currentUser?.uid ? 'You' : receiver?.fullName}
                           </p>
                           <p className="truncate text-zinc-600 italic">{msg.replyTo.text}</p>
@@ -776,12 +785,12 @@ export default function ChatScreen() {
 
                       {/* Display Reactions */}
                       {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                        <div className={`absolute -bottom-3 ${isMe ? 'right-2' : 'left-2'} flex items-center gap-0.5 bg-[#E0F7FF] rounded-full px-1.5 py-0.5 shadow-sm border border-[#00B0FF]/20 z-20`}>
+                        <div className={`absolute -bottom-3 ${isMe ? 'right-2' : 'left-2'} flex items-center gap-0.5 bg-[var(--bg-main)] rounded-full px-1.5 py-0.5 shadow-sm border border-[var(--border-color)] z-20`}>
                           {Object.entries(msg.reactions).slice(0, 3).map(([uid, emoji]) => (
                             <span key={uid} className="text-[13px]">{emoji as string}</span>
                           ))}
                           {Object.keys(msg.reactions).length > 1 && (
-                            <span className="text-[9px] font-bold text-[#00B0FF] ml-0.5">{Object.keys(msg.reactions).length}</span>
+                            <span className="text-[9px] font-bold text-[var(--primary)] ml-0.5">{Object.keys(msg.reactions).length}</span>
                           )}
                         </div>
                       )}
@@ -795,7 +804,7 @@ export default function ChatScreen() {
                           setReplyingTo(msg);
                           setVisibleButtonsId(null);
                         }} 
-                        className="p-1.5 bg-white hover:bg-zinc-50 rounded-full text-[#00B0FF] shadow-md border border-zinc-100 transition-all active:scale-90"
+                        className="p-1.5 bg-white hover:bg-zinc-50 rounded-full text-[var(--primary)] shadow-md border border-zinc-100 transition-all active:scale-90"
                         title="Reply"
                       >
                         <Reply size={14} />
@@ -806,7 +815,7 @@ export default function ChatScreen() {
                           setActiveMessageMenu(activeMessageMenu?.id === msg.id ? null : msg); 
                           setVisibleButtonsId(null);
                         }} 
-                        className="p-1.5 bg-white hover:bg-zinc-50 rounded-full text-[#00B0FF] shadow-md border border-zinc-100 transition-all active:scale-90"
+                        className="p-1.5 bg-white hover:bg-zinc-50 rounded-full text-[var(--primary)] shadow-md border border-zinc-100 transition-all active:scale-90"
                         title="More options"
                       >
                         <MoreVertical size={14} />
@@ -832,20 +841,20 @@ export default function ChatScreen() {
                     <motion.div 
                       animate={{ scale: [1, 1.2, 1] }} 
                       transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                      className="w-1.5 h-1.5 bg-[#00B0FF] rounded-full" 
+                      className="w-1.5 h-1.5 bg-[var(--primary)] rounded-full" 
                     />
                     <motion.div 
                       animate={{ scale: [1, 1.2, 1] }} 
                       transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                      className="w-1.5 h-1.5 bg-[#00B0FF] rounded-full" 
+                      className="w-1.5 h-1.5 bg-[var(--primary)] rounded-full" 
                     />
                     <motion.div 
                       animate={{ scale: [1, 1.2, 1] }} 
                       transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                      className="w-1.5 h-1.5 bg-[#00B0FF] rounded-full" 
+                      className="w-1.5 h-1.5 bg-[var(--primary)] rounded-full" 
                     />
                   </div>
-                  <span className="text-[11px] font-bold text-[#00B0FF] uppercase tracking-wider">Typing...</span>
+                  <span className="text-[11px] font-bold text-[var(--primary)] uppercase tracking-wider">Typing...</span>
                 </div>
               </motion.div>
             )}
@@ -856,7 +865,7 @@ export default function ChatScreen() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 bg-[#00B0FF] p-1.5 pb-3 z-50 shadow-[0_-4px_20px_rgba(0,176,255,0.15)] relative">
+      <div className="shrink-0 bg-[var(--bg-card)] p-1.5 pb-3 z-50 shadow-[0_-4px_20px_var(--primary-shadow)] relative border-t border-[var(--border-color)]">
         <ChatMessageMenu 
           activeMessageMenu={activeMessageMenu}
           setActiveMessageMenu={setActiveMessageMenu}
@@ -913,7 +922,7 @@ export default function ChatScreen() {
           <button 
             type="submit"
             disabled={!newMessage.trim() || isSending}
-            className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-[#00B0FF] disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
+            className="bg-[var(--primary)] w-11 h-11 flex items-center justify-center rounded-full text-white disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
           </button>
