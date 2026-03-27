@@ -3,6 +3,8 @@
  * It stores the lock status, type, and credentials locally.
  */
 
+import { storage } from './StorageService';
+
 export type LockType = 'pin4' | 'pin6' | 'alpha' | null;
 
 interface LockData {
@@ -15,7 +17,7 @@ const STORAGE_KEY = 'gxchat_app_lock';
 
 export const LockService = {
   getLockData: (): LockData => {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = storage.getItem(STORAGE_KEY);
     if (data) {
       try {
         return JSON.parse(data);
@@ -27,7 +29,7 @@ export const LockService = {
   },
 
   setLockData: (data: LockData) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    storage.setItem(STORAGE_KEY, JSON.stringify(data));
   },
 
   enableLock: (type: LockType, value: string) => {
@@ -36,7 +38,7 @@ export const LockService = {
       type,
       hash: value
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    storage.setItem(STORAGE_KEY, JSON.stringify(data));
   },
 
   disableLock: () => {
@@ -45,7 +47,7 @@ export const LockService = {
       type: null,
       hash: null
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    storage.setItem(STORAGE_KEY, JSON.stringify(data));
   },
 
   verifyLock: (value: string): boolean => {
