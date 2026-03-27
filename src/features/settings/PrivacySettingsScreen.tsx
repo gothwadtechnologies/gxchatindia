@@ -49,7 +49,7 @@ export default function PrivacySettingsScreen() {
   const Toggle = ({ active, onClick }: { active: boolean, onClick: () => void }) => (
     <button 
       onClick={onClick}
-      className={`w-10 h-5 rounded-full transition-all relative ${active ? 'bg-[#00B0FF]' : 'bg-zinc-300'}`}
+      className={`w-10 h-5 rounded-full transition-all relative ${active ? 'bg-primary' : 'bg-zinc-300'}`}
     >
       <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
     </button>
@@ -61,7 +61,7 @@ export default function PrivacySettingsScreen() {
       icon: EyeOff,
       label: 'Hide from search',
       sub: "Others won't find you in search results",
-      color: 'text-blue-500'
+      color: 'text-primary'
     },
     {
       id: 'hidePhoto',
@@ -89,7 +89,7 @@ export default function PrivacySettingsScreen() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-[var(--bg-main)]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00B0FF]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -99,7 +99,7 @@ export default function PrivacySettingsScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-lg shadow-[var(--primary-shadow)]">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
@@ -117,7 +117,7 @@ export default function PrivacySettingsScreen() {
               onClick={() => updatePrivacySetting('profileType', 'public')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                 !isPrivate 
-                ? 'bg-[#00B0FF] text-white shadow-lg shadow-blue-500/20' 
+                ? 'bg-primary text-white shadow-lg shadow-[var(--primary-shadow)]' 
                 : 'text-zinc-400 hover:text-zinc-600'
               }`}
             >
