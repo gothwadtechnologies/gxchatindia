@@ -86,7 +86,7 @@ export default function FollowListScreen() {
   return (
     <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-md">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
@@ -104,7 +104,7 @@ export default function FollowListScreen() {
             placeholder={`Search ${type}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-zinc-100 rounded-2xl py-3 pl-10 pr-4 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#00B0FF]/20 transition-all"
+            className="w-full bg-zinc-100 rounded-2xl py-3 pl-10 pr-4 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
           />
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function FollowListScreen() {
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00B0FF]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">Loading List...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
@@ -153,7 +153,7 @@ export default function FollowListScreen() {
                       className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 ${
                         amIFollowing 
                         ? 'bg-zinc-100 text-zinc-900 border border-zinc-200' 
-                        : 'bg-[#00B0FF] text-white shadow-lg shadow-[#00B0FF]/20'
+                        : 'bg-primary text-white shadow-lg shadow-[var(--primary-shadow)]'
                       }`}
                     >
                       {amIFollowing ? 'Following' : 'Follow'}
