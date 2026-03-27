@@ -161,6 +161,19 @@ export default function ChatsTab() {
       const callList = await Promise.all(relevantCalls.map(async (data: any) => {
         const isCaller = data.callerId === auth.currentUser?.uid;
         const otherUserId = isCaller ? data.receiverId : data.callerId;
+        
+        if (!otherUserId) {
+          return {
+            id: data.id,
+            otherUserId: '',
+            user: 'Unknown User',
+            avatar: `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
+            type: data.type,
+            isIncoming: !isCaller,
+            time: toDate(data.timestamp) ? new Date(toDate(data.timestamp)!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'
+          };
+        }
+
         const userDoc = await getDoc(doc(db, "users", otherUserId));
         const userData = userDoc.data();
 
@@ -202,14 +215,14 @@ export default function ChatsTab() {
 
   return (
     <div className="h-full flex flex-col bg-[var(--bg-card)] overflow-hidden">
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
         {/* User List (Chats or Calls) */}
         <div className="flex flex-col">
           {activeFilter === 'Calls' ? (
             /* Calls List */
             callsLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-8 h-8 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
                 <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading Calls...</p>
               </div>
             ) : filteredCalls.length > 0 ? (
@@ -235,12 +248,12 @@ export default function ChatsTab() {
                       {call.isIncoming ? (
                         <ArrowDownLeft size={12} className="text-emerald-500" />
                       ) : (
-                        <ArrowUpRight size={12} className="text-sky-500" />
+                        <ArrowUpRight size={12} className="text-[var(--primary)]" />
                       )}
                       <span>{call.isIncoming ? 'Incoming' : 'Outgoing'}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sky-500">
+                  <div className="flex items-center gap-4 text-[var(--primary)]">
                     <Link to={`/call/${call.otherUserId}?type=${call.type}`}>
                       {call.type === 'video' ? <Video size={20} /> : <Phone size={20} />}
                     </Link>
@@ -264,7 +277,7 @@ export default function ChatsTab() {
             /* Chats List */
             loading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-8 h-8 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
                 <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading Chats...</p>
               </div>
             ) : filteredConversations.length > 0 ? (
@@ -289,7 +302,7 @@ export default function ChatsTab() {
                       <h3 className={`text-[15px] truncate ${chat.unread ? 'font-black text-[var(--text-primary)]' : 'font-bold text-[var(--text-primary)]'}`}>
                         {chat.user}
                       </h3>
-                      <span className={`text-[10px] whitespace-nowrap ${chat.unread ? 'text-sky-600 font-bold' : 'text-[var(--text-secondary)]'}`}>
+                      <span className={`text-[10px] whitespace-nowrap ${chat.unread ? 'text-[var(--primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
                         {chat.time}
                       </span>
                     </div>
@@ -298,7 +311,7 @@ export default function ChatsTab() {
                         {chat.lastMsg}
                       </p>
                       {chat.unread && (
-                        <div className="min-w-[18px] h-[18px] px-1 bg-sky-600 rounded-full flex items-center justify-center shadow-lg shadow-sky-200 ml-2">
+                        <div className="min-w-[18px] h-[18px] px-1 bg-[var(--primary)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--primary-shadow)] ml-2">
                           <span className="text-[10px] text-white font-bold">{chat.unreadCount}</span>
                         </div>
                       )}
@@ -319,7 +332,7 @@ export default function ChatsTab() {
                 </div>
                 <button 
                   onClick={() => navigate('/explore')}
-                  className="mt-2 bg-sky-600 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-sky-100 hover:bg-sky-700 transition-all"
+                  className="mt-2 bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-[var(--primary-shadow)] hover:opacity-90 transition-all"
                 >
                   Find Friends
                 </button>
@@ -330,10 +343,10 @@ export default function ChatsTab() {
       </div>
 
       {/* Floating Action Button */}
-      <div className="absolute bottom-24 right-6 z-40">
+      <div className="absolute bottom-6 right-8 z-40">
         <button 
           onClick={() => navigate('/explore')}
-          className="p-4 bg-sky-600 text-white rounded-full shadow-xl hover:bg-sky-700 transition-all active:scale-95"
+          className="p-4 bg-[var(--primary)] text-white rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border-2 border-white/20"
         >
           <Plus size={24} />
         </button>
