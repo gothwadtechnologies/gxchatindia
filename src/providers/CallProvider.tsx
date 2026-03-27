@@ -28,17 +28,25 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (!snapshot.empty) {
-        const callData = snapshot.docs[0].data();
-        setIncomingCall({ id: snapshot.docs[0].id, ...callData });
-        
-        const userDoc = await getDoc(doc(db, "users", callData.callerId));
-        if (userDoc.exists()) setCaller(userDoc.data());
-      } else {
-        setIncomingCall(null);
-        setCaller(null);
+      try {
+        if (!snapshot.empty) {
+          const callData = snapshot.docs[0].data();
+          setIncomingCall({ id: snapshot.docs[0].id, ...callData });
+          
+          try {
+            const userDoc = await getDoc(doc(db, "users", callData.callerId));
+            if (userDoc.exists()) setCaller(userDoc.data());
+          } catch (e) {
+            console.warn('Error fetching caller doc:', e);
+          }
+        } else {
+          setIncomingCall(null);
+          setCaller(null);
+        }
+      } catch (e) {
+        console.error('Call snapshot error:', e);
       }
-    });
+    }, (err) => console.warn('Call query snapshot error:', err));
 
     return () => unsubscribe();
   }, [user]);
@@ -52,7 +60,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const rejectCall = async () => {
     if (incomingCall) {
-      await updateDoc(doc(db, "calls", incomingCall.id), { status: 'ended' });
+      try {
+        await updateDoc(doc(db, "calls", incomingCall.id), { status: 'ended' });
+      } catch (e) {
+        console.warn('Error rejecting call:', e);
+      }
       setIncomingCall(null);
     }
   };
@@ -72,7 +84,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
               <h4 className="text-white text-sm font-black uppercase tracking-tight">{caller.fullName || 'Incoming Call'}</h4>
               <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
                 {incomingCall.type === 'video' ? <Video size={10} /> : <Phone size={10} />}
-                GxChat {incomingCall.type} Call...
+                GxChat India {incomingCall.type} Call...
               </p>
             </div>
             <div className="flex items-center gap-2">
