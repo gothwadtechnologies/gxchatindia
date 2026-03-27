@@ -1,5 +1,7 @@
 // src/services/CacheService.ts
 
+import { storage } from './StorageService';
+
 export interface CachedUser {
   uid: string;
   fullName?: string;
@@ -20,13 +22,9 @@ let memoryCache: Record<string, CachedUser> | null = null;
 export const CacheService = {
   getUsers: (): Record<string, CachedUser> => {
     if (memoryCache) return memoryCache;
-    try {
-      const data = localStorage.getItem(USER_CACHE_KEY);
-      memoryCache = data ? JSON.parse(data) : {};
-      return memoryCache || {};
-    } catch (e) {
-      return {};
-    }
+    const data = storage.getItem(USER_CACHE_KEY);
+    memoryCache = data ? JSON.parse(data) : {};
+    return memoryCache || {};
   },
 
   getUser: (uid: string): CachedUser | null => {
@@ -47,11 +45,7 @@ export const CacheService = {
     };
     memoryCache = cache;
     // Debounce localStorage write or just do it once per save
-    try {
-      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
-    } catch (e) {
-      console.error('Cache save error:', e);
-    }
+    storage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
   },
 
   clearOldCache: () => {
@@ -66,7 +60,7 @@ export const CacheService = {
     });
     if (changed) {
       memoryCache = cache;
-      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
+      storage.setItem(USER_CACHE_KEY, JSON.stringify(cache));
     }
   }
 };
