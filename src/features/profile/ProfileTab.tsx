@@ -54,7 +54,7 @@ export default function ProfileTab() {
           <div className="flex items-center gap-8 mb-4">
             {/* Profile Picture */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+              <div className="w-20 h-20 rounded-full p-0.5 bg-[var(--primary)]">
                 <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-zinc-100">
                   <img 
                     src={userData?.photoURL || DEFAULT_LOGO} 
@@ -66,7 +66,7 @@ export default function ProfileTab() {
               </div>
               <button 
                 onClick={() => navigate('/edit-profile')}
-                className="absolute bottom-0 right-0 w-6 h-6 bg-blue-500 text-white rounded-full border-2 border-white flex items-center justify-center shadow-sm"
+                className="absolute bottom-0 right-0 w-6 h-6 bg-[var(--primary)] text-white rounded-full border-2 border-white flex items-center justify-center shadow-sm"
               >
                 <PlusSquare size={14} />
               </button>
