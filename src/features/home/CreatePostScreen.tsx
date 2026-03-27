@@ -16,7 +16,7 @@ export default function CreatePostScreen() {
           </button>
           <h2 className="text-xl font-bold">New post</h2>
         </div>
-        <button className="text-blue-500 font-bold text-lg">Share</button>
+        <button className="text-primary font-bold text-lg">Share</button>
       </div>
 
       {/* Content */}
