@@ -88,7 +88,7 @@ export default function CameraTab() {
             <p className="text-white/70 mb-6 font-medium">{error}</p>
             <button 
               onClick={startCamera}
-              className="px-6 py-3 bg-[#00B0FF] text-white rounded-2xl font-bold uppercase tracking-widest text-xs active:scale-95 transition-all"
+              className="px-6 py-3 bg-primary text-white rounded-2xl font-bold uppercase tracking-widest text-xs active:scale-95 transition-all"
             >
               Try Again
             </button>
