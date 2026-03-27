@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Home, Clapperboard, LayoutGrid, User } from 'lucide-react';
+import { MessageCircle, Compass, PlayCircle, LayoutGrid, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { auth, db } from '../../services/firebase.ts';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -12,7 +12,6 @@ export default function BottomNav() {
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    // Query unread messages directly
     const q = query(
       collection(db, "messages"),
       where("receiverId", "==", auth.currentUser.uid),
@@ -27,15 +26,15 @@ export default function BottomNav() {
   }, []);
   
   const navItems = [
-    { icon: MessageSquare, path: '/chats', badge: unreadCount },
-    { icon: Clapperboard, path: '/reels' },
-    { icon: Home, path: '/' },
-    { icon: LayoutGrid, path: '/hub' },
-    { icon: User, path: '/profile' },
+    { icon: MessageCircle, path: '/chats', label: 'Chats', badge: unreadCount },
+    { icon: PlayCircle, path: '/reels', label: 'Reels' },
+    { icon: Compass, path: '/', label: 'Explore' },
+    { icon: LayoutGrid, path: '/hub', label: 'Hub' },
+    { icon: UserCircle, path: '/profile', label: 'Profile' },
   ];
 
   return (
-    <div className="w-full bg-[#00B0FF] px-4 py-2 flex justify-around items-center z-50 shadow-[0_-8px_30px_rgba(0,176,255,0.2)] shrink-0 border-t border-white/10">
+    <div className="w-full bg-gradient-to-r from-[#4f46e5] via-[#9333ea] to-[#ec4899] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] shrink-0 border-t border-white/10 pb-safe">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
@@ -44,23 +43,47 @@ export default function BottomNav() {
           <Link 
             key={item.path} 
             to={item.path} 
-            className="relative flex flex-col items-center justify-center py-1 px-2 min-w-[50px] transition-all duration-300 group"
+            className="relative flex flex-col items-center justify-center py-2 px-1 min-w-[64px] transition-all duration-300 group"
           >
             <div className="relative flex flex-col items-center">
-              <div className={`px-4 py-1.5 rounded-2xl transition-all duration-300 ${isActive ? 'bg-white text-[#00B0FF] shadow-lg' : 'text-white/80 group-hover:bg-white/10 group-hover:text-white'}`}>
+              <motion.div 
+                animate={{ 
+                  scale: isActive ? 1.1 : 1,
+                  y: isActive ? -2 : 0
+                }}
+                className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}
+              >
                 <Icon 
-                  size={24} 
-                  className="transition-transform duration-300" 
+                  size={26} 
                   strokeWidth={isActive ? 2.5 : 2}
                 />
-              </div>
+              </motion.div>
               
               {item.badge !== undefined && item.badge > 0 && (
-                <div className={`absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 shadow-sm z-10 ${isActive ? 'border-white' : 'border-[#00B0FF]'}`}>
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#9333ea] shadow-sm z-10"
+                >
                   {item.badge > 9 ? '9+' : item.badge}
-                </div>
+                </motion.div>
               )}
             </div>
+            
+            <span className={`text-[10px] mt-1 font-bold transition-all duration-300 ${isActive ? 'text-white opacity-100' : 'text-white/40 opacity-70 group-hover:opacity-100'}`}>
+              {item.label}
+            </span>
+
+
+            {isActive && (
+              <motion.div 
+                layoutId="nav-indicator"
+                className="absolute top-0 w-8 h-1 bg-[var(--primary)] rounded-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
           </Link>
         );
       })}
