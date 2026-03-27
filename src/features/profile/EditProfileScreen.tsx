@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../services/firebase.ts';
+import { storage } from '../../services/StorageService';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { verifyBeforeUpdateEmail } from 'firebase/auth';
 
@@ -109,11 +110,15 @@ export default function EditProfileScreen() {
         bio: bio.trim() || 'Available'
       });
 
-      const cachedData = localStorage.getItem(`user_data_${auth.currentUser.uid}`);
+      const cachedData = storage.getItem(`user_data_${auth.currentUser.uid}`);
       if (cachedData) {
-        const parsed = JSON.parse(cachedData);
-        const updatedData = { ...parsed, fullName: fullName.trim(), username: trimmedUsername, bio: bio.trim() };
-        localStorage.setItem(`user_data_${auth.currentUser.uid}`, JSON.stringify(updatedData));
+        try {
+          const parsed = JSON.parse(cachedData);
+          const updatedData = { ...parsed, fullName: fullName.trim(), username: trimmedUsername, bio: bio.trim() };
+          storage.setItem(`user_data_${auth.currentUser.uid}`, JSON.stringify(updatedData));
+        } catch (e) {
+          console.warn('Error updating cached profile data');
+        }
       }
 
       navigate('/profile');
@@ -135,7 +140,7 @@ export default function EditProfileScreen() {
           <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{label}</label>
           <button 
             onClick={() => toggleEdit(field)}
-            className={`p-1.5 rounded-lg transition-all ${isEditing ? 'bg-[#00B0FF]/10 text-[#00B0FF]' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600'}`}
+            className={`p-1.5 rounded-lg transition-all ${isEditing ? 'bg-primary/10 text-primary' : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600'}`}
           >
             <Pencil size={14} />
           </button>
@@ -152,7 +157,7 @@ export default function EditProfileScreen() {
               disabled={!isEditing}
               rows={3}
               className={`w-full bg-[var(--bg-card)] border rounded-2xl py-3.5 pl-12 pr-4 text-sm transition-all resize-none ${
-                isEditing ? 'border-[#00B0FF] ring-4 ring-[#00B0FF]/5 focus:outline-none' : 'border-[var(--border-color)] opacity-70'
+                isEditing ? 'border-primary ring-4 ring-primary/5 focus:outline-none' : 'border-[var(--border-color)] opacity-70'
               }`}
               placeholder={`Your ${label.toLowerCase()}`}
             />
@@ -164,7 +169,7 @@ export default function EditProfileScreen() {
               onChange={(e) => setter(e.target.value)}
               disabled={!isEditing}
               className={`w-full bg-[var(--bg-card)] border rounded-2xl py-3.5 pl-12 pr-4 text-sm transition-all ${
-                isEditing ? 'border-[#00B0FF] ring-4 ring-[#00B0FF]/5 focus:outline-none' : 'border-[var(--border-color)] opacity-70'
+                isEditing ? 'border-primary ring-4 ring-primary/5 focus:outline-none' : 'border-[var(--border-color)] opacity-70'
               }`}
               placeholder={`Your ${label.toLowerCase()}`}
             />
@@ -177,7 +182,7 @@ export default function EditProfileScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-primary z-50 shadow-md">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
             <ArrowLeft size={24} className="text-white" />
@@ -189,7 +194,7 @@ export default function EditProfileScreen() {
         <button 
           onClick={handleSave}
           disabled={loading}
-          className="bg-white text-[#00B0FF] px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
+          className="bg-white text-primary px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
         >
           {loading ? 'Saving...' : 'Save'}
         </button>
@@ -197,7 +202,7 @@ export default function EditProfileScreen() {
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {/* Profile Picture Section */}
-        <div className="relative py-10 flex flex-col items-center bg-gradient-to-b from-[#00B0FF]/5 to-transparent">
+        <div className="relative py-10 flex flex-col items-center bg-gradient-to-b from-primary/5 to-transparent">
           <div className="relative group">
             <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl relative">
               <img 
@@ -210,11 +215,11 @@ export default function EditProfileScreen() {
                 <Camera size={32} className="text-white opacity-80 group-hover:opacity-100 transition-all" />
               </div>
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-[#00B0FF] text-white p-2.5 rounded-2xl shadow-xl border-4 border-white">
+            <div className="absolute -bottom-2 -right-2 bg-primary text-white p-2.5 rounded-2xl shadow-xl border-4 border-white">
               <Camera size={18} />
             </div>
           </div>
-          <p className="mt-4 text-[10px] font-black text-[#00B0FF] uppercase tracking-[0.3em]">Change Profile Photo</p>
+          <p className="mt-4 text-[10px] font-black text-primary uppercase tracking-[0.3em]">Change Profile Photo</p>
         </div>
 
         <div className="px-6 pb-12 space-y-8">
@@ -229,7 +234,7 @@ export default function EditProfileScreen() {
           {/* Personal Info */}
           <div className="space-y-5">
             <div className="flex items-center gap-2 mb-1">
-              <User size={14} className="text-[#00B0FF]" />
+              <User size={14} className="text-primary" />
               <h3 className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Personal Info</h3>
             </div>
             
@@ -243,7 +248,7 @@ export default function EditProfileScreen() {
           {/* Contact Info */}
           <div className="space-y-5">
             <div className="flex items-center gap-2 mb-1">
-              <Mail size={14} className="text-[#00B0FF]" />
+              <Mail size={14} className="text-primary" />
               <h3 className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Contact Details</h3>
             </div>
             
