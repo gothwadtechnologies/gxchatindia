@@ -19,7 +19,7 @@ export default function NotificationsSettingsScreen() {
   const Toggle = ({ active, onClick }: { active: boolean, onClick: () => void }) => (
     <button 
       onClick={onClick}
-      className={`w-10 h-5 rounded-full transition-all relative ${active ? 'bg-[#00B0FF]' : 'bg-zinc-300'}`}
+      className={`w-10 h-5 rounded-full transition-all relative ${active ? 'bg-primary' : 'bg-zinc-300'}`}
     >
       <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${active ? 'right-0.5' : 'left-0.5'}`} />
     </button>
@@ -28,7 +28,7 @@ export default function NotificationsSettingsScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-md">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
@@ -58,7 +58,7 @@ export default function NotificationsSettingsScreen() {
         <div className="bg-[var(--bg-card)] border-y border-[var(--border-color)] mb-6">
           <button className="w-full flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
             <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Bell size={20} />
               </div>
               <div className="text-left">
@@ -128,7 +128,7 @@ export default function NotificationsSettingsScreen() {
         <div className="bg-[var(--bg-card)] border-y border-[var(--border-color)]">
           <button className="w-full flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-sky-500/10 text-sky-500">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Phone size={20} />
               </div>
               <div className="text-left">
