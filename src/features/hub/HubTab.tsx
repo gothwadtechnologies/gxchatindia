@@ -19,10 +19,10 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
 const tools = [
-  { id: 'gx-ai', name: 'Gx Chat AI', icon: Cpu, color: 'bg-sky-600', category: 'AI', path: '/chat/gx-ai' },
+  { id: 'gx-ai', name: 'Gx Chat AI', icon: Cpu, color: 'bg-primary', category: 'AI', path: '/chat/gx-ai' },
   { id: 'calculator', name: 'Calculator', icon: Calculator, color: 'bg-orange-500', category: 'Utility' },
   { id: 'pdf', name: 'PDF Tools', icon: FileText, color: 'bg-red-500', category: 'Utility' },
-  { id: 'image', name: 'Image Editor', icon: ImageIcon, color: 'bg-blue-500', category: 'Creative' },
+  { id: 'image', name: 'Image Editor', icon: ImageIcon, color: 'bg-primary', category: 'Creative' },
   { id: 'games', name: 'Instant Games', icon: Gamepad2, color: 'bg-purple-500', category: 'Entertainment' },
   { id: 'stories', name: 'Stories Hub', icon: Zap, color: 'bg-yellow-500', category: 'Entertainment' },
   { id: 'books', name: 'Book Library', icon: BookOpen, color: 'bg-emerald-500', category: 'Education' },
@@ -46,12 +46,12 @@ export default function HubTab() {
 
   return (
     <div className="h-full flex flex-col bg-[var(--bg-card)] overflow-hidden font-sans">
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
+      <div className="flex-1 pb-24">
         {/* Categories / Grid */}
         <div className="px-4 mt-6">
           <div className="flex items-center justify-between mb-6 px-2">
             <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Featured {activeFilter}</h3>
-            <button className="text-[10px] font-black text-sky-600 uppercase tracking-widest">View All</button>
+            <button className="text-[10px] font-black text-primary uppercase tracking-widest">View All</button>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
