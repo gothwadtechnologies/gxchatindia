@@ -19,11 +19,11 @@ export default function AppPreferencesScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
-        <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-          <ArrowLeft size={24} className="text-white" />
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[var(--bg-card)] z-50 border-b border-[var(--border-color)]">
+        <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors">
+          <ArrowLeft size={24} className="text-[var(--text-primary)]" />
         </button>
-        <h1 className="text-lg font-black text-white tracking-tight uppercase">
+        <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
           Preferences
         </h1>
       </div>
@@ -41,18 +41,18 @@ export default function AppPreferencesScreen() {
               }`}
             >
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg bg-zinc-50/10 ${language === lang.id ? 'text-[#00B0FF]' : 'text-zinc-400'}`}>
+                <div className={`p-2 rounded-lg bg-zinc-50/10 ${language === lang.id ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
                   <Globe size={20} />
                 </div>
                 <div className="text-left">
-                  <h4 className={`text-sm font-bold ${language === lang.id ? 'text-[#00B0FF]' : 'text-[var(--text-primary)]'}`}>
+                  <h4 className={`text-sm font-bold ${language === lang.id ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>
                     {lang.label}
                   </h4>
                   <p className="text-[11px] text-[var(--text-secondary)]">{lang.sub}</p>
                 </div>
               </div>
               {language === lang.id && (
-                <div className="bg-[#00B0FF] p-1 rounded-full shadow-lg shadow-blue-500/20">
+                <div className="bg-[var(--primary)] p-1 rounded-full shadow-lg">
                   <Check size={14} className="text-white" />
                 </div>
               )}
@@ -72,18 +72,18 @@ export default function AppPreferencesScreen() {
               }`}
             >
               <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg bg-zinc-50/10 ${theme === t.id ? 'text-[#00B0FF]' : 'text-zinc-400'}`}>
+                <div className={`p-2 rounded-lg bg-zinc-50/10 ${theme === t.id ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'}`}>
                   <Palette size={20} />
                 </div>
                 <div className="text-left">
-                  <h4 className={`text-sm font-bold ${theme === t.id ? 'text-[#00B0FF]' : 'text-[var(--text-primary)]'}`}>
+                  <h4 className={`text-sm font-bold ${theme === t.id ? 'text-[var(--primary)]' : 'text-[var(--text-primary)]'}`}>
                     {t.label}
                   </h4>
                   <p className="text-[11px] text-[var(--text-secondary)]">{t.sub}</p>
                 </div>
               </div>
               {theme === t.id && (
-                <div className="bg-[#00B0FF] p-1 rounded-full shadow-lg shadow-blue-500/20">
+                <div className="bg-[var(--primary)] p-1 rounded-full shadow-lg">
                   <Check size={14} className="text-white" />
                 </div>
               )}
