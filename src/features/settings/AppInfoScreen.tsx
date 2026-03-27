@@ -9,7 +9,7 @@ export default function AppInfoScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-md">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
@@ -47,7 +47,7 @@ export default function AppInfoScreen() {
 
           <div className="px-6 py-5 border-b border-[var(--border-color)]">
             <div className="flex items-center gap-4 mb-2">
-              <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
                 <Globe size={20} />
               </div>
               <h4 className="text-sm font-bold text-[var(--text-primary)]">Made in India</h4>
