@@ -80,8 +80,8 @@ export default function SetupLockScreen() {
             }}
             className={`h-16 rounded-2xl flex items-center justify-center text-xl font-black transition-all active:scale-90 ${
               key === 'check' 
-              ? 'bg-sky-500 text-white shadow-lg shadow-sky-100' 
-              : 'bg-white text-zinc-900 shadow-sm border border-zinc-100'
+              ? 'bg-[var(--primary)] text-white shadow-lg' 
+              : 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm border border-[var(--border-color)]'
             }`}
           >
             {key === 'delete' ? <Delete size={24} /> : key === 'check' ? <Check size={24} /> : key}
@@ -92,13 +92,13 @@ export default function SetupLockScreen() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8F9FA] overflow-hidden font-sans">
+    <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden font-sans">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-sky-500 z-50 shadow-md">
-        <button onClick={() => navigate(-1)} className="hover:bg-sky-600 p-2 rounded-full transition-colors">
-          <ArrowLeft size={24} className="text-white" />
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[var(--bg-card)] z-50 shadow-sm border-b border-[var(--border-color)]">
+        <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors">
+          <ArrowLeft size={24} className="text-[var(--text-primary)]" />
         </button>
-        <h1 className="text-lg font-black text-white tracking-tight uppercase">
+        <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
           Setup {type === 'alpha' ? 'Password' : 'PIN'}
         </h1>
       </div>
@@ -115,8 +115,8 @@ export default function SetupLockScreen() {
               <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-emerald-100">
                 <CheckCircle2 size={40} />
               </div>
-              <h2 className="text-xl font-black text-zinc-900 uppercase tracking-tight">Lock Enabled!</h2>
-              <p className="text-xs font-bold text-zinc-400 mt-2">Your app is now secure.</p>
+              <h2 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">Lock Enabled!</h2>
+              <p className="text-xs font-bold text-[var(--text-secondary)] mt-2">Your app is now secure.</p>
             </motion.div>
           ) : (
             <motion.div 
@@ -126,10 +126,10 @@ export default function SetupLockScreen() {
               exit={{ x: -20, opacity: 0 }}
               className="w-full flex flex-col items-center"
             >
-              <span className="text-[10px] font-black text-sky-500 uppercase tracking-[0.3em] mb-2">
+              <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.3em] mb-2">
                 Step {step === 'enter' ? '1' : '2'} of 2
               </span>
-              <h2 className="text-xl font-black text-zinc-900 uppercase tracking-tight mb-8">
+              <h2 className="text-xl font-bold text-[var(--text-primary)] tracking-tight mb-8">
                 {step === 'enter' ? 'Enter' : 'Confirm'} {type === 'alpha' ? 'Password' : 'PIN'}
               </h2>
 
@@ -140,8 +140,8 @@ export default function SetupLockScreen() {
                       key={i}
                       className={`w-4 h-4 rounded-full border-2 transition-all ${
                         (step === 'enter' ? value : confirmValue).length > i 
-                        ? 'bg-sky-500 border-sky-500 scale-110' 
-                        : 'border-zinc-200'
+                        ? 'bg-[var(--primary)] border-[var(--primary)] scale-110' 
+                        : 'border-[var(--border-color)]'
                       }`}
                     />
                   ))}
@@ -153,7 +153,7 @@ export default function SetupLockScreen() {
                     value={step === 'enter' ? value : confirmValue}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    className="w-full bg-white border border-zinc-100 rounded-2xl px-6 py-4 text-center text-lg font-black tracking-widest outline-none focus:border-sky-500 shadow-sm"
+                    className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl px-6 py-4 text-center text-lg font-bold tracking-widest outline-none focus:border-[var(--primary)] shadow-sm text-[var(--text-primary)]"
                     placeholder="••••••••"
                     autoFocus
                   />
@@ -171,7 +171,7 @@ export default function SetupLockScreen() {
               <button 
                 onClick={handleNext}
                 disabled={(step === 'enter' ? value : confirmValue).length === 0}
-                className="mt-12 w-full max-w-[280px] bg-sky-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-sky-100 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                className="mt-12 w-full max-w-[280px] bg-[var(--primary)] text-white py-4 rounded-2xl font-bold uppercase tracking-[0.2em] shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
               >
                 {step === 'enter' ? 'Next' : 'Confirm'}
                 <ArrowRight size={18} />
@@ -183,8 +183,8 @@ export default function SetupLockScreen() {
 
       <div className="p-8 flex flex-col items-center gap-1 opacity-30">
         <div className="flex items-center gap-2">
-          <ShieldCheck size={14} className="text-zinc-900" />
-          <span className="text-zinc-900 text-[9px] font-black tracking-[0.2em] uppercase">Encrypted Local Storage</span>
+          <ShieldCheck size={14} className="text-[var(--text-primary)]" />
+          <span className="text-[var(--text-primary)] text-[9px] font-bold tracking-[0.2em] uppercase">Encrypted Local Storage</span>
         </div>
       </div>
     </div>
