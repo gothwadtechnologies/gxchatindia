@@ -188,7 +188,7 @@ export default function HomeTab() {
   );
 
   const hubShortcuts = [
-    { id: 'ai', name: 'AI Chat', icon: Cpu, color: 'bg-sky-600', path: '/chat/gx-ai' },
+    { id: 'ai', name: 'AI Chat', icon: Cpu, color: 'bg-primary', path: '/chat/gx-ai' },
     { id: 'reels', name: 'Reels', icon: Clapperboard, color: 'bg-rose-600', path: '/reels' },
     { id: 'games', name: 'Games', icon: Gamepad2, color: 'bg-purple-600', path: '/hub' },
     { id: 'hub', name: 'More', icon: LayoutGrid, color: 'bg-zinc-800', path: '/hub' },
@@ -207,17 +207,17 @@ export default function HomeTab() {
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 mt-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Search Results</h3>
-                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{filteredUsers.length} Found</span>
+                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{filteredUsers.length} Found</span>
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {filteredUsers.map(user => (
-                  <div onClick={() => navigate(`/user/${user.uid}`)} key={user.uid} className="flex items-center gap-3 p-3 bg-sky-500 rounded-2xl shadow-md cursor-pointer">
+                  <div onClick={() => navigate(`/user/${user.uid}`)} key={user.uid} className="flex items-center gap-3 p-3 bg-primary rounded-2xl shadow-md cursor-pointer">
                     <img src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} className="w-12 h-12 rounded-full object-cover border-2 border-white" referrerPolicy="no-referrer" />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-[14px] font-black text-white truncate">{user.fullName || 'Gx Member'}</h4>
-                      <p className="text-[11px] font-bold text-sky-100 truncate opacity-90">@{user.username}</p>
+                      <p className="text-[11px] font-bold text-white/80 truncate opacity-90">@{user.username}</p>
                     </div>
-                    <button onClick={(e) => handleToggleFollow(e, user.uid)} className="px-4 py-2 bg-white text-sky-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={(e) => handleToggleFollow(e, user.uid)} className="px-4 py-2 bg-white text-primary rounded-xl text-[10px] font-black uppercase tracking-widest">
                       {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
                     </button>
                   </div>
@@ -233,10 +233,10 @@ export default function HomeTab() {
                 <section className="px-4">
                   <div className="flex items-center justify-between mb-4 px-1">
                     <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <Sparkles size={14} className="text-sky-500" />
+                      <Sparkles size={14} className="text-primary" />
                       Suggested for you
                     </h3>
-                    <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-sky-600 uppercase tracking-widest">See All</button>
+                    <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-primary uppercase tracking-widest">See All</button>
                   </div>
                   <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                     {recommendedUsers.map(user => (
@@ -246,12 +246,12 @@ export default function HomeTab() {
                         key={user.uid} 
                         className="min-w-[120px] bg-white rounded-[2rem] p-4 flex flex-col items-center text-center shadow-sm border border-zinc-100 relative"
                       >
-                        <img src={user.photoURL || DEFAULT_LOGO} className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-sky-50" referrerPolicy="no-referrer" />
+                        <img src={user.photoURL || DEFAULT_LOGO} className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-primary/10" referrerPolicy="no-referrer" />
                         <h4 className="text-[12px] font-black text-zinc-900 truncate w-full mb-1">{user.fullName?.split(' ')[0] || 'Member'}</h4>
                         <button 
                           onClick={(e) => handleToggleFollow(e, user.uid)}
                           className={`w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                            currentUserData?.following?.includes(user.uid) ? 'bg-zinc-100 text-zinc-400' : 'bg-sky-600 text-white'
+                            currentUserData?.following?.includes(user.uid) ? 'bg-zinc-100 text-zinc-400' : 'bg-primary text-white'
                           }`}
                         >
                           {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
@@ -267,19 +267,19 @@ export default function HomeTab() {
                 <section className="px-4">
                   <div className="flex items-center justify-between mb-4 px-1">
                     <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <Bell size={14} className="text-sky-500" />
+                      <Bell size={14} className="text-primary" />
                       Recent Updates
                     </h3>
                   </div>
                   <div className="flex flex-col gap-3">
                     {recommendedUsers.slice(0, 3).map(user => (
                       <div key={user.uid} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-zinc-100">
-                        <div className="w-10 h-10 bg-sky-50 rounded-full flex items-center justify-center text-sky-600">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                           <Zap size={18} />
                         </div>
                         <div className="flex-1">
                           <p className="text-[11px] text-zinc-900 font-bold">
-                            <span className="text-sky-600">@{user.username}</span> posted a new update.
+                            <span className="text-primary">@{user.username}</span> posted a new update.
                           </p>
                           <p className="text-[9px] text-zinc-400 mt-0.5">Just now</p>
                         </div>
@@ -297,7 +297,7 @@ export default function HomeTab() {
                       <MessageSquare size={14} className="text-emerald-500" />
                       Recent Chats
                     </h3>
-                    <button onClick={() => navigate('/chats')} className="text-[10px] font-black text-sky-600 uppercase tracking-widest">View Chats</button>
+                    <button onClick={() => navigate('/chats')} className="text-[10px] font-black text-primary uppercase tracking-widest">View Chats</button>
                   </div>
                   <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-zinc-100">
                     {recentChats.length > 0 ? (
@@ -335,7 +335,7 @@ export default function HomeTab() {
                       <Clapperboard size={14} className="text-rose-500" />
                       Trending Reels
                     </h3>
-                    <button onClick={() => navigate('/reels')} className="text-[10px] font-black text-sky-600 uppercase tracking-widest">Watch Reels</button>
+                    <button onClick={() => navigate('/reels')} className="text-[10px] font-black text-primary uppercase tracking-widest">Watch Reels</button>
                   </div>
                   <div className="flex gap-3 overflow-x-auto no-scrollbar">
                     {[1, 2, 3, 4].map((i) => (
@@ -366,7 +366,7 @@ export default function HomeTab() {
                       <LayoutGrid size={14} className="text-indigo-500" />
                       Quick Access
                     </h3>
-                    <button onClick={() => navigate('/hub')} className="text-[10px] font-black text-sky-600 uppercase tracking-widest">All Apps</button>
+                    <button onClick={() => navigate('/hub')} className="text-[10px] font-black text-primary uppercase tracking-widest">All Apps</button>
                   </div>
                   <div className="grid grid-cols-4 gap-3">
                     {hubShortcuts.map(item => (
