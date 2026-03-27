@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getDatabase, ref, onValue, set, onDisconnect, serverTimestamp as rtdbTimestamp } from "firebase/database";
-import { getMessaging } from "firebase/messaging";
+import { getMessaging, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -22,7 +22,21 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
-export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+
+// Messaging may not be supported in some environments (like iframes)
+export const messagingPromise = (async () => {
+  try {
+    if (typeof window !== 'undefined') {
+      const supported = await isSupported();
+      if (supported) {
+        return getMessaging(app);
+      }
+    }
+  } catch (e) {
+    console.warn('Firebase Messaging is not supported in this browser environment.');
+  }
+  return null;
+})();
 
 // Presence Logic
 export const setupPresence = (uid: string) => {
