@@ -25,8 +25,8 @@ export default function NotificationsScreen() {
       time: '15m ago',
       avatar: 'https://picsum.photos/seed/user2/100/100',
       icon: UserPlus,
-      iconColor: 'text-blue-500',
-      bgColor: 'bg-blue-50'
+      iconColor: 'text-primary',
+      bgColor: 'bg-primary/5'
     },
     {
       id: 3,
@@ -106,7 +106,7 @@ export default function NotificationsScreen() {
                   <span className="text-[11px] text-zinc-400 font-medium">{notif.time}</span>
                 </div>
                 {notif.type === 'follow' && (
-                  <button className="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors">
+                  <button className="px-4 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:opacity-90 transition-colors">
                     Follow
                   </button>
                 )}
