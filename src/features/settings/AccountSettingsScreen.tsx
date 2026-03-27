@@ -6,7 +6,7 @@ export default function AccountSettingsScreen() {
   const navigate = useNavigate();
 
   const accountItems = [
-    { icon: Shield, label: 'Security notifications', sub: 'Get notified of security changes', color: 'text-blue-500' },
+    { icon: Shield, label: 'Security notifications', sub: 'Get notified of security changes', color: 'text-primary' },
     { icon: Key, label: 'Passkeys', sub: 'A simple way to sign in safely', color: 'text-emerald-500' },
     { icon: Smartphone, label: 'Change number', sub: 'Migrate your account info, groups & settings', color: 'text-indigo-500' },
     { icon: FileText, label: 'Request account info', sub: 'Create a report of your account info', color: 'text-zinc-500' },
@@ -16,7 +16,7 @@ export default function AccountSettingsScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-lg shadow-[var(--primary-shadow)]">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
