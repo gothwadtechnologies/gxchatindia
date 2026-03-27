@@ -36,7 +36,7 @@ export default function SettingsScreen() {
           icon: Key, 
           label: 'Account', 
           sub: 'Security notifications, change number', 
-          color: 'text-blue-500',
+          color: 'text-primary',
           onClick: () => navigate('/account-settings')
         },
         {
@@ -99,11 +99,11 @@ export default function SettingsScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
-        <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-          <ArrowLeft size={24} className="text-white" />
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[var(--bg-card)] z-50 border-b border-[var(--border-color)]">
+        <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors">
+          <ArrowLeft size={24} className="text-[var(--text-primary)]" />
         </button>
-        <h1 className="text-lg font-black text-white tracking-tight uppercase">
+        <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
           Settings
         </h1>
       </div>
