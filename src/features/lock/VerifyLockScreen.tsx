@@ -58,7 +58,7 @@ export default function VerifyLockScreen() {
             }}
             className={`h-16 rounded-2xl flex items-center justify-center text-xl font-black transition-all active:scale-90 ${
               key === 'check' 
-              ? 'bg-sky-500 text-white shadow-lg shadow-sky-100' 
+              ? 'bg-primary text-white shadow-lg shadow-[var(--primary-shadow)]' 
               : 'bg-white text-zinc-900 shadow-sm border border-zinc-100'
             }`}
           >
@@ -72,8 +72,8 @@ export default function VerifyLockScreen() {
   return (
     <div className="h-full flex flex-col bg-[#F8F9FA] overflow-hidden font-sans">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-sky-500 z-50 shadow-md">
-        <button onClick={() => navigate(-1)} className="hover:bg-sky-600 p-2 rounded-full transition-colors">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-md">
+        <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
         <h1 className="text-lg font-black text-white tracking-tight uppercase">
@@ -83,7 +83,7 @@ export default function VerifyLockScreen() {
 
       <div className="flex-1 flex flex-col items-center justify-center p-8">
         <div className="flex flex-col items-center w-full">
-          <div className="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-500 mb-6 border border-sky-100">
+          <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center text-primary mb-6 border border-primary/10">
             <Lock size={32} />
           </div>
           
@@ -101,7 +101,7 @@ export default function VerifyLockScreen() {
                   key={i}
                   className={`w-4 h-4 rounded-full border-2 transition-all ${
                     value.length > i 
-                    ? 'bg-sky-500 border-sky-500 scale-110' 
+                    ? 'bg-primary border-primary scale-110' 
                     : 'border-zinc-200'
                   }`}
                 />
@@ -114,7 +114,7 @@ export default function VerifyLockScreen() {
                 value={value}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                className="w-full bg-white border border-zinc-100 rounded-2xl px-6 py-4 text-center text-lg font-black tracking-widest outline-none focus:border-sky-500 shadow-sm"
+                className="w-full bg-white border border-zinc-100 rounded-2xl px-6 py-4 text-center text-lg font-black tracking-widest outline-none focus:border-primary shadow-sm"
                 placeholder="••••••••"
                 autoFocus
               />
