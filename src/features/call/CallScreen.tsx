@@ -287,13 +287,13 @@ export default function CallScreen() {
             />
           </div>
           {callStatus === 'ringing' && (
-            <div className="absolute inset-0 rounded-full border-4 border-sky-500 animate-ping opacity-20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-primary animate-ping opacity-20"></div>
           )}
         </motion.div>
         
         <h2 className="text-3xl font-black tracking-tight mb-2 uppercase">{receiver?.fullName || 'GxChat User'}</h2>
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${callStatus === 'connected' ? 'bg-emerald-500' : 'bg-sky-500 animate-pulse'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${callStatus === 'connected' ? 'bg-emerald-500' : 'bg-primary animate-pulse'}`}></div>
           <span className="text-sm font-bold text-zinc-300 uppercase tracking-[0.2em]">
             {callStatus === 'ringing' ? 'Ringing...' : 
              callStatus === 'connecting' ? 'Connecting...' : 
