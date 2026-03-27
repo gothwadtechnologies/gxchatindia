@@ -126,7 +126,7 @@ export default function UserProfileScreen() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function UserProfileScreen() {
     return (
       <div className="h-full flex flex-col items-center justify-center bg-white p-6 text-center">
         <p className="text-zinc-500 mb-4">User not found or has been removed.</p>
-        <button onClick={() => navigate(-1)} className="text-blue-600 font-bold">Go Back</button>
+        <button onClick={() => navigate(-1)} className="text-primary font-bold">Go Back</button>
       </div>
     );
   }
@@ -143,38 +143,38 @@ export default function UserProfileScreen() {
   const isPrivate = user.profileType === 'private' && !isFollowing && auth.currentUser?.uid !== userId;
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden font-sans">
+    <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden font-sans">
       {/* Header matching TopNav style but with back button */}
-      <div className="w-full bg-[#00B0FF] px-4 h-13 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-[0_8px_30px_rgba(0,176,255,0.2)]">
+      <div className="w-full bg-[var(--bg-card)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-[var(--border-color)] shadow-sm">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer">
-            <ArrowLeft size={22} className="text-white" />
+          <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors cursor-pointer">
+            <ArrowLeft size={22} className="text-[var(--text-primary)]" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold text-white tracking-tight">{user.fullName || 'GxChat User'}</h1>
+            <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">{user.fullName || 'GxChat User'}</h1>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-            <Bell size={22} className="text-white" />
+          <button className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors cursor-pointer">
+            <Bell size={22} className="text-[var(--text-secondary)]" />
           </button>
           <button 
             onClick={() => setShowMenu(true)}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+            className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors cursor-pointer"
           >
-            <MoreVertical size={22} className="text-white" />
+            <MoreVertical size={22} className="text-[var(--text-secondary)]" />
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
         {/* Instagram Style Header */}
-        <div className="px-4 pt-6 pb-4">
+        <div className="px-4 pt-6 pb-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
           <div className="flex items-center gap-8 mb-4">
             {/* Profile Picture */}
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
-                <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-zinc-100">
+                <div className="w-full h-full rounded-full border-2 border-[var(--bg-card)] overflow-hidden bg-[var(--bg-main)]">
                   <img 
                     src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} 
                     className="w-full h-full object-cover"
@@ -188,22 +188,22 @@ export default function UserProfileScreen() {
             {/* Stats */}
             <div className="flex-1 flex justify-around items-center">
               <div className="flex flex-col items-center">
-                <span className="text-lg font-bold text-zinc-900">0</span>
-                <span className="text-xs text-zinc-500">Posts</span>
+                <span className="text-lg font-bold text-[var(--text-primary)]">0</span>
+                <span className="text-xs text-[var(--text-secondary)]">Posts</span>
               </div>
               <button 
                 onClick={() => !isPrivate && navigate(`/user/${userId}/followers`)}
                 className={`flex flex-col items-center ${isPrivate ? 'opacity-50 cursor-default' : ''}`}
               >
-                <span className="text-lg font-bold text-zinc-900">{user.followers?.length || 0}</span>
-                <span className="text-xs text-zinc-500">Followers</span>
+                <span className="text-lg font-bold text-[var(--text-primary)]">{user.followers?.length || 0}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Followers</span>
               </button>
               <button 
                 onClick={() => !isPrivate && navigate(`/user/${userId}/following`)}
                 className={`flex flex-col items-center ${isPrivate ? 'opacity-50 cursor-default' : ''}`}
               >
-                <span className="text-lg font-bold text-zinc-900">{user.following?.length || 0}</span>
-                <span className="text-xs text-zinc-500">Following</span>
+                <span className="text-lg font-bold text-[var(--text-primary)]">{user.following?.length || 0}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Following</span>
               </button>
             </div>
           </div>
@@ -211,10 +211,10 @@ export default function UserProfileScreen() {
           {/* Name, Username and Action Buttons Row */}
           <div className="flex flex-col mb-4">
             <div className="flex flex-col mb-4">
-              <h2 className="text-sm font-bold text-zinc-900 leading-tight">
+              <h2 className="text-sm font-bold text-[var(--text-primary)] leading-tight">
                 {user.fullName || 'GxChat User'}
               </h2>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-[var(--text-secondary)]">
                 @{user.username || 'username'}
               </p>
             </div>
@@ -225,15 +225,15 @@ export default function UserProfileScreen() {
                 disabled={followLoading}
                 className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors border ${
                   isFollowing 
-                  ? 'bg-zinc-100 text-zinc-900 border-zinc-200' 
-                  : 'bg-blue-500 text-white border-blue-600'
+                  ? 'bg-[var(--bg-main)] text-[var(--text-primary)] border-[var(--border-color)]' 
+                  : 'bg-[var(--primary)] text-white border-[var(--primary)]/20'
                 }`}
               >
                 {isFollowing ? 'Following' : 'Follow'}
               </button>
               <button 
                 onClick={() => navigate(`/chat/${userId}`)}
-                className="flex-1 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-sm font-semibold rounded-lg transition-colors border border-zinc-200"
+                className="flex-1 py-1.5 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] text-[var(--text-primary)] text-sm font-semibold rounded-lg transition-colors border border-[var(--border-color)]"
               >
                 Message
               </button>
@@ -243,12 +243,12 @@ export default function UserProfileScreen() {
 
         {/* Profile Content (Tabs & Grid) */}
         {isPrivate ? (
-          <div className="bg-white p-10 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-300 mb-4">
+          <div className="bg-[var(--bg-card)] p-10 flex flex-col items-center text-center mt-4 border-y border-[var(--border-color)]">
+            <div className="w-16 h-16 bg-[var(--bg-main)] rounded-full flex items-center justify-center text-[var(--text-secondary)] mb-4">
               <LockKeyhole size={32} />
             </div>
-            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-tight mb-2">This Account is Private</h3>
-            <p className="text-xs text-zinc-500 leading-relaxed">
+            <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight mb-2">This Account is Private</h3>
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               Follow this account to see their photos, videos and profile details.
             </p>
           </div>
@@ -258,9 +258,9 @@ export default function UserProfileScreen() {
 
         {/* Branding Footer */}
         <div className="py-12 flex flex-col items-center gap-1 opacity-40">
-          <span className="text-zinc-400 text-sm font-medium">from</span>
-          <span className="text-zinc-900 text-[10px] font-black tracking-[0.3em] uppercase">Gothwad technologies</span>
-          <span className="text-zinc-400 text-[8px] uppercase tracking-tighter mt-1">made in india</span>
+          <span className="text-[var(--text-secondary)] text-sm font-medium">from</span>
+          <span className="text-[var(--text-primary)] text-[10px] font-black tracking-[0.3em] uppercase">Gothwad technologies</span>
+          <span className="text-[var(--text-secondary)] text-[8px] uppercase tracking-tighter mt-1">made in india</span>
         </div>
       </div>
 
@@ -279,26 +279,26 @@ export default function UserProfileScreen() {
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-[70] p-6"
+              className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] rounded-t-3xl z-[70] p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-zinc-900">Options</h3>
-                <button onClick={() => setShowMenu(false)} className="p-2 hover:bg-zinc-100 rounded-full">
-                  <X size={20} className="text-zinc-500" />
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">Options</h3>
+                <button onClick={() => setShowMenu(false)} className="p-2 hover:bg-[var(--bg-main)] rounded-full">
+                  <X size={20} className="text-[var(--text-secondary)]" />
                 </button>
               </div>
               
               <div className="space-y-2">
                 <button 
                   onClick={handleToggleBlock}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors text-red-600"
+                  className="w-full flex items-center gap-4 p-4 hover:bg-[var(--bg-main)] rounded-2xl transition-colors text-red-600"
                 >
                   <UserX size={20} />
                   <span className="font-bold">{isBlocked ? 'Unblock User' : 'Block User'}</span>
                 </button>
                 <button 
                   onClick={() => setShowMenu(false)}
-                  className="w-full flex items-center gap-4 p-4 hover:bg-zinc-50 rounded-2xl transition-colors text-orange-600"
+                  className="w-full flex items-center gap-4 p-4 hover:bg-[var(--bg-main)] rounded-2xl transition-colors text-orange-600"
                 >
                   <ShieldAlert size={20} />
                   <span className="font-bold">Report User</span>
