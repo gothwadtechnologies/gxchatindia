@@ -19,7 +19,7 @@ export default function HelpScreen() {
       icon: HelpCircle,
       label: 'Help Center',
       sub: 'Get help with GxChat features',
-      color: 'text-blue-500'
+      color: 'text-primary'
     },
     {
       icon: FileText,
@@ -44,7 +44,7 @@ export default function HelpScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[#00B0FF] z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-md">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
@@ -82,7 +82,7 @@ export default function HelpScreen() {
         <h3 className="px-6 mb-2 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">APP INFORMATION</h3>
         <div className="bg-[var(--bg-card)] border-y border-[var(--border-color)] mb-8 p-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 bg-[#00B0FF] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[var(--primary-shadow)]">
               <MessageSquare size={24} />
             </div>
             <div>
@@ -91,7 +91,7 @@ export default function HelpScreen() {
             </div>
           </div>
           <div className="bg-zinc-50/10 border border-[var(--border-color)] rounded-xl p-3 flex gap-3">
-            <Info size={16} className="text-[#00B0FF] shrink-0" />
+            <Info size={16} className="text-primary shrink-0" />
             <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
               GxChat India is a secure, fast, and reliable messaging platform developed by Gothwad Technologies.
             </p>
