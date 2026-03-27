@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
-import { messaging, auth, db } from '../services/firebase.ts';
+import { messagingPromise, auth, db } from '../services/firebase.ts';
 import { getToken, onMessage } from 'firebase/messaging';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 export default function NotificationHandler() {
   useEffect(() => {
-    const requestPermission = async () => {
-      if (!messaging || !auth.currentUser) return;
+    const initMessaging = async () => {
+      const messaging = await messagingPromise;
+      if (!messaging || !auth.currentUser || typeof Notification === 'undefined') return;
 
       try {
         const permission = await Notification.requestPermission();
@@ -28,27 +29,36 @@ export default function NotificationHandler() {
           }
         }
       } catch (error) {
-        console.error('Error getting notification permission:', error);
+        console.warn('Error getting notification permission:', error);
       }
-    };
 
-    if (auth.currentUser) {
-      requestPermission();
-    }
-
-    // Listen for foreground messages
-    if (messaging) {
+      // Listen for foreground messages
       const unsubscribe = onMessage(messaging, (payload) => {
         console.log('Foreground message received:', payload);
         if (payload.notification) {
-          new Notification(payload.notification.title || 'New Message', {
-            body: payload.notification.body,
-            icon: '/logo.png'
-          });
+          try {
+            new Notification(payload.notification.title || 'New Message', {
+              body: payload.notification.body,
+              icon: '/logo.png'
+            });
+          } catch (e) {
+            console.warn('Failed to show notification:', e);
+          }
         }
       });
-      return () => unsubscribe();
+      return unsubscribe;
+    };
+
+    let unsubscribeFn: (() => void) | undefined;
+    if (auth.currentUser) {
+      initMessaging().then(unsub => {
+        unsubscribeFn = unsub;
+      });
     }
+
+    return () => {
+      if (unsubscribeFn) unsubscribeFn();
+    };
   }, []);
 
   return null;
