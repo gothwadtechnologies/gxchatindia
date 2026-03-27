@@ -101,7 +101,7 @@ export default function GlobalLockScreen({ onUnlock }: GlobalLockScreenProps) {
           animate={{ y: 0, opacity: 1 }}
           className="flex flex-col items-center w-full"
         >
-          <div className="w-20 h-20 bg-sky-500 rounded-[2rem] flex items-center justify-center text-white mb-8 shadow-xl shadow-sky-100">
+          <div className="w-20 h-20 bg-primary rounded-[2rem] flex items-center justify-center text-white mb-8 shadow-xl shadow-[var(--primary-shadow)]">
             <Lock size={40} />
           </div>
           
@@ -120,7 +120,7 @@ export default function GlobalLockScreen({ onUnlock }: GlobalLockScreenProps) {
                     key={i}
                     className={`w-5 h-5 rounded-full border-2 transition-all duration-300 ${
                       value.length > i 
-                      ? 'bg-sky-500 border-sky-500 scale-110 shadow-lg shadow-sky-100' 
+                      ? 'bg-primary border-primary scale-110 shadow-lg shadow-[var(--primary-shadow)]' 
                       : 'border-zinc-200'
                     }`}
                   />
@@ -134,13 +134,13 @@ export default function GlobalLockScreen({ onUnlock }: GlobalLockScreenProps) {
                     value={value}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
-                    className="w-full bg-white border border-zinc-100 rounded-2xl px-6 py-5 text-center text-xl font-black tracking-widest outline-none focus:border-sky-500 shadow-sm"
+                    className="w-full bg-white border border-zinc-100 rounded-2xl px-6 py-5 text-center text-xl font-black tracking-widest outline-none focus:border-primary shadow-sm"
                     placeholder="••••••••"
                     autoFocus
                   />
                   <button 
                     onClick={() => setShowHelp(true)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-sky-500 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-300 hover:text-primary transition-colors"
                   >
                     <Info size={20} />
                   </button>
