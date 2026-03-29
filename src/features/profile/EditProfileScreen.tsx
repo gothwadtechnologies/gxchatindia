@@ -182,7 +182,7 @@ export default function EditProfileScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-primary z-50 shadow-md">
+      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] z-50 shadow-lg border-b border-white/10">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
             <ArrowLeft size={24} className="text-white" />
@@ -194,7 +194,7 @@ export default function EditProfileScreen() {
         <button 
           onClick={handleSave}
           disabled={loading}
-          className="bg-white text-primary px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
+          className="bg-white text-[#1e3a8a] px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
         >
           {loading ? 'Saving...' : 'Save'}
         </button>
