@@ -145,24 +145,24 @@ export default function UserProfileScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden font-sans">
       {/* Header matching TopNav style but with back button */}
-      <div className="w-full bg-[var(--bg-card)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-[var(--border-color)] shadow-sm">
+      <div className="w-full bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors cursor-pointer">
-            <ArrowLeft size={22} className="text-[var(--text-primary)]" />
+          <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer">
+            <ArrowLeft size={22} className="text-white" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">{user.fullName || 'GxChat User'}</h1>
+            <h1 className="text-lg font-bold text-white tracking-tight">{user.fullName || 'GxChat User'}</h1>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors cursor-pointer">
-            <Bell size={22} className="text-[var(--text-secondary)]" />
+          <button className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+            <Bell size={22} className="text-white/80" />
           </button>
           <button 
             onClick={() => setShowMenu(true)}
-            className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors cursor-pointer"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
           >
-            <MoreVertical size={22} className="text-[var(--text-secondary)]" />
+            <MoreVertical size={22} className="text-white/80" />
           </button>
         </div>
       </div>
