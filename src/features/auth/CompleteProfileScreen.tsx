@@ -68,7 +68,7 @@ export default function CompleteProfileScreen() {
   return (
     <div className="h-full overflow-y-auto bg-[#f8faff] flex flex-col items-center relative">
       {/* Dynamic Multi-color Gradient Background */}
-      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#4f46e5] via-[#9333ea] to-[#ec4899] opacity-95"></div>
+      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] opacity-95"></div>
       
       <div className="w-full max-w-[450px] px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
         {/* Branding Area */}
