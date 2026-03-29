@@ -68,7 +68,7 @@ export default function LoginScreen() {
   return (
     <div className="h-full overflow-y-auto bg-[#f8faff] flex flex-col items-center relative">
       {/* Dynamic Multi-color Gradient Background - Fixed to stay while scrolling */}
-      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#4f46e5] via-[#9333ea] to-[#ec4899] opacity-95"></div>
+      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] opacity-95"></div>
       
       {/* Optional: Add a secondary glow at the bottom for more depth */}
       <div className="fixed bottom-0 left-0 w-full h-[50%] bg-gradient-to-t from-[#f43f5e]/20 to-transparent pointer-events-none"></div>
