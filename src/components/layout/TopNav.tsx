@@ -9,14 +9,14 @@ export default function TopNav() {
   const { searchTerm, setSearchTerm, isSearchOpen, setIsSearchOpen } = useSearch();
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#4f46e5] via-[#9333ea] to-[#ec4899] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
+    <div className="w-full bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
       <AnimatePresence>
         {isSearchOpen ? (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#4f46e5] flex items-center px-4 z-50"
+            className="absolute inset-0 bg-[#1e3a8a] flex items-center px-4 z-50"
           >
             <div className="flex-1 flex items-center bg-white/10 rounded-full px-4 py-1.5 border border-white/10">
               <Search size={18} className="text-white/60 mr-3" />
