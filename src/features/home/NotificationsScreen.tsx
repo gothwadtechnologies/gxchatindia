@@ -66,11 +66,11 @@ export default function NotificationsScreen() {
   return (
     <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-4 px-4 h-16 border-b border-zinc-100 bg-white z-50">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
-          <ArrowLeft size={24} className="text-zinc-900" />
+      <div className="shrink-0 flex items-center gap-4 px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] border-b border-white/10 shadow-lg z-50">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+          <ArrowLeft size={24} className="text-white" />
         </button>
-        <h1 className="text-xl font-bold text-zinc-900">Notifications</h1>
+        <h1 className="text-xl font-bold text-white">Notifications</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
