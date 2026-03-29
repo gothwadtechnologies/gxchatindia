@@ -98,19 +98,19 @@ export default function MessagesListScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-[var(--bg-card)] z-50 border-b border-[var(--border-color)]">
+      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] z-50 shadow-lg border-b border-white/10">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors">
-            <ArrowLeft size={24} className="text-[var(--text-primary)]" />
+          <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+            <ArrowLeft size={24} className="text-white" />
           </button>
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Messages</span>
-            <h2 className="text-sm font-bold text-[var(--text-primary)] tracking-tight">@{auth.currentUser?.displayName || 'My Chats'}</h2>
+            <span className="text-[10px] font-bold text-white/70 uppercase tracking-wider">Messages</span>
+            <h2 className="text-sm font-bold text-white tracking-tight">@{auth.currentUser?.displayName || 'My Chats'}</h2>
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors">
-            <Edit size={22} className="text-[var(--text-secondary)]" />
+          <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
+            <Edit size={22} className="text-white" />
           </button>
         </div>
       </div>
