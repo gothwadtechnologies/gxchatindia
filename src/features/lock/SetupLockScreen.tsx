@@ -94,11 +94,11 @@ export default function SetupLockScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden font-sans">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[var(--bg-card)] z-50 shadow-sm border-b border-[var(--border-color)]">
-        <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-main)] p-2 rounded-full transition-colors">
-          <ArrowLeft size={24} className="text-[var(--text-primary)]" />
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] z-50 shadow-lg border-b border-white/10">
+        <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+          <ArrowLeft size={24} className="text-white" />
         </button>
-        <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
+        <h1 className="text-lg font-bold text-white tracking-tight">
           Setup {type === 'alpha' ? 'Password' : 'PIN'}
         </h1>
       </div>
