@@ -34,7 +34,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#4f46e5] via-[#9333ea] to-[#ec4899] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] shrink-0 border-t border-white/10 pb-safe">
+    <div className="w-full bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] shrink-0 border-t border-white/10 pb-safe">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
@@ -63,7 +63,7 @@ export default function BottomNav() {
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#9333ea] shadow-sm z-10"
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#1d4ed8] shadow-sm z-10"
                 >
                   {item.badge > 9 ? '9+' : item.badge}
                 </motion.div>
