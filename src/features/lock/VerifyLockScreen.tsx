@@ -72,7 +72,7 @@ export default function VerifyLockScreen() {
   return (
     <div className="h-full flex flex-col bg-[#F8F9FA] overflow-hidden font-sans">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-primary z-50 shadow-md">
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] z-50 shadow-lg border-b border-white/10">
         <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <ArrowLeft size={24} className="text-white" />
         </button>
