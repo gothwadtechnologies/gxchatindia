@@ -9,14 +9,14 @@ export default function CreatePostScreen() {
   return (
     <div className="min-h-screen bg-white w-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 h-14 border-b border-zinc-100">
+      <div className="flex items-center justify-between px-4 h-14 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] border-b border-white/10 shadow-lg">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)}>
+          <button onClick={() => navigate(-1)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
             <X size={28} />
           </button>
-          <h2 className="text-xl font-bold">New post</h2>
+          <h2 className="text-xl font-bold text-white">New post</h2>
         </div>
-        <button className="text-primary font-bold text-lg">Share</button>
+        <button className="text-white font-bold text-lg hover:bg-white/10 px-3 py-1 rounded-lg transition-colors">Share</button>
       </div>
 
       {/* Content */}
