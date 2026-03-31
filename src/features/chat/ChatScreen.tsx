@@ -10,19 +10,22 @@ import {
   MessageCircle,
   Reply,
   MoreVertical,
-  Trash
+  Trash,
+  X
 } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   ChatHeader, 
   ChatMessageMenu, 
   ChatReplyPreview, 
   ChatEditPreview, 
   ChatPlusMenu,
-  ChatMessageReactions
+  ChatMessageReactions,
+  EmojiPickerMenu
 } from '../../components/ChatUIComponents';
-import { auth, db, rtdb } from '../../services/firebase.ts';
-import { ref, onValue, update } from 'firebase/database';
+import { auth, db, rtdb, storage as firebaseStorage } from '../../services/firebase.ts';
+import { ref as rtdbRef, onValue, update } from 'firebase/database';
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from 'firebase/storage';
 import { toDate, formatLastSeen } from '../../utils/dateUtils.ts';
 import { 
   collection, 
@@ -106,6 +109,7 @@ import { storage } from '../../services/StorageService';
 export default function ChatScreen() {
   const { id: receiverId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [messageLimit, setMessageLimit] = useState(15);
@@ -120,11 +124,16 @@ export default function ChatScreen() {
   const [editingMessage, setEditingMessage] = useState<any | null>(null);
   const [activeMessageMenu, setActiveMessageMenu] = useState<any | null>(null);
   const [showReactionPicker, setShowReactionPicker] = useState<any | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [visibleButtonsId, setVisibleButtonsId] = useState<string | null>(null);
   const [lastTap, setLastTap] = useState<{id: string, time: number}>({id: '', time: 0});
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [receiverStatus, setReceiverStatus] = useState<'online' | 'offline'>('offline');
   const [isSending, setIsSending] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
   const [menuPosition, setMenuPosition] = useState<'top' | 'bottom'>('top');
   const [receiverActiveChatId, setReceiverActiveChatId] = useState<string | null>(null);
   const [receiverLastSeen, setReceiverLastSeen] = useState<any>(null);
@@ -132,9 +141,30 @@ export default function ChatScreen() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const chatId = [auth.currentUser?.uid, receiverId].sort().join('_');
+
+  // Handle captured image from camera
+  useEffect(() => {
+    if (location.state?.capturedImage) {
+      const dataUrl = location.state.capturedImage;
+      setImagePreviewUrl(dataUrl);
+      
+      // Convert dataUrl to File
+      fetch(dataUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
+          setSelectedImageFile(file);
+        });
+      
+      // Clear location state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   // Scroll to bottom helper
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -219,6 +249,9 @@ export default function ChatScreen() {
       if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
         setShowPlusMenu(false);
       }
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -268,7 +301,7 @@ export default function ChatScreen() {
       });
 
       // Listen for receiver RTDB status
-      const statusRef = ref(rtdb, `/status/${receiverId}`);
+      const statusRef = rtdbRef(rtdb, `/status/${receiverId}`);
       const statusUnsubscribe = onValue(statusRef, (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -284,7 +317,7 @@ export default function ChatScreen() {
 
       // Set my active chat ID in RTDB
       if (auth.currentUser) {
-        const myStatusRef = ref(rtdb, `/status/${auth.currentUser.uid}`);
+        const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
         update(myStatusRef, { activeChatId: receiverId }).catch(err => console.error("Error updating activeChatId:", err));
       }
 
@@ -293,7 +326,7 @@ export default function ChatScreen() {
         statusUnsubscribe();
         // Clear my active chat ID
         if (auth.currentUser) {
-          const myStatusRef = ref(rtdb, `/status/${auth.currentUser.uid}`);
+          const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
           update(myStatusRef, { activeChatId: null }).catch(err => console.error("Error clearing activeChatId:", err));
         }
       };
@@ -473,9 +506,88 @@ export default function ChatScreen() {
     return () => unsubscribe();
   }, [chatId, messageLimit, scrollToBottom]);
 
+  useEffect(() => {
+    if (!chatId) return;
+    
+    // Cleanup expired messages (24h after seen)
+    const cleanupInterval = setInterval(async () => {
+      try {
+        const now = Timestamp.now();
+        const q = query(
+          collection(db, "messages"),
+          where("expiresAt", "<=", now)
+        );
+        const snapshot = await getDocs(q);
+        const batch = writeBatch(db);
+        
+        for (const msgDoc of snapshot.docs) {
+          const data = msgDoc.data();
+          // Delete from storage if it has an image
+          if (data.imageUrl && data.storagePath) {
+            try {
+              const sRef = storageRef(firebaseStorage, data.storagePath);
+              await deleteObject(sRef);
+            } catch (e) {
+              console.error("Error deleting image from storage:", e);
+            }
+          }
+          batch.delete(msgDoc.ref);
+        }
+        
+        if (!snapshot.empty) {
+          await batch.commit();
+          console.log(`Cleaned up ${snapshot.size} expired messages`);
+        }
+      } catch (err) {
+        console.error("Cleanup error:", err);
+      }
+    }, 60000); // Check every minute
+    
+    return () => clearInterval(cleanupInterval);
+  }, [chatId]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auth.currentUser) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreviewUrl(reader.result as string);
+      setSelectedImageFile(file);
+    };
+    reader.readAsDataURL(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Mark images for deletion when they are seen
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    
+    const unreadImages = messages.filter(m => 
+      m.receiverId === auth.currentUser?.uid && 
+      m.type === 'image' && 
+      m.isRead && 
+      !m.expiresAt
+    );
+    
+    if (unreadImages.length > 0) {
+      const batch = writeBatch(db);
+      const tomorrow = new Date();
+      tomorrow.setHours(tomorrow.getHours() + 24);
+      
+      unreadImages.forEach(msg => {
+        batch.update(doc(db, "messages", msg.id), {
+          expiresAt: Timestamp.fromDate(tomorrow)
+        });
+      });
+      
+      batch.commit().catch(err => console.error("Error setting expiration:", err));
+    }
+  }, [messages]);
+
   const handleSendMessage = React.useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !auth.currentUser) return;
+    if ((!newMessage.trim() && !selectedImageFile) || !auth.currentUser || isSending || isUploading) return;
 
     const textToSend = newMessage;
     const replyContext = replyingTo ? { id: replyingTo.id, text: replyingTo.text, senderId: replyingTo.senderId } : null;
@@ -494,6 +606,46 @@ export default function ChatScreen() {
           text: textToSend,
           isEdited: true
         }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `messages/${editMsg.id}`));
+        setIsSending(false);
+      } else if (selectedImageFile) {
+        setIsUploading(true);
+        const timestamp = Date.now();
+        const path = `chats/${chatId}/${timestamp}_${selectedImageFile.name}`;
+        const sRef = storageRef(firebaseStorage, path);
+        
+        const uploadTask = uploadBytesResumable(sRef, selectedImageFile);
+
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(Math.round(progress));
+          }, 
+          (error) => {
+            console.error("Upload error:", error);
+            setIsUploading(false);
+            setIsSending(false);
+            alert("Failed to upload image.");
+          }, 
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            await addDoc(collection(db, "messages"), {
+              chatId,
+              senderId: auth.currentUser?.uid,
+              receiverId,
+              text: textToSend,
+              imageUrl: url,
+              storagePath: path,
+              timestamp: serverTimestamp(),
+              isRead: false,
+              type: 'image'
+            });
+            setIsUploading(false);
+            setIsSending(false);
+            setSelectedImageFile(null);
+            setImagePreviewUrl(null);
+            setUploadProgress(0);
+          }
+        );
       } else {
         await addDoc(collection(db, "messages"), {
           chatId,
@@ -582,7 +734,7 @@ export default function ChatScreen() {
     } finally {
       setIsSending(false);
     }
-  }, [newMessage, editingMessage, replyingTo, chatId, receiverId, receiver]);
+  }, [newMessage, editingMessage, replyingTo, chatId, receiverId, receiver, selectedImageFile, isSending, isUploading]);
 
   const deleteMessage = React.useCallback(async (msgId: string) => {
     try {
@@ -763,7 +915,22 @@ export default function ChatScreen() {
                       )}
 
                       <div className="flex flex-col min-w-[60px]">
-                        <p className="text-[14.5px] leading-snug break-words whitespace-pre-wrap">{msg.text}</p>
+                        {msg.imageUrl && (
+                          <div className="mb-1 rounded-lg overflow-hidden border border-black/5">
+                            <img 
+                              src={msg.imageUrl} 
+                              alt="Sent image" 
+                              className="max-w-full h-auto max-h-64 object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                            {msg.expiresAt && (
+                              <div className="bg-black/40 text-white text-[9px] px-2 py-1 flex items-center gap-1">
+                                <Clock size={10} /> Expires in 24h
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {msg.text && <p className="text-[14.5px] leading-snug break-words whitespace-pre-wrap">{msg.text}</p>}
                         <div className="flex items-center justify-end gap-1 mt-0.5 -mr-1">
                           <span className="text-[10px] text-zinc-500 font-medium">
                             {toDate(msg.timestamp)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) || ''}
@@ -865,7 +1032,7 @@ export default function ChatScreen() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 bg-[var(--bg-card)] p-1.5 pb-3 z-50 shadow-[0_-4px_20px_var(--primary-shadow)] relative border-t border-[var(--border-color)]">
+      <div className="shrink-0 bg-blue-600 p-1.5 pb-3 z-50 shadow-[0_-4px_20px_rgba(37,99,235,0.2)] relative border-t border-white/10">
         <ChatMessageMenu 
           activeMessageMenu={activeMessageMenu}
           setActiveMessageMenu={setActiveMessageMenu}
@@ -890,14 +1057,46 @@ export default function ChatScreen() {
         />
 
         <form onSubmit={handleSendMessage} className="flex items-center gap-2 px-1">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*" 
+            onChange={handleFileChange}
+          />
           <ChatPlusMenu 
             showPlusMenu={showPlusMenu}
             setShowPlusMenu={setShowPlusMenu}
             plusMenuRef={plusMenuRef}
+            onMediaClick={() => fileInputRef.current?.click()}
+            chatId={chatId}
           />
 
-          <div className="flex-1 bg-white rounded-[20px] px-4 py-1.5 flex items-end shadow-inner min-w-0 transition-all">
-            <textarea 
+          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-white/20">
+            {imagePreviewUrl && (
+              <div className="mb-2 relative w-fit group">
+                <div className="relative rounded-xl overflow-hidden border border-white/20 shadow-lg max-w-[120px]">
+                  <img src={imagePreviewUrl} alt="Preview" className="w-full h-auto" />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                      <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mb-1" />
+                      <span className="text-white text-[10px] font-bold">{uploadProgress}%</span>
+                    </div>
+                  )}
+                  {!isUploading && (
+                    <button 
+                      type="button"
+                      onClick={() => { setSelectedImageFile(null); setImagePreviewUrl(null); }}
+                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="flex items-end w-full">
+              <textarea 
               ref={textareaRef}
               placeholder="Type a message"
               value={newMessage}
@@ -909,7 +1108,7 @@ export default function ChatScreen() {
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
               rows={1}
-              className="flex-1 bg-transparent text-[16px] focus:outline-none text-zinc-800 py-1.5 resize-none max-h-[120px] leading-tight"
+              className="flex-1 bg-transparent text-[16px] focus:outline-none text-white placeholder:text-white/60 py-1.5 resize-none max-h-[120px] leading-tight"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -917,12 +1116,23 @@ export default function ChatScreen() {
                 }
               }}
             />
+            <EmojiPickerMenu 
+              showEmojiPicker={showEmojiPicker}
+              setShowEmojiPicker={setShowEmojiPicker}
+              emojiPickerRef={emojiPickerRef}
+              onEmojiSelect={(emoji) => {
+                setNewMessage(prev => prev + emoji);
+                setShowEmojiPicker(false);
+                textareaRef.current?.focus();
+              }}
+            />
+            </div>
           </div>
 
           <button 
             type="submit"
-            disabled={!newMessage.trim() || isSending}
-            className="bg-[var(--primary)] w-11 h-11 flex items-center justify-center rounded-full text-white disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
+            disabled={(!newMessage.trim() && !selectedImageFile) || isSending || isUploading}
+            className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-blue-600 disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
           </button>
