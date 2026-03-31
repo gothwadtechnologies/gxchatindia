@@ -41,7 +41,7 @@ export default function OnboardingSplash({ onComplete }: OnboardingSplashProps) 
 
   return (
     <div className="h-[100dvh] flex justify-center bg-[#f8faff] overflow-hidden font-sans">
-      <div className="w-full max-w-[450px] h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] flex flex-col relative overflow-hidden">
+      <div className="w-full h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] flex flex-col relative overflow-hidden">
         {/* Subtle glow effects */}
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-white/10 blur-[100px] rounded-full"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-white/10 blur-[100px] rounded-full"></div>
