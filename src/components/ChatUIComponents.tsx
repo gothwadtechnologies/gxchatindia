@@ -20,7 +20,8 @@ import {
   Reply,
   Forward,
   Edit2,
-  Smile
+  Smile,
+  Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -274,26 +275,74 @@ export const ChatPlusMenu: React.FC<{
   showPlusMenu: boolean;
   setShowPlusMenu: (show: boolean) => void;
   plusMenuRef: React.RefObject<HTMLDivElement | null>;
-}> = ({ showPlusMenu, setShowPlusMenu, plusMenuRef }) => {
+  onMediaClick?: () => void;
+  chatId?: string;
+}> = ({ showPlusMenu, setShowPlusMenu, plusMenuRef, onMediaClick, chatId }) => {
+  const navigate = useNavigate();
   return (
     <div className="relative" ref={plusMenuRef}>
-      <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className="p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-main)] rounded-full transition-colors shrink-0">
+      <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className="p-2 text-white hover:bg-white/10 rounded-full transition-colors shrink-0">
         <Plus size={24} />
       </button>
       {showPlusMenu && (
         <div className="absolute bottom-full left-0 mb-3 w-40 bg-[var(--bg-card)] rounded-xl shadow-2xl border border-[var(--border-color)] py-1 z-[100] overflow-hidden">
+          <button 
+            onClick={() => { navigate(`/camera?chatId=${chatId}`); setShowPlusMenu(false); }}
+            className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-main)] flex items-center gap-3 transition-colors"
+          >
+            <div className="w-7 h-7 rounded-full bg-[var(--bg-main)] flex items-center justify-center text-[var(--primary)]"><Camera size={16} /></div> Camera
+          </button>
           <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-main)] flex items-center gap-3 transition-colors">
             <div className="w-7 h-7 rounded-full bg-[var(--bg-main)] flex items-center justify-center text-[var(--primary)]"><Mic size={16} /></div> Microphone
           </button>
-          <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-main)] flex items-center gap-3 transition-colors">
+          <button 
+            onClick={() => { onMediaClick?.(); setShowPlusMenu(false); }}
+            className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-main)] flex items-center gap-3 transition-colors"
+          >
             <div className="w-7 h-7 rounded-full bg-[var(--bg-main)] flex items-center justify-center text-[var(--primary)]"><ImageIcon size={16} /></div> Media
           </button>
           <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-main)] flex items-center gap-3 transition-colors">
             <div className="w-7 h-7 rounded-full bg-[var(--bg-main)] flex items-center justify-center text-[var(--primary)]"><FileText size={16} /></div> Files
           </button>
-          <button className="w-full px-3 py-2.5 text-left text-[13px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-main)] flex items-center gap-3 transition-colors">
-            <div className="w-7 h-7 rounded-full bg-[var(--bg-main)] flex items-center justify-center text-[var(--primary)]"><LinkIcon size={16} /></div> Links
-          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const EmojiPickerMenu: React.FC<{
+  showEmojiPicker: boolean;
+  setShowEmojiPicker: (show: boolean) => void;
+  emojiPickerRef: React.RefObject<HTMLDivElement | null>;
+  onEmojiSelect: (emoji: string) => void;
+}> = ({ showEmojiPicker, setShowEmojiPicker, emojiPickerRef, onEmojiSelect }) => {
+  const emojis = ['😊', '😂', '🥰', '😍', '😒', '😭', '😘', '☺️', '😩', '😔', '😏', '😁', '💕', '❤️', '🔥', '✨', '👍', '🙏', '💯', '🤣', '🤔', '🙄', '🥺', '😎', '🙌', '👏', '🎉', '🎈', '🎂', '🎁'];
+  
+  return (
+    <div className="relative" ref={emojiPickerRef}>
+      <button 
+        type="button" 
+        onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+        className="p-2 text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+      >
+        <Smile size={24} />
+      </button>
+      {showEmojiPicker && (
+        <div className="absolute bottom-full right-0 mb-3 w-64 bg-[var(--bg-card)] rounded-xl shadow-2xl border border-[var(--border-color)] p-2 z-[100] animate-in slide-in-from-bottom-2 duration-200">
+          <div className="px-2 py-1.5 border-b border-[var(--border-color)] mb-2">
+            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Emojis</p>
+          </div>
+          <div className="grid grid-cols-6 gap-1 max-h-48 overflow-y-auto no-scrollbar">
+            {emojis.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => { onEmojiSelect(emoji); }}
+                className="w-9 h-9 flex items-center justify-center hover:bg-[var(--bg-main)] rounded-lg transition-all active:scale-125 text-xl"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
