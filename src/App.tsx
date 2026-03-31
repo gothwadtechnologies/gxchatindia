@@ -69,25 +69,35 @@ const GlobalLockScreen = React.lazy(() => import('./features/lock').then(m => ({
 const CallScreen = React.lazy(() => import('./features/call').then(m => ({ default: m.CallScreen })));
 const AdminDashboard = React.lazy(() => import('./features/admin').then(m => ({ default: m.AdminDashboard })));
 
+import { storage } from './services/StorageService.ts';
 import MainLayout from './components/layout/MainLayout.tsx';
-
-// ... (rest of imports)
-
+import OnboardingSplash from './components/OnboardingSplash.tsx';
 import { LayoutProvider } from './contexts/LayoutContext.tsx';
 import { NavProvider } from './contexts/NavContext.tsx';
 
 export default function App() {
   const { user, userData, loading: authLoading, isAuthReady } = useAuth();
   const [splashLoading, setSplashLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(!LockService.getLockData().isEnabled);
 
   useEffect(() => {
     CacheService.clearOldCache();
+    const hasSeenOnboarding = storage.getItem('hasSeenOnboarding');
+    
     const timer = setTimeout(() => {
       setSplashLoading(false);
-    }, 2000);
+      if (!hasSeenOnboarding && !user) {
+        setShowOnboarding(true);
+      }
+    }, 2500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]);
+
+  const handleOnboardingComplete = () => {
+    storage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
 
   // Global Back Button Handler for Mobile
   useEffect(() => {
@@ -103,38 +113,50 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-[100dvh] flex justify-center bg-[#f8faff] overflow-hidden">
-        <div className="w-full max-w-[450px] h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] flex flex-col items-center justify-center relative overflow-hidden">
-          {/* Subtle glow effects */}
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-white/10 blur-[100px] rounded-full"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-white/10 blur-[100px] rounded-full"></div>
+      <div className="h-[100dvh] flex justify-center bg-white overflow-hidden font-sans">
+        <div className="w-full max-w-[450px] h-full bg-[#fdfcfd] flex flex-col items-center justify-center relative overflow-hidden">
+          
+          {/* Mesh Gradient Background */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[60%] bg-blue-200/40 blur-[120px] rounded-full"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[80%] h-[60%] bg-blue-100/40 blur-[120px] rounded-full"></div>
+            <div className="absolute bottom-[-20%] right-[-20%] w-[70%] h-[50%] bg-blue-200/40 blur-[120px] rounded-full"></div>
+            <div className="absolute top-[20%] left-[-10%] w-[60%] h-[40%] bg-blue-100/40 blur-[120px] rounded-full"></div>
+          </div>
 
           <div className="flex-1 flex flex-col items-center justify-center z-10">
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex flex-col items-center gap-4"
+              transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+              className="flex flex-col items-center gap-6"
             >
-              <img 
-                src={APP_CONFIG.LOGO_URL} 
-                alt={`${APP_CONFIG.NAME} Logo`} 
-                className="w-24 h-24 object-contain brightness-0 invert"
-                referrerPolicy="no-referrer"
-              />
-              <h1 className="text-3xl font-black text-white tracking-tighter italic">GxChat India</h1>
+              <div className="w-32 h-32 bg-white/60 backdrop-blur-2xl rounded-[2.5rem] border border-white/40 flex items-center justify-center shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]">
+                <img 
+                  src={APP_CONFIG.LOGO_URL} 
+                  alt={`${APP_CONFIG.NAME} Logo`} 
+                  className="w-20 h-20 object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="text-center">
+                <h1 className="text-3xl font-black text-zinc-900 tracking-tighter italic mb-1">GxChat India</h1>
+                <p className="text-zinc-400 text-[10px] font-black uppercase tracking-[0.4em]">Social World</p>
+              </div>
             </motion.div>
           </div>
           
-          <div className="pb-12 flex flex-col items-center gap-0.5 animate-pulse z-10">
-            <span className="text-white/60 text-[10px] font-medium uppercase tracking-widest">from</span>
-            <div className="flex items-center gap-1">
-              <span className="text-white font-bold tracking-[0.2em] uppercase text-[11px]">{APP_CONFIG.DEVELOPER}</span>
-            </div>
+          <div className="pb-12 flex flex-col items-center gap-1.5 z-10 opacity-40">
+            <span className="text-zinc-900 text-[9px] font-black uppercase tracking-[0.3em]">from</span>
+            <span className="text-zinc-900 font-black tracking-[0.2em] uppercase text-[10px]">{APP_CONFIG.DEVELOPER}</span>
           </div>
         </div>
       </div>
     );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingSplash onComplete={handleOnboardingComplete} />;
   }
 
   if (!isUnlocked) {
