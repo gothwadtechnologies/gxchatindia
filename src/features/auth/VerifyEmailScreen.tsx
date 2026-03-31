@@ -48,7 +48,7 @@ export default function VerifyEmailScreen() {
       {/* Dynamic Multi-color Gradient Background */}
       <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] opacity-95"></div>
       
-      <div className="w-full max-w-[450px] px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
+      <div className="w-full px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
         {/* Branding Area */}
         <div className="flex flex-col items-center mb-10 text-white">
           <img 
