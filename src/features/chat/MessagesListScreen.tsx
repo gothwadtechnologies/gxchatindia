@@ -98,7 +98,7 @@ export default function MessagesListScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] z-50 shadow-lg border-b border-white/10">
+      <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-[var(--header-gradient)] z-50 shadow-lg border-b border-white/10">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
             <ArrowLeft size={24} className="text-white" />
