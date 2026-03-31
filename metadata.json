@@ -1,6 +1,6 @@
 {
-  "name": "Remix: BackUp GxChat India V 1.0.0",
-  "description": "A deep Instagram clone for India with social features, real-time messaging, and media sharing.",
+  "name": "GxChat India | The Ultimate Social Messaging App",
+  "description": "GxChat India - A high-performance social messaging app for India. Features real-time chat, reels, media sharing, and secure communication.",
   "requestFramePermissions": [
     "camera",
     "microphone",
