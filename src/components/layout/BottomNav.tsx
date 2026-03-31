@@ -34,7 +34,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] shrink-0 border-t border-white/10 pb-safe">
+    <div className="w-full bg-[var(--header-gradient)] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] shrink-0 border-t border-white/10 pb-safe">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
