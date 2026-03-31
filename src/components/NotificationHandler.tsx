@@ -2,37 +2,79 @@ import { useEffect } from 'react';
 import { messagingPromise, auth, db } from '../services/firebase.ts';
 import { getToken, onMessage } from 'firebase/messaging';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { useAuth } from '../providers/AuthProvider';
 
 export default function NotificationHandler() {
+  const { user } = useAuth();
+
   useEffect(() => {
     const initMessaging = async () => {
+      console.log('Initializing FCM...');
       const messaging = await messagingPromise;
-      if (!messaging || !auth.currentUser || typeof Notification === 'undefined') return;
+      if (!messaging) {
+        console.warn('FCM Messaging instance is null');
+        return;
+      }
+      
+      if (!auth.currentUser) {
+        console.warn('No authenticated user for FCM');
+        return;
+      }
+
+      if (typeof Notification === 'undefined') {
+        console.warn('Notification API is not available');
+        return;
+      }
 
       try {
+        let registration;
+        if ('serviceWorker' in navigator) {
+          console.log('Registering Service Worker for FCM...');
+          // Register service worker with config as query params for dynamic initialization
+          const config = {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+            appId: import.meta.env.VITE_FIREBASE_APP_ID
+          };
+          const queryParams = new URLSearchParams(config as any).toString();
+          registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${queryParams}`);
+          console.log('Service Worker registered successfully');
+        } else {
+          console.warn('Service Worker is not supported in this browser');
+        }
+
+        console.log('Requesting notification permission...');
         const permission = await Notification.requestPermission();
+        console.log('Notification permission status:', permission);
+        
         if (permission === 'granted') {
           // Get FCM Token
-          // Note: You need to provide your VAPID key here from Firebase Console
-          // Project Settings -> Cloud Messaging -> Web Push certificates
+          console.log('Getting FCM Token...');
           const token = await getToken(messaging, {
-            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+            vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+            serviceWorkerRegistration: registration
           });
 
           if (token) {
-            console.log('FCM Token:', token);
+            console.log('FCM Token received:', token);
             // Save token to user document
             const userRef = doc(db, 'users', auth.currentUser.uid);
             await updateDoc(userRef, {
               fcmTokens: arrayUnion(token)
             });
+            console.log('FCM Token saved to Firestore');
+          } else {
+            console.warn('No FCM Token received');
           }
         }
       } catch (error) {
-        console.warn('Error getting notification permission:', error);
+        console.error('Error in FCM initialization:', error);
       }
 
       // Listen for foreground messages
+      console.log('Setting up foreground message listener...');
       const unsubscribe = onMessage(messaging, (payload) => {
         console.log('Foreground message received:', payload);
         if (payload.notification) {
@@ -42,7 +84,7 @@ export default function NotificationHandler() {
               icon: '/logo.png'
             });
           } catch (e) {
-            console.warn('Failed to show notification:', e);
+            console.warn('Failed to show foreground notification:', e);
           }
         }
       });
@@ -50,16 +92,21 @@ export default function NotificationHandler() {
     };
 
     let unsubscribeFn: (() => void) | undefined;
-    if (auth.currentUser) {
+    if (user) {
       initMessaging().then(unsub => {
         unsubscribeFn = unsub;
+      }).catch(err => {
+        console.error('initMessaging failed:', err);
       });
     }
 
     return () => {
-      if (unsubscribeFn) unsubscribeFn();
+      if (unsubscribeFn) {
+        console.log('Cleaning up FCM listener');
+        unsubscribeFn();
+      }
     };
-  }, []);
+  }, [user]);
 
   return null;
 }
