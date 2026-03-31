@@ -7,46 +7,38 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="GxChat" />
+    <meta name="google-site-verification" content="W2ez42lwANlmcKz6ng6zAXdHwiwbI-h1OohQlI3mqLg" />
+    <meta name="description" content="GxChat India - The ultimate social messaging app for India. Connect with friends, share reels, and chat securely with Gothwad Technologies' latest platform." />
+    <meta name="keywords" content="GxChat, GxChat India, Gothwad Technologies, Indian Chat App, Social Media India, Messaging App, Reels India, Secure Chat" />
+    <meta name="author" content="Gothwad Technologies" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://gxchatindia.com/" />
+    <meta property="og:title" content="GxChat India | Connect, Share, Chat" />
+    <meta property="og:description" content="GxChat India - The ultimate social messaging app for India. Connect with friends, share reels, and chat securely." />
+    <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://gxchatindia.com/" />
+    <meta property="twitter:title" content="GxChat India | Connect, Share, Chat" />
+    <meta property="twitter:description" content="GxChat India - The ultimate social messaging app for India. Connect with friends, share reels, and chat securely." />
+    <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" />
+
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1041/1041916.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>GxChat India</title>
+    <title>GxChat India | The Ultimate Social Messaging App</title>
     <script>
-      // Unregister all service workers to ensure the preview updates correctly in AI Studio
+      // Silent check for service worker support
       try {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-              registration.unregister();
-              console.log('Service Worker unregistered');
-            }
-          }).catch(err => {
-            // Only log if it's not a security policy error
-            if (!err.message.includes('security policy')) {
-              console.warn('Service Worker registration error:', err);
-            }
-          });
+        if ('serviceWorker' in navigator && window.self === window.top) {
+          // Only attempt service worker operations if not in an iframe
+          console.log('Service Worker supported and not in iframe');
         }
       } catch (e) {
-        // Silent catch for security errors
-      }
-      
-      // Also clear caches to be absolutely sure
-      try {
-        if ('caches' in window) {
-          caches.keys().then(function(names) {
-            for (let name of names) {
-              caches.delete(name);
-              console.log('Cache cleared:', name);
-            }
-          }).catch(err => {
-            // Only log if it's not a security policy error
-            if (!err.message.includes('security policy')) {
-              console.warn('Cache access error:', err);
-            }
-          });
-        }
-      } catch (e) {
-        // Silent catch for security errors
+        // Silent catch
       }
     </script>
   </head>
