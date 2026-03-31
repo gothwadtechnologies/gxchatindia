@@ -9,7 +9,7 @@ export default function TopNav() {
   const { searchTerm, setSearchTerm, isSearchOpen, setIsSearchOpen } = useSearch();
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
+    <div className="w-full bg-[var(--header-gradient)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
       <AnimatePresence>
         {isSearchOpen ? (
           <motion.div 
