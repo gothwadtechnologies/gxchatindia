@@ -91,7 +91,7 @@ export default function SignupScreen() {
       {/* Optional: Add a secondary glow at the bottom for more depth */}
       <div className="fixed bottom-0 left-0 w-full h-[50%] bg-gradient-to-t from-[#f43f5e]/20 to-transparent pointer-events-none"></div>
       
-      <div className="w-full max-w-[450px] px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
+      <div className="w-full px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
         {/* Branding Area */}
         <motion.div 
           initial={{ y: -20, opacity: 0 }}
