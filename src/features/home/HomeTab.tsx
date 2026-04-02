@@ -26,13 +26,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CacheService } from '../../services/CacheService.ts';
 import { toDate } from '../../utils/dateUtils.ts';
 
-import { useLayout } from '../../contexts/LayoutContext.tsx';
-
 export default function HomeTab() {
   const navigate = useNavigate();
   const { searchTerm } = useSearch();
-  const { activeFilters } = useLayout();
-  const activeFilter = activeFilters['home'];
   const [users, setUsers] = useState<any[]>([]);
   const [recommendedUsers, setRecommendedUsers] = useState<any[]>([]);
   const [recentChats, setRecentChats] = useState<any[]>([]);
@@ -189,20 +185,20 @@ export default function HomeTab() {
 
   const hubShortcuts = [
     { id: 'ai', name: 'AI Chat', icon: Cpu, color: 'bg-primary', path: '/chat/gx-ai' },
-    { id: 'reels', name: 'Reels', icon: Clapperboard, color: 'bg-rose-600', path: '/reels' },
+    { id: 'reels', name: 'Videos', icon: Clapperboard, color: 'bg-rose-600', path: '/channels' },
     { id: 'games', name: 'Games', icon: Gamepad2, color: 'bg-purple-600', path: '/hub' },
     { id: 'hub', name: 'More', icon: LayoutGrid, color: 'bg-zinc-800', path: '/hub' },
   ];
 
   return (
-    <div className="h-full flex flex-col bg-[var(--bg-card)] overflow-hidden font-sans">
+    <div className="flex flex-col bg-[var(--bg-card)] font-sans">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex-1 overflow-y-auto no-scrollbar pb-24"
+        className="flex-1 pb-24"
       >
         <AnimatePresence mode="wait">
-          {searchTerm || activeFilter === 'Search' ? (
+          {searchTerm ? (
             /* Search Results */
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 mt-4">
               <div className="flex items-center justify-between mb-4">
@@ -211,13 +207,13 @@ export default function HomeTab() {
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {filteredUsers.map(user => (
-                  <div onClick={() => navigate(`/user/${user.uid}`)} key={user.uid} className="flex items-center gap-3 p-3 bg-primary rounded-2xl shadow-md cursor-pointer">
-                    <img src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} className="w-12 h-12 rounded-full object-cover border-2 border-white" referrerPolicy="no-referrer" />
+                  <div onClick={() => navigate(`/user/${user.uid}`)} key={user.uid} className="flex items-center gap-3 p-3 bg-[var(--bg-card)] rounded-2xl shadow-sm border border-[var(--border-color)] cursor-pointer">
+                    <img src={user.hidePhoto ? DEFAULT_LOGO : (user.photoURL || DEFAULT_LOGO)} className="w-12 h-12 rounded-full object-cover border-2 border-[var(--primary)]/10" referrerPolicy="no-referrer" />
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-[14px] font-black text-white truncate">{user.fullName || 'Gx Member'}</h4>
-                      <p className="text-[11px] font-bold text-white/80 truncate opacity-90">@{user.username}</p>
+                      <h4 className="text-[14px] font-black text-[var(--text-primary)] truncate">{user.fullName || 'Gx Member'}</h4>
+                      <p className="text-[11px] font-bold text-[var(--text-secondary)] truncate opacity-90">@{user.username}</p>
                     </div>
-                    <button onClick={(e) => handleToggleFollow(e, user.uid)} className="px-4 py-2 bg-white text-primary rounded-xl text-[10px] font-black uppercase tracking-widest">
+                    <button onClick={(e) => handleToggleFollow(e, user.uid)} className="px-4 py-2 bg-[var(--primary)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest">
                       {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
                     </button>
                   </div>
@@ -228,164 +224,154 @@ export default function HomeTab() {
             /* Dashboard UI */
             <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col gap-8 pt-4">
               
-              {/* 1. Suggested Users (Horizontal) - Only for Explore or For You */}
-              {(activeFilter === 'Explore' || activeFilter === 'For You') && (
-                <section className="px-4">
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <Sparkles size={14} className="text-primary" />
-                      Suggested for you
-                    </h3>
-                    <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-primary uppercase tracking-widest">See All</button>
-                  </div>
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                    {recommendedUsers.map(user => (
-                      <motion.div 
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(`/user/${user.uid}`)}
-                        key={user.uid} 
-                        className="min-w-[120px] bg-white rounded-[2rem] p-4 flex flex-col items-center text-center shadow-sm border border-zinc-100 relative"
+              {/* 1. Suggested Users (Horizontal) */}
+              <section className="px-4">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest flex items-center gap-2">
+                    <Sparkles size={14} className="text-primary" />
+                    Suggested for you
+                  </h3>
+                  <button onClick={() => navigate('/explore')} className="text-[10px] font-black text-primary uppercase tracking-widest">See All</button>
+                </div>
+                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                  {recommendedUsers.map(user => (
+                    <motion.div 
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(`/user/${user.uid}`)}
+                      key={user.uid} 
+                      className="min-w-[120px] bg-[var(--bg-card)] rounded-[2rem] p-4 flex flex-col items-center text-center shadow-sm border border-[var(--border-color)] relative"
+                    >
+                      <img src={user.photoURL || DEFAULT_LOGO} className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-[var(--primary)]/10" referrerPolicy="no-referrer" />
+                      <h4 className="text-[12px] font-black text-[var(--text-primary)] truncate w-full mb-1">{user.fullName?.split(' ')[0] || 'Member'}</h4>
+                      <button 
+                        onClick={(e) => handleToggleFollow(e, user.uid)}
+                        className={`w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                          currentUserData?.following?.includes(user.uid) ? 'bg-[var(--bg-chat)] text-[var(--text-secondary)]' : 'bg-[var(--primary)] text-white'
+                        }`}
                       >
-                        <img src={user.photoURL || DEFAULT_LOGO} className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-primary/10" referrerPolicy="no-referrer" />
-                        <h4 className="text-[12px] font-black text-zinc-900 truncate w-full mb-1">{user.fullName?.split(' ')[0] || 'Member'}</h4>
-                        <button 
-                          onClick={(e) => handleToggleFollow(e, user.uid)}
-                          className={`w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                            currentUserData?.following?.includes(user.uid) ? 'bg-zinc-100 text-zinc-400' : 'bg-primary text-white'
-                          }`}
-                        >
-                          {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
-                        </button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                        {currentUserData?.following?.includes(user.uid) ? 'Following' : 'Follow'}
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
 
-              {/* Updates Section */}
-              {activeFilter === 'Updates' && (
-                <section className="px-4">
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <Bell size={14} className="text-primary" />
-                      Recent Updates
-                    </h3>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {recommendedUsers.slice(0, 3).map(user => (
-                      <div key={user.uid} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-zinc-100">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                          <Zap size={18} />
+              {/* Recent Updates */}
+              <section className="px-4">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest flex items-center gap-2">
+                    <Bell size={14} className="text-primary" />
+                    Recent Updates
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {recommendedUsers.slice(0, 3).map(user => (
+                    <div key={user.uid} className="flex items-center gap-3 p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)]">
+                      <div className="w-10 h-10 bg-[var(--primary)]/10 rounded-full flex items-center justify-center text-[var(--primary)]">
+                        <Zap size={18} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] text-[var(--text-primary)] font-bold">
+                          <span className="text-[var(--primary)]">@{user.username}</span> posted a new update.
+                        </p>
+                        <p className="text-[9px] text-[var(--text-secondary)] mt-0.5">Just now</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 2. Recent Chats */}
+              <section className="px-4">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest flex items-center gap-2">
+                    <MessageSquare size={14} className="text-emerald-500" />
+                    Recent Chats
+                  </h3>
+                  <button onClick={() => navigate('/chats')} className="text-[10px] font-black text-primary uppercase tracking-widest">View Chats</button>
+                </div>
+                <div className="bg-[var(--bg-card)] rounded-[2.5rem] p-2 shadow-sm border border-[var(--border-color)]">
+                  {recentChats.length > 0 ? (
+                    recentChats.map((chat, idx) => (
+                      <Link 
+                        to={`/chat/${chat.id}`} 
+                        key={chat.id} 
+                        className={`flex items-center gap-4 p-4 hover:bg-[var(--bg-chat)] transition-all ${idx !== recentChats.length - 1 ? 'border-b border-[var(--border-color)]' : ''}`}
+                      >
+                        <img src={chat.avatar} className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-baseline mb-0.5">
+                            <h4 className="text-[14px] font-black text-[var(--text-primary)] truncate">{chat.name}</h4>
+                            <span className="text-[10px] font-bold text-[var(--text-secondary)]">{chat.time}</span>
+                          </div>
+                          <p className="text-[12px] text-[var(--text-secondary)] truncate">{chat.lastMsg}</p>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-[11px] text-zinc-900 font-bold">
-                            <span className="text-primary">@{user.username}</span> posted a new update.
-                          </p>
-                          <p className="text-[9px] text-zinc-400 mt-0.5">Just now</p>
+                        <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-30" />
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center">
+                      <p className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">No recent chats</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* 3. Videos Preview */}
+              <section className="px-4">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest flex items-center gap-2">
+                    <Clapperboard size={14} className="text-rose-500" />
+                    Trending Videos
+                  </h3>
+                  <button onClick={() => navigate('/channels')} className="text-[10px] font-black text-primary uppercase tracking-widest">Watch Videos</button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto no-scrollbar">
+                  {[1, 2, 3, 4].map((i) => (
+                    <motion.div 
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate('/channels')}
+                      key={i} 
+                      className="min-w-[140px] aspect-[9/16] bg-zinc-900 rounded-[2rem] relative overflow-hidden shadow-lg"
+                    >
+                      <img src={`https://picsum.photos/seed/reel${i}/300/533`} className="w-full h-full object-cover opacity-70" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
+                        <div className="flex items-center gap-2 text-white">
+                          <Play size={10} fill="currentColor" />
+                          <span className="text-[9px] font-black tracking-widest uppercase">1.2K</span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
 
-              {/* 2. Recent Chats - Only for For You */}
-              {activeFilter === 'For You' && (
-                <section className="px-4">
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <MessageSquare size={14} className="text-emerald-500" />
-                      Recent Chats
-                    </h3>
-                    <button onClick={() => navigate('/chats')} className="text-[10px] font-black text-primary uppercase tracking-widest">View Chats</button>
-                  </div>
-                  <div className="bg-white rounded-[2.5rem] p-2 shadow-sm border border-zinc-100">
-                    {recentChats.length > 0 ? (
-                      recentChats.map((chat, idx) => (
-                        <Link 
-                          to={`/chat/${chat.id}`} 
-                          key={chat.id} 
-                          className={`flex items-center gap-4 p-4 hover:bg-zinc-50 transition-all ${idx !== recentChats.length - 1 ? 'border-b border-zinc-50' : ''}`}
-                        >
-                          <img src={chat.avatar} className="w-12 h-12 rounded-full object-cover" referrerPolicy="no-referrer" />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-baseline mb-0.5">
-                              <h4 className="text-[14px] font-black text-zinc-900 truncate">{chat.name}</h4>
-                              <span className="text-[10px] font-bold text-zinc-400">{chat.time}</span>
-                            </div>
-                            <p className="text-[12px] text-zinc-500 truncate">{chat.lastMsg}</p>
-                          </div>
-                          <ChevronRight size={16} className="text-zinc-300" />
-                        </Link>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center">
-                        <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">No recent chats</p>
+              {/* 4. Hub Shortcuts (Grid) */}
+              <section className="px-4 mb-4">
+                <div className="flex items-center justify-between mb-4 px-1">
+                  <h3 className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest flex items-center gap-2">
+                    <LayoutGrid size={14} className="text-indigo-500" />
+                    Quick Access
+                  </h3>
+                  <button onClick={() => navigate('/hub')} className="text-[10px] font-black text-primary uppercase tracking-widest">All Apps</button>
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {hubShortcuts.map(item => (
+                    <motion.div 
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => navigate(item.path)}
+                      key={item.id} 
+                      className="bg-[var(--bg-card)] rounded-[1.5rem] p-3 flex flex-col items-center gap-2 shadow-sm border border-[var(--border-color)] cursor-pointer"
+                    >
+                      <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                        <item.icon size={20} />
                       </div>
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {/* 3. Reels Preview - Only for Trending or For You */}
-              {(activeFilter === 'Trending' || activeFilter === 'For You') && (
-                <section className="px-4">
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <Clapperboard size={14} className="text-rose-500" />
-                      Trending Reels
-                    </h3>
-                    <button onClick={() => navigate('/reels')} className="text-[10px] font-black text-primary uppercase tracking-widest">Watch Reels</button>
-                  </div>
-                  <div className="flex gap-3 overflow-x-auto no-scrollbar">
-                    {[1, 2, 3, 4].map((i) => (
-                      <motion.div 
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate('/reels')}
-                        key={i} 
-                        className="min-w-[140px] aspect-[9/16] bg-zinc-900 rounded-[2rem] relative overflow-hidden shadow-lg"
-                      >
-                        <img src={`https://picsum.photos/seed/reel${i}/300/533`} className="w-full h-full object-cover opacity-70" referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-4">
-                          <div className="flex items-center gap-2 text-white">
-                            <Play size={10} fill="currentColor" />
-                            <span className="text-[9px] font-black tracking-widest uppercase">1.2K</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* 4. Hub Shortcuts (Grid) - Always show or only for For You */}
-              {activeFilter === 'For You' && (
-                <section className="px-4 mb-4">
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <h3 className="text-[11px] font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
-                      <LayoutGrid size={14} className="text-indigo-500" />
-                      Quick Access
-                    </h3>
-                    <button onClick={() => navigate('/hub')} className="text-[10px] font-black text-primary uppercase tracking-widest">All Apps</button>
-                  </div>
-                  <div className="grid grid-cols-4 gap-3">
-                    {hubShortcuts.map(item => (
-                      <motion.div 
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate(item.path)}
-                        key={item.id} 
-                        className="bg-white rounded-[1.5rem] p-3 flex flex-col items-center gap-2 shadow-sm border border-zinc-100 cursor-pointer"
-                      >
-                        <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
-                          <item.icon size={20} />
-                        </div>
-                        <span className="text-[9px] font-black text-zinc-900 uppercase tracking-tight">{item.name}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                      <span className="text-[9px] font-black text-[var(--text-primary)] uppercase tracking-tight">{item.name}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
 
             </motion.div>
           )}
