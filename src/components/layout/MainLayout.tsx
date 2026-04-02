@@ -13,19 +13,17 @@ export default function MainLayout() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Paths where BottomNav should be visible
-  const tabPaths = ['/', '/reels', '/chats', '/hub', '/profile'];
-  const showBottomNav = tabPaths.includes(location.pathname);
+  const tabPaths = ['/', '/stories', '/hub', '/calls', '/profile'];
+  const isChatScreen = location.pathname.startsWith('/chat/');
+  const showBottomNav = tabPaths.includes(location.pathname) || isChatScreen;
   
   // Paths where TopNav should be visible
-  const showTopNav = tabPaths.includes(location.pathname);
+  const showTopNav = tabPaths.includes(location.pathname) && !isChatScreen;
 
   // Determine current tab for ResourcesNav
   const getTab = (path: string): TabType | null => {
-    if (path === '/') return 'home';
-    if (path === '/reels') return 'reels';
-    if (path === '/chats') return 'chats';
-    if (path === '/hub') return 'hub';
-    if (path === '/profile') return 'profile';
+    if (path === '/') return 'chats';
+    if (path === '/calls') return 'calls';
     return null;
   };
 
@@ -38,7 +36,7 @@ export default function MainLayout() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {showTopNav && <TopNav />}
+      {showTopNav && <div className="lg:hidden"><TopNav /></div>}
       
       <div 
         ref={scrollContainerRef}
@@ -51,7 +49,7 @@ export default function MainLayout() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="overflow-hidden shrink-0"
+              className="overflow-hidden shrink-0 lg:hidden"
             >
               <ResourcesNav tab={currentTab} />
             </motion.div>
