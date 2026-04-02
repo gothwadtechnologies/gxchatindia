@@ -99,11 +99,11 @@ export default function SettingsScreen() {
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-gradient-to-r from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] z-50 border-b border-white/10 shadow-lg">
-        <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-          <ArrowLeft size={24} className="text-white" />
+      <div className="shrink-0 flex items-center gap-3 px-4 h-16 bg-[var(--header-bg)] z-50 border-b border-[var(--border-color)] shadow-sm">
+        <button onClick={() => navigate(-1)} className="hover:bg-[var(--bg-chat)] p-2 rounded-full transition-colors">
+          <ArrowLeft size={24} className="text-[var(--text-primary)]" />
         </button>
-        <h1 className="text-lg font-bold text-white tracking-tight">
+        <h1 className="text-lg font-bold text-[var(--text-primary)] tracking-tight">
           Settings
         </h1>
       </div>
@@ -112,7 +112,7 @@ export default function SettingsScreen() {
         {/* Settings Sections */}
         {menuSections.map((section) => (
           <div key={section.title} className="mb-6">
-            <h3 className="px-6 mb-2 text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+            <h3 className="px-6 mb-2 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">
               {section.title}
             </h3>
             <div className="bg-[var(--bg-card)] border-y border-[var(--border-color)]">
@@ -120,18 +120,18 @@ export default function SettingsScreen() {
                 <button 
                   key={item.label}
                   onClick={item.onClick}
-                  className={`w-full flex items-center gap-4 px-6 py-4 hover:bg-zinc-50/10 transition-colors ${
+                  className={`w-full flex items-center gap-4 px-6 py-4 hover:bg-[var(--bg-chat)] transition-colors ${
                     index !== section.items.length - 1 ? 'border-b border-[var(--border-color)]' : ''
                   }`}
                 >
-                  <div className={`p-2 rounded-lg bg-zinc-50/10 ${item.color}`}>
+                  <div className={`p-2 rounded-lg bg-[var(--bg-chat)] ${item.color}`}>
                     <item.icon size={20} />
                   </div>
                   <div className="flex-1 text-left">
                     <h4 className="text-sm font-bold text-[var(--text-primary)]">{item.label}</h4>
                     <p className="text-[11px] text-[var(--text-secondary)]">{item.sub}</p>
                   </div>
-                  <ChevronRight size={18} className="text-zinc-300" />
+                  <ChevronRight size={18} className="text-[var(--text-secondary)] opacity-30" />
                 </button>
               ))}
             </div>
@@ -142,7 +142,7 @@ export default function SettingsScreen() {
         <div className="mt-8 px-6">
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 bg-[var(--bg-card)] hover:bg-red-50/10 text-red-600 py-4 rounded-2xl font-bold transition-all border border-[var(--border-color)] hover:border-red-100 shadow-sm"
+            className="w-full flex items-center justify-center gap-2 bg-[var(--bg-card)] hover:bg-red-500/10 text-red-500 py-4 rounded-2xl font-bold transition-all border border-[var(--border-color)] hover:border-red-500/30 shadow-sm"
           >
             <LogOut size={20} />
             <span>Log Out</span>
