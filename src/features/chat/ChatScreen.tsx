@@ -891,8 +891,8 @@ export default function ChatScreen() {
                         activeMessageMenu?.id === msg.id ? 'z-50' : 'z-10'
                       } ${
                         isMe 
-                          ? 'bg-[var(--bubble-own)] text-[#303030]' 
-                          : 'bg-[var(--bubble-other)] text-[#303030]'
+                          ? 'bg-[var(--bubble-own)] text-[var(--bubble-text-own)]' 
+                          : 'bg-[var(--bubble-other)] text-[var(--bubble-text-other)]'
                       }`}
                     >
                       {/* Reaction Picker on Click */}
@@ -1032,7 +1032,7 @@ export default function ChatScreen() {
       </div>
 
       {/* Input */}
-      <div className="shrink-0 bg-blue-600 p-1.5 pb-3 z-50 shadow-[0_-4px_20px_rgba(37,99,235,0.2)] relative border-t border-white/10">
+      <div className="shrink-0 bg-[var(--bg-main)] p-1.5 pb-3 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] relative border-t border-[var(--border-color)]">
         <ChatMessageMenu 
           activeMessageMenu={activeMessageMenu}
           setActiveMessageMenu={setActiveMessageMenu}
@@ -1072,10 +1072,10 @@ export default function ChatScreen() {
             chatId={chatId}
           />
 
-          <div className="flex-1 bg-white/10 backdrop-blur-md rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-white/20">
+          <div className="flex-1 bg-[var(--bg-chat)] rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-[var(--border-color)]">
             {imagePreviewUrl && (
               <div className="mb-2 relative w-fit group">
-                <div className="relative rounded-xl overflow-hidden border border-white/20 shadow-lg max-w-[120px]">
+                <div className="relative rounded-xl overflow-hidden border border-[var(--border-color)] shadow-lg max-w-[120px]">
                   <img src={imagePreviewUrl} alt="Preview" className="w-full h-auto" />
                   {isUploading && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
@@ -1108,7 +1108,7 @@ export default function ChatScreen() {
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
               rows={1}
-              className="flex-1 bg-transparent text-[16px] focus:outline-none text-white placeholder:text-white/60 py-1.5 resize-none max-h-[120px] leading-tight"
+              className="flex-1 bg-transparent text-[16px] focus:outline-none text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/60 py-1.5 resize-none max-h-[120px] leading-tight"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -1132,7 +1132,7 @@ export default function ChatScreen() {
           <button 
             type="submit"
             disabled={(!newMessage.trim() && !selectedImageFile) || isSending || isUploading}
-            className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-blue-600 disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
+            className="bg-[var(--primary)] w-11 h-11 flex items-center justify-center rounded-full text-white disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
           >
             {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
           </button>
