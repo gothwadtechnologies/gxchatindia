@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { collection, query, where, onSnapshot, getDoc, getDocs, doc, limit, orderBy } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase.ts';
 import { toDate } from '../../utils/dateUtils.ts';
-import { useLayout } from '../../contexts/LayoutContext.tsx';
 import { useSearch } from '../../contexts/SearchContext.tsx';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, MessageCircle, MoreVertical, Phone, Video, ArrowUpRight, ArrowDownLeft, Plus } from 'lucide-react';
@@ -11,12 +10,8 @@ import { CacheService } from '../../services/CacheService.ts';
 export default function ChatsTab() {
   const navigate = useNavigate();
   const { searchTerm } = useSearch();
-  const { activeFilters } = useLayout();
-  const activeFilter = activeFilters['chats'];
   const [conversations, setConversations] = useState<any[]>([]);
-  const [calls, setCalls] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [callsLoading, setCallsLoading] = useState(true);
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -140,61 +135,6 @@ export default function ChatsTab() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const q = query(collection(db, "calls"));
-
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const allCalls = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) }));
-      
-      const relevantCalls = allCalls.filter((data: any) => {
-        const isCaller = data.callerId === auth.currentUser?.uid;
-        const isReceiver = data.receiverId === auth.currentUser?.uid;
-        return (isCaller || isReceiver) && data.status === 'ended';
-      }).sort((a: any, b: any) => {
-        const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-        const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-        return timeB - timeA;
-      });
-
-      const callList = await Promise.all(relevantCalls.map(async (data: any) => {
-        const isCaller = data.callerId === auth.currentUser?.uid;
-        const otherUserId = isCaller ? data.receiverId : data.callerId;
-        
-        if (!otherUserId) {
-          return {
-            id: data.id,
-            otherUserId: '',
-            user: 'Unknown User',
-            avatar: `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
-            type: data.type,
-            isIncoming: !isCaller,
-            time: toDate(data.timestamp) ? new Date(toDate(data.timestamp)!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'
-          };
-        }
-
-        const userDoc = await getDoc(doc(db, "users", otherUserId));
-        const userData = userDoc.data();
-
-        return {
-          id: data.id,
-          otherUserId,
-          user: userData?.fullName || userData?.username || 'Unknown User',
-          avatar: userData?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
-          type: data.type,
-          isIncoming: !isCaller,
-          time: toDate(data.timestamp) ? new Date(toDate(data.timestamp)!).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'
-        };
-      }));
-
-      setCalls(callList);
-      setCallsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   const formatTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -204,146 +144,90 @@ export default function ChatsTab() {
     return date.toLocaleDateString();
   };
 
-  const filteredConversations = conversations.filter(c => 
-    c.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.username.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredCalls = calls.filter(c => 
-    c.user.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredConversations = conversations.filter(c => {
+    const matchesSearch = c.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         c.username.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesSearch;
+  });
 
   return (
     <div className="h-full flex flex-col bg-[var(--bg-card)] overflow-hidden">
+      <div className="px-4 pt-6 pb-2">
+        <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter italic italic">Chats</h2>
+        <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] mt-1">Messages</p>
+      </div>
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
-        {/* User List (Chats or Calls) */}
+        {/* User List (Chats) */}
         <div className="flex flex-col">
-          {activeFilter === 'Calls' ? (
-            /* Calls List */
-            callsLoading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
-                <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading Calls...</p>
-              </div>
-            ) : filteredCalls.length > 0 ? (
-              filteredCalls.map(call => (
-                <div key={call.id} className="flex items-center gap-4 px-4 py-4 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group">
-                  <div className="relative">
-                    <img 
-                      src={call.avatar} 
-                      className="w-14 h-14 rounded-full object-cover border-2 border-[var(--bg-card)] shadow-sm group-hover:scale-105 transition-transform"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <h3 className="text-[15px] truncate font-bold text-[var(--text-primary)]">
-                        {call.user}
-                      </h3>
-                      <span className="text-[10px] whitespace-nowrap text-[var(--text-secondary)]">
-                        {call.time}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 text-[var(--text-secondary)] text-[11px]">
-                      {call.isIncoming ? (
-                        <ArrowDownLeft size={12} className="text-emerald-500" />
-                      ) : (
-                        <ArrowUpRight size={12} className="text-[var(--primary)]" />
-                      )}
-                      <span>{call.isIncoming ? 'Incoming' : 'Outgoing'}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 text-[var(--primary)]">
-                    <Link to={`/call/${call.otherUserId}?type=${call.type}`}>
-                      {call.type === 'video' ? <Video size={20} /> : <Phone size={20} />}
-                    </Link>
-                  </div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
+              <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading Chats...</p>
+            </div>
+          ) : filteredConversations.length > 0 ? (
+            filteredConversations.map(chat => (
+              <Link 
+                to={`/chat/${chat.otherUserId}`} 
+                key={chat.id} 
+                className="flex items-center gap-4 px-4 py-4 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group"
+              >
+                <div className="relative">
+                  <img 
+                    src={chat.avatar} 
+                    className="w-14 h-14 rounded-full object-cover border-2 border-[var(--bg-card)] shadow-sm group-hover:scale-105 transition-transform"
+                    referrerPolicy="no-referrer"
+                  />
+                  {chat.isOnline && (
+                    <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[var(--bg-card)] rounded-full"></div>
+                  )}
                 </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 px-10 text-center gap-4">
-                <div className="p-4 bg-[var(--bg-main)] rounded-full text-[var(--text-secondary)]">
-                  <Phone size={40} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">No call history</h3>
-                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                    Calls you make or receive will appear here.
-                  </p>
-                </div>
-              </div>
-            )
-          ) : (
-            /* Chats List */
-            loading ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
-                <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Loading Chats...</p>
-              </div>
-            ) : filteredConversations.length > 0 ? (
-              filteredConversations.map(chat => (
-                <Link 
-                  to={`/chat/${chat.otherUserId}`} 
-                  key={chat.id} 
-                  className="flex items-center gap-4 px-4 py-4 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group"
-                >
-                  <div className="relative">
-                    <img 
-                      src={chat.avatar} 
-                      className="w-14 h-14 rounded-full object-cover border-2 border-[var(--bg-card)] shadow-sm group-hover:scale-105 transition-transform"
-                      referrerPolicy="no-referrer"
-                    />
-                    {chat.isOnline && (
-                      <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[var(--bg-card)] rounded-full"></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-baseline mb-0.5">
+                    <h3 className={`text-[15px] truncate ${chat.unread ? 'font-black text-[var(--text-primary)]' : 'font-bold text-[var(--text-primary)]'}`}>
+                      {chat.user}
+                    </h3>
+                    <span className={`text-[10px] whitespace-nowrap ${chat.unread ? 'text-[var(--primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
+                      {chat.time}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <p className={`text-xs truncate ${chat.unread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
+                      {chat.lastMsg}
+                    </p>
+                    {chat.unread && (
+                      <div className="min-w-[18px] h-[18px] px-1 bg-[var(--primary)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--primary-shadow)] ml-2">
+                        <span className="text-[10px] text-white font-bold">{chat.unreadCount}</span>
+                      </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <h3 className={`text-[15px] truncate ${chat.unread ? 'font-black text-[var(--text-primary)]' : 'font-bold text-[var(--text-primary)]'}`}>
-                        {chat.user}
-                      </h3>
-                      <span className={`text-[10px] whitespace-nowrap ${chat.unread ? 'text-[var(--primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
-                        {chat.time}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className={`text-xs truncate ${chat.unread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
-                        {chat.lastMsg}
-                      </p>
-                      {chat.unread && (
-                        <div className="min-w-[18px] h-[18px] px-1 bg-[var(--primary)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--primary-shadow)] ml-2">
-                          <span className="text-[10px] text-white font-bold">{chat.unreadCount}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 px-10 text-center gap-4">
-                <div className="p-4 bg-[var(--bg-main)] rounded-full text-[var(--text-secondary)]">
-                  <MessageCircle size={40} />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">No messages yet</h3>
-                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                    Start a conversation with your friends in GxChat India.
-                  </p>
-                </div>
-                <button 
-                  onClick={() => navigate('/explore')}
-                  className="mt-2 bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-[var(--primary-shadow)] hover:opacity-90 transition-all"
-                >
-                  Find Friends
-                </button>
+              </Link>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 px-10 text-center gap-4">
+              <div className="p-4 bg-[var(--bg-main)] rounded-full text-[var(--text-secondary)]">
+                <MessageCircle size={40} />
               </div>
-            )
+              <div>
+                <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">No messages yet</h3>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  Start a conversation with your friends in GxChat India.
+                </p>
+              </div>
+              <button 
+                onClick={() => navigate('/explore')}
+                className="mt-2 bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-[var(--primary-shadow)] hover:opacity-90 transition-all"
+              >
+                Find Friends
+              </button>
+            </div>
           )}
         </div>
       </div>
 
       {/* Floating Action Button */}
-      <div className="absolute bottom-6 right-8 z-40">
+      <div className="absolute bottom-20 right-6 z-40 lg:hidden">
         <button 
           onClick={() => navigate('/explore')}
           className="p-4 bg-[var(--primary)] text-white rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border-2 border-white/20"
