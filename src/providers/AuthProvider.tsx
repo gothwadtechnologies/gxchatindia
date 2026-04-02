@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let unsubscribeConnected: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      console.log('Auth State Changed:', currentUser ? 'User Logged In' : 'No User');
       try {
         // Cleanup previous listeners if any
         if (unsubscribeDoc) unsubscribeDoc();
@@ -84,11 +85,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }, (err) => console.warn('User doc snapshot error:', err));
 
           setLoading(false);
-          setIsAuthReady(true);
+          // Small delay to ensure state is synchronized
+          setTimeout(() => setIsAuthReady(true), 100);
         } else {
           setUserData(null);
           setLoading(false);
-          setIsAuthReady(true);
+          setTimeout(() => setIsAuthReady(true), 100);
         }
       } catch (e) {
         console.error('Auth state change error:', e);
