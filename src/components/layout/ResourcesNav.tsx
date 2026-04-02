@@ -13,6 +13,7 @@ import {
   Search, 
   Compass, 
   Bell, 
+  TrendingUp,
   Wrench, 
   LayoutGrid, 
   Gamepad2, 
@@ -22,40 +23,39 @@ import {
 
 import { useLayout } from '../../contexts/LayoutContext.tsx';
 
-export type TabType = 'home' | 'reels' | 'chats' | 'hub' | 'profile';
+export type TabType = 'stories' | 'hub' | 'chats' | 'calls' | 'profile';
 
 interface ResourcesNavProps {
   tab: TabType;
 }
 
 const tabFilters: Record<TabType, { id: string; label: string; icon: any }[]> = {
-  home: [
+  stories: [
     { id: 'For You', label: 'For You', icon: Heart },
     { id: 'Search', label: 'Search', icon: Search },
-    { id: 'Explore', label: 'Explore', icon: Compass },
+    { id: 'Stories', label: 'Stories', icon: Compass },
     { id: 'Updates', label: 'Updates', icon: Bell }
   ],
-  reels: [
-    { id: 'Status', label: 'Status', icon: CircleDashed },
-    { id: 'Reels', label: 'Reels', icon: Clapperboard },
-    { id: 'Video', label: 'Video', icon: Video },
-    { id: 'Posts', label: 'Posts', icon: Grid }
+  hub: [
+    { id: 'Explore', label: 'Explore', icon: Compass },
+    { id: 'Following', label: 'Following', icon: Users },
+    { id: 'Popular', label: 'Popular', icon: TrendingUp },
+    { id: 'New', label: 'New', icon: Bell }
   ],
   chats: [
-    { id: 'Calls', label: 'Calls', icon: Phone },
+    { id: 'All', label: 'All', icon: MessageSquare },
+    { id: 'Unread', label: 'Unread', icon: Bell },
     { id: 'Chats', label: 'Chats', icon: MessageSquare },
     { id: 'Groups', label: 'Groups', icon: Users },
     { id: 'Requests', label: 'Requests', icon: UserPlus }
   ],
-  hub: [
-    { id: 'Tools', label: 'Tools', icon: Wrench },
-    { id: 'Apps', label: 'Apps', icon: LayoutGrid },
-    { id: 'Games', label: 'Games', icon: Gamepad2 },
-    { id: 'Others', label: 'Others', icon: MoreHorizontal }
+  calls: [
+    { id: 'All', label: 'All', icon: Phone },
+    { id: 'Missed', label: 'Missed', icon: Phone }
   ],
   profile: [
     { id: 'Post', label: 'Post', icon: Grid },
-    { id: 'Reels', label: 'Reels', icon: Clapperboard },
+    { id: 'Videos', label: 'Videos', icon: Clapperboard },
     { id: 'Video', label: 'Video', icon: Video },
     { id: 'Upload', label: 'Upload', icon: Upload }
   ]
@@ -63,32 +63,64 @@ const tabFilters: Record<TabType, { id: string; label: string; icon: any }[]> = 
 
 export default function ResourcesNav({ tab }: ResourcesNavProps) {
   const { activeFilters, setActiveFilter } = useLayout();
-  const activeFilter = activeFilters[tab];
+  const activeFilter = activeFilters[tab] || '';
   const filters = tabFilters[tab] || [];
 
+  if (tab === 'chats') {
+    return (
+      <div className="w-full bg-[var(--bg-card)] shrink-0 z-40 lg:hidden">
+        <div className="flex items-center gap-2 px-4 py-2 pb-3 overflow-x-auto no-scrollbar">
+          {filters.map((filter) => {
+            const isActive = activeFilter.toLowerCase() === filter.id.toLowerCase();
+            
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(tab, filter.id)}
+                className={`px-3.5 py-1 rounded-full text-[12px] font-semibold transition-all whitespace-nowrap ${
+                  isActive 
+                    ? 'bg-[var(--primary)] text-white' 
+                    : 'bg-[var(--bg-main)] text-[var(--text-secondary)] hover:bg-[var(--border-color)]'
+                }`}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-transparent px-2 h-14 flex items-center shrink-0 z-40">
-      <div className="flex gap-1.5 w-full">
+    <div className="w-full bg-[var(--header-bg)] border-b border-[var(--border-color)] shrink-0 z-40 lg:hidden">
+      <div className="flex px-2">
         {filters.map((filter) => {
           const isActive = activeFilter.toLowerCase() === filter.id.toLowerCase();
           const Icon = filter.icon;
 
           return (
-            <motion.button
+            <button
               key={filter.id}
-              whileTap={{ scale: 0.95 }}
               onClick={() => setActiveFilter(tab, filter.id)}
-              className={`flex-1 flex items-center justify-center gap-1 px-1 py-2.5 rounded-xl transition-all duration-300 border min-w-0 ${
-                isActive 
-                  ? 'bg-white text-[#9333ea] border-white shadow-md' 
-                  : 'bg-black/5 text-black/60 border-transparent hover:text-black hover:bg-black/10'
+              className={`flex-1 flex items-center justify-center gap-2 py-3.5 transition-all relative min-w-0 ${
+                isActive ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <Icon size={14} strokeWidth={isActive ? 3 : 2} className="shrink-0" />
-              <span className="text-[9px] font-bold uppercase tracking-tighter truncate">
+              <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
+              <span className="text-[11px] font-bold uppercase tracking-wider truncate">
                 {filter.label}
               </span>
-            </motion.button>
+              
+              {isActive && (
+                <motion.div 
+                  layoutId={`nav-indicator-${tab}`}
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)]"
+                  initial={false}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
+            </button>
           );
         })}
       </div>
