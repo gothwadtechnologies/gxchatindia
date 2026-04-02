@@ -31,10 +31,10 @@ export default function ProfileContent({ posts, activeTab }: ProfileContentProps
         </div>
       )}
 
-      {activeTab === 'Reels' && (
+      {activeTab === 'Videos' && (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--text-secondary)]">
           <Clapperboard size={48} strokeWidth={1.5} />
-          <p className="mt-4 text-[11px] font-bold uppercase tracking-widest">No Reels yet</p>
+          <p className="mt-4 text-[11px] font-bold uppercase tracking-widest">No Videos yet</p>
         </div>
       )}
 
