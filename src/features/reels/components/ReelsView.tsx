@@ -3,10 +3,10 @@ import { Play, Heart, MessageCircle, Share2, Music } from 'lucide-react';
 
 export default function ReelsView() {
   return (
-    <div className="flex-1 overflow-y-auto no-scrollbar pb-10 px-4 pt-4">
+    <div className="flex-1 pb-10 px-4 pt-4">
       <div className="grid grid-cols-2 gap-4">
         {[1, 2, 3, 4, 5, 6].map((reel) => (
-          <div key={reel} className="aspect-[9/16] bg-zinc-900 rounded-3xl relative overflow-hidden group">
+          <div key={reel} className="aspect-[9/16] bg-[var(--bg-chat)] rounded-3xl relative overflow-hidden group border border-[var(--border-color)]">
             <img 
               src={`https://picsum.photos/seed/reel${reel}/400/700`} 
               className="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500" 
