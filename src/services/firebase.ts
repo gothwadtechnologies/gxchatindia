@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, browserSessionPersistence, inMemoryPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getDatabase, ref, onValue, set, onDisconnect, serverTimestamp as rtdbTimestamp } from "firebase/database";
@@ -20,6 +20,34 @@ const app = initializeApp(firebaseConfig);
 
 // Export services
 export const auth = getAuth(app);
+
+// Safe persistence check
+const getSafePersistence = () => {
+  try {
+    // Accessing window.localStorage itself can throw in some iframe contexts
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return browserLocalPersistence;
+    }
+  } catch (e) {
+    console.warn("LocalStorage access denied, falling back to session/memory persistence.");
+  }
+  
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      return browserSessionPersistence;
+    }
+  } catch (e) {
+    // Fallback to memory
+  }
+  
+  return inMemoryPersistence;
+};
+
+// Set persistence explicitly to local with fallback
+setPersistence(auth, getSafePersistence()).catch((err) => {
+  console.error("Auth persistence error:", err);
+});
+
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 export const storage = getStorage(app);
