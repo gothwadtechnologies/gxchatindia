@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { APP_CONFIG } from '../../config/appConfig';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth, db, googleProvider } from '../../services/firebase.ts';
+import { auth, db, googleProvider, githubProvider } from '../../services/firebase.ts';
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { motion } from 'motion/react';
-import { Eye, EyeOff, Mail, Lock, User as UserIcon, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, ArrowRight, Github } from 'lucide-react';
 
 export default function LoginScreen() {
   const [identifier, setIdentifier] = useState(''); // Can be email or username
@@ -14,6 +14,8 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [showSocial, setShowSocial] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,16 +26,30 @@ export default function LoginScreen() {
     let loginEmail = identifier;
 
     try {
-      if (!identifier.includes('@')) {
+      // Check if identifier is email, phone, or username
+      if (identifier.includes('@')) {
+        loginEmail = identifier;
+      } else {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", identifier.toLowerCase().trim()));
+        let q;
+        
+        // Check if it's a phone number (digits only or starts with +)
+        const isPhone = /^\+?[0-9]+$/.test(identifier.trim());
+        
+        if (isPhone) {
+          q = query(usersRef, where("phoneNumber", "==", identifier.trim()));
+        } else {
+          q = query(usersRef, where("username", "==", identifier.toLowerCase().trim()));
+        }
+        
         const querySnapshot = await getDocs(q);
         
         if (querySnapshot.empty) {
-          throw new Error("Username not found");
+          throw new Error(isPhone ? "Phone number not found" : "Username not found");
         }
         
-        loginEmail = querySnapshot.docs[0].data().email;
+        const userData = querySnapshot.docs[0].data();
+        loginEmail = (userData as any).email;
       }
 
       await signInWithEmailAndPassword(auth, loginEmail, password);
@@ -65,138 +81,174 @@ export default function LoginScreen() {
     }
   };
 
-  return (
-    <div className="h-full overflow-y-auto bg-[#f8faff] flex flex-col items-center relative">
-      {/* Dynamic Multi-color Gradient Background - Fixed to stay while scrolling */}
-      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] opacity-95"></div>
+  const handleGithubSignIn = async () => {
+    setGithubLoading(true);
+    setError('');
+    try {
+      const result = await signInWithPopup(auth, githubProvider);
+      const user = result.user;
       
-      {/* Optional: Add a secondary glow at the bottom for more depth */}
-      <div className="fixed bottom-0 left-0 w-full h-[50%] bg-gradient-to-t from-[#f43f5e]/20 to-transparent pointer-events-none"></div>
-      
-      <div className="w-full px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
-        {/* Branding Area */}
-        <motion.div 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex flex-col items-center mb-10 text-white"
-        >
-          <img 
-            src={APP_CONFIG.LOGO_URL} 
-            alt={`${APP_CONFIG.NAME} Logo`} 
-            className="w-16 h-16 mb-4 object-contain brightness-0 invert"
-            referrerPolicy="no-referrer"
-          />
-          <h1 className="text-2xl font-black tracking-tighter italic">GxChat India</h1>
-        </motion.div>
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        navigate('/complete-profile');
+      } else {
+        navigate('/');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setGithubLoading(false);
+    }
+  };
 
-        {/* Main Card */}
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="w-full bg-white rounded-[40px] shadow-2xl shadow-indigo-100/50 px-8 py-10 flex flex-col"
-        >
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Sign In To Your Account.</h2>
-            <p className="text-zinc-500 text-sm font-medium">Unleash your social world today.</p>
+  return (
+    <div className="h-full overflow-y-auto bg-white flex flex-col items-center relative font-sans">
+      <div className="w-full max-w-md px-8 pt-16 pb-12 z-10 flex flex-col min-h-full relative">
+        {/* Branding Overlay - Absolute to not push content down */}
+        <div className="absolute top-6 left-0 right-0 flex items-center justify-center gap-2">
+          <div className="bg-zinc-50 px-3 py-1.5 rounded-full border border-zinc-100 flex items-center gap-2 shadow-sm">
+            <img 
+              src={APP_CONFIG.LOGO_URL} 
+              alt="Logo" 
+              className="w-4 h-4 object-contain"
+              referrerPolicy="no-referrer"
+            />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-800">GxChat India</span>
+          </div>
+        </div>
+
+        {/* Header Area */}
+        <div className="text-center mb-10">
+          <h2 className="text-2xl font-bold text-zinc-900 mb-2">Welcome back</h2>
+          <p className="text-zinc-500 text-xs leading-relaxed max-w-[240px] mx-auto">
+            Connect with friends, share your world, and chat in real-time with GxChat India.
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-zinc-800 ml-1">Email, Username or Phone</label>
+            <input 
+              type="text" 
+              placeholder="Enter email, username or phone"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              className="w-full px-5 py-4 bg-zinc-100 border-none rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#375a7f]/20 transition-all placeholder:text-zinc-400"
+              required
+            />
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-700 ml-1">Username or Email</label>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
-                  <Mail size={18} />
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="Enter your email or username"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-zinc-400"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center px-1">
-                <label className="text-xs font-bold text-zinc-700">Password</label>
-                <button type="button" className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700">Forgot Password?</button>
-              </div>
-              <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
-                  <Lock size={18} />
-                </div>
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3.5 bg-zinc-50 border border-zinc-200 rounded-2xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all placeholder:text-zinc-400"
-                  required
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 px-1">
-              <input type="checkbox" id="remember" className="w-4 h-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500" />
-              <label htmlFor="remember" className="text-xs font-bold text-zinc-600 cursor-pointer">Remember For 30 Days</label>
-            </div>
-            
-            <button 
-              type="submit"
-              disabled={loading || googleLoading || !identifier || password.length < 6}
-              className="w-full bg-indigo-600 text-white text-sm font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98]"
-            >
-              <span>{loading ? 'Signing in...' : 'Sign In'}</span>
-              {!loading && <ArrowRight size={18} />}
-            </button>
-
-            {error && (
-              <motion.p 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg"
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-zinc-800 ml-1">Password</label>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Enter you password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-5 py-4 bg-zinc-100 border-none rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#375a7f]/20 transition-all placeholder:text-zinc-400"
+                required
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
               >
-                {error}
-              </motion.p>
-            )}
-
-            <div className="text-center">
-              <span className="text-xs font-bold text-zinc-500">Don't have an account? </span>
-              <Link to="/signup" className="text-xs font-bold text-indigo-600 hover:underline">Sign Up</Link>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
+          </div>
 
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-zinc-100"></div>
-              <span className="flex-shrink mx-4 text-[10px] font-black text-zinc-300 uppercase tracking-widest">OR</span>
-              <div className="flex-grow border-t border-zinc-100"></div>
+          <div className="flex justify-between items-center px-1">
+            <div className="flex items-center gap-2">
+              <input 
+                type="checkbox" 
+                id="remember" 
+                className="w-4 h-4 rounded border-zinc-300 text-[#375a7f] focus:ring-[#375a7f] accent-[#375a7f]" 
+              />
+              <label htmlFor="remember" className="text-xs font-bold text-zinc-800 cursor-pointer">Remember me</label>
             </div>
+            <Link to="/forgot-password" title="Forgot password?" className="text-xs font-bold text-red-500 hover:text-red-600">Forgot password?</Link>
+          </div>
+          
+          <button 
+            type="submit"
+            disabled={loading || googleLoading || !identifier || password.length < 6}
+            style={{ backgroundColor: '#375a7f' }}
+            className="w-full text-white text-sm font-bold py-4 rounded-2xl transition-all disabled:opacity-70 flex items-center justify-center gap-2 active:scale-[0.98] shadow-sm"
+          >
+            <span>{loading ? 'Signing in...' : 'Sign in'}</span>
+          </button>
 
+          {error && (
+            <motion.p 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <div className="text-center py-2">
             <button 
               type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading || googleLoading}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-zinc-200 py-3.5 rounded-2xl text-sm font-bold text-zinc-700 hover:bg-zinc-50 transition-all active:scale-[0.98]"
+              onClick={() => setShowSocial(!showSocial)}
+              className="text-[11px] font-bold text-zinc-400 hover:text-zinc-500 transition-colors tracking-tight"
             >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" />
-              <span>{googleLoading ? 'Connecting...' : 'Sign In With Google'}</span>
+              {showSocial ? (
+                <>I'm not using gxchat on web browser <span className="text-blue-600">click here</span></>
+              ) : (
+                <>I'm using gxchat on web browser <span className="text-blue-600">click here</span></>
+              )}
             </button>
-          </form>
-        </motion.div>
+          </div>
 
-        {/* Footer */}
-        <div className="mt-auto pt-10 pb-6 flex flex-col items-center gap-1">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">© 2026 GxChat India</span>
-          <span className="text-[9px] font-medium text-zinc-300 uppercase tracking-[0.2em]">from Gothwad technologies</span>
+          <AnimatePresence>
+            {showSocial && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="space-y-3 overflow-hidden"
+              >
+                <button 
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading || googleLoading || githubLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-zinc-100 py-4 rounded-2xl text-sm font-bold text-zinc-800 hover:bg-zinc-200 transition-all active:scale-[0.98]"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" />
+                  <span>{googleLoading ? 'Connecting...' : 'Continue with Google'}</span>
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={handleGithubSignIn}
+                  disabled={loading || googleLoading || githubLoading}
+                  className="w-full flex items-center justify-center gap-3 bg-zinc-100 py-4 rounded-2xl text-sm font-bold text-zinc-800 hover:bg-zinc-200 transition-all active:scale-[0.98]"
+                >
+                  <Github size={20} />
+                  <span>{githubLoading ? 'Connecting...' : 'Continue with GitHub'}</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="text-center pt-8">
+            <span className="text-xs font-bold text-zinc-500">Don't have an account? </span>
+            <Link to="/signup" className="text-xs font-bold text-zinc-800 hover:underline">Sign up</Link>
+          </div>
+        </form>
+
+        {/* Footer at the very bottom */}
+        <div className="mt-auto pt-12 flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2 text-[10px] font-bold">
+            <Link to="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+            <span className="text-zinc-900">&</span>
+            <Link to="/terms" className="text-blue-600 hover:underline">Terms and Conditions</Link>
+          </div>
+          <span className="text-[9px] font-black text-zinc-900 uppercase tracking-widest">Gothwad Technologies</span>
         </div>
       </div>
     </div>
