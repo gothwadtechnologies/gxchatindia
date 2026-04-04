@@ -34,7 +34,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="w-full lg:hidden bg-[var(--nav-bg)] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-1px_10px_rgba(0,0,0,0.05)] shrink-0 border-t border-[var(--border-color)] pb-safe">
+    <div className="w-full bg-[var(--nav-bg)] px-2 py-1 flex justify-around items-center z-50 shadow-[0_-1px_10px_rgba(0,0,0,0.1)] shrink-0 border-t border-white/10 pb-safe">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location.pathname === item.path;
@@ -51,7 +51,7 @@ export default function BottomNav() {
                   scale: isActive ? 1.1 : 1,
                   y: isActive ? -2 : 0
                 }}
-                className={`transition-colors duration-300 ${isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}
+                className={`transition-colors duration-300 ${isActive ? 'text-[var(--nav-text)]' : 'text-[var(--nav-text)]/60 group-hover:text-[var(--nav-text)]'}`}
               >
                 <Icon 
                   size={26} 
@@ -63,14 +63,14 @@ export default function BottomNav() {
                 <motion.div 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[var(--bg-card)] shadow-sm z-10"
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[var(--nav-bg)] shadow-sm z-10"
                 >
                   {item.badge > 9 ? '9+' : item.badge}
                 </motion.div>
               )}
             </div>
             
-            <span className={`text-[10px] mt-1 font-bold transition-all duration-300 ${isActive ? 'text-[var(--text-primary)] opacity-100' : 'text-[var(--text-secondary)] opacity-70 group-hover:opacity-100'}`}>
+            <span className={`text-[10px] mt-1 font-bold transition-all duration-300 ${isActive ? 'text-[var(--nav-text)] opacity-100' : 'text-[var(--nav-text)]/60 opacity-70 group-hover:opacity-100'}`}>
               {item.label}
             </span>
 
@@ -78,7 +78,7 @@ export default function BottomNav() {
             {isActive && (
               <motion.div 
                 layoutId="nav-indicator"
-                className="absolute top-0 w-8 h-1 bg-[var(--primary)] rounded-full"
+                className="absolute top-0 w-8 h-1 bg-white rounded-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
