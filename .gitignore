@@ -5,3 +5,14 @@ coverage/
 *.log
 .env*
 !.env.example
+package-lock.json
+yarn.lock
+dist
+.DS_Store
+*.log
+.env*
+!.env.example
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+pnpm-workspace.yaml
