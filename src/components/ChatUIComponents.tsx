@@ -73,13 +73,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   };
   
   return (
-    <div className="shrink-0 flex items-center justify-between px-4 h-16 bg-[var(--header-bg)] z-50 border-b border-[var(--border-color)] shadow-sm">
-      <div className="flex items-center gap-2">
-        <button onClick={() => navigate(-1)} className="lg:hidden hover:bg-[var(--bg-chat)] p-1.5 rounded-full transition-colors">
-          <ArrowLeft size={22} className="text-[var(--text-primary)]" />
+    <div className="shrink-0 flex items-center justify-between px-4 h-14 bg-[var(--header-bg)] z-50 border-b border-[var(--border-color)] shadow-sm w-full min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
+        <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-1.5 rounded-full transition-colors shrink-0">
+          <ArrowLeft size={22} className="text-[var(--header-text)]" />
         </button>
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate(`/user/${receiverId}`)}>
-          <div className="relative">
+        <div className="flex items-center gap-2 cursor-pointer min-w-0" onClick={() => navigate(`/user/${receiverId}`)}>
+          <div className="relative shrink-0">
             <img 
               src={receiver?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`} 
               className="w-9 h-9 rounded-full object-cover border border-[var(--border-color)] shadow-sm"
@@ -89,33 +89,33 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[var(--header-bg)] rounded-full"></div>
             )}
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-[14px] font-bold text-[var(--text-primary)] leading-tight">{receiver?.fullName || 'GxChat User'}</h2>
-            <span className="text-[10px] text-[var(--text-secondary)] font-medium">
+          <div className="flex flex-col min-w-0">
+            <h2 className="text-[14px] font-bold text-[var(--header-text)] leading-tight truncate">{receiver?.fullName || 'GxChat User'}</h2>
+            <span className="text-[10px] text-[var(--header-text)] opacity-80 font-medium truncate">
               {getStatusText()}
             </span>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         <button 
           onClick={() => navigate(`/call/${receiverId}?type=video`)}
-          className="p-2 hover:bg-[var(--bg-chat)] rounded-full transition-colors"
+          className="p-2 hover:bg-white/10 rounded-full transition-colors"
         >
-          <Video size={20} className="text-[var(--text-secondary)]" />
+          <Video size={20} className="text-[var(--header-text)]" />
         </button>
         <button 
           onClick={() => navigate(`/call/${receiverId}?type=voice`)}
-          className="p-2 hover:bg-[var(--bg-chat)] rounded-full transition-colors"
+          className="p-2 hover:bg-white/10 rounded-full transition-colors"
         >
-          <Phone size={18} className="text-[var(--text-secondary)]" />
+          <Phone size={18} className="text-[var(--header-text)]" />
         </button>
         <div className="relative" ref={optionsRef}>
           <button 
             onClick={() => setShowOptions(!showOptions)}
             className="p-2 hover:bg-white/10 rounded-full transition-colors"
           >
-            <MoreVertical size={22} className="text-white/80" />
+            <MoreVertical size={22} className="text-[var(--header-text)]" />
           </button>
 
           {showOptions && (
@@ -222,23 +222,23 @@ export const ChatReplyPreview: React.FC<{
 }> = ({ replyingTo, setReplyingTo, receiver, currentUserUid }) => {
   if (!replyingTo) return null;
   return (
-    <div className="mb-2 mx-2 p-2 bg-[var(--bg-main)] rounded-xl border-l-[6px] border-[var(--primary)] flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+    <div className="mb-2 mx-2 p-2 bg-black/20 rounded-xl border-l-[6px] border-[var(--primary)] flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2 duration-200">
       <div className="flex items-center gap-3 flex-1 min-w-0 px-2">
         <div className="p-1.5 bg-[var(--primary)]/10 rounded-full">
           <Reply size={14} className="text-[var(--primary)]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest opacity-80">
+          <p className="text-[11px] font-black text-white uppercase tracking-widest opacity-80">
             Replying to {replyingTo.senderId === currentUserUid ? 'yourself' : receiver?.fullName}
           </p>
-          <p className="text-[13px] text-[var(--text-secondary)] font-medium truncate italic">"{replyingTo.text}"</p>
+          <p className="text-[13px] text-white/70 font-medium truncate italic">"{replyingTo.text}"</p>
         </div>
       </div>
       <button 
         onClick={() => setReplyingTo(null)} 
-        className="p-1.5 hover:bg-[var(--bg-main)] rounded-full transition-all active:scale-90"
+        className="p-1.5 hover:bg-white/10 rounded-full transition-all active:scale-90"
       >
-        <X size={18} className="text-[var(--text-secondary)]" />
+        <X size={18} className="text-white/70" />
       </button>
     </div>
   );
@@ -251,21 +251,21 @@ export const ChatEditPreview: React.FC<{
 }> = ({ editingMessage, setEditingMessage, setNewMessage }) => {
   if (!editingMessage) return null;
   return (
-    <div className="mb-2 mx-2 p-2 bg-[var(--bg-main)] rounded-xl border-l-[6px] border-[var(--primary)] flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+    <div className="mb-2 mx-2 p-2 bg-black/20 rounded-xl border-l-[6px] border-[var(--primary)] flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-2 duration-200">
       <div className="flex items-center gap-3 flex-1 min-w-0 px-2">
         <div className="p-1.5 bg-[var(--primary)]/10 rounded-full">
           <Edit2 size={14} className="text-[var(--primary)]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-black text-[var(--text-primary)] uppercase tracking-widest opacity-80">Editing Message</p>
-          <p className="text-[13px] text-[var(--text-secondary)] font-medium truncate italic">"{editingMessage.text}"</p>
+          <p className="text-[11px] font-black text-white uppercase tracking-widest opacity-80">Editing Message</p>
+          <p className="text-[13px] text-white/70 font-medium truncate italic">"{editingMessage.text}"</p>
         </div>
       </div>
       <button 
         onClick={() => { setEditingMessage(null); setNewMessage(''); }} 
-        className="p-1.5 hover:bg-[var(--bg-main)] rounded-full transition-all active:scale-90"
+        className="p-1.5 hover:bg-white/10 rounded-full transition-all active:scale-90"
       >
-        <X size={18} className="text-[var(--text-secondary)]" />
+        <X size={18} className="text-white/70" />
       </button>
     </div>
   );
