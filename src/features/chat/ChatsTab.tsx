@@ -227,7 +227,7 @@ export default function ChatsTab() {
       </div>
 
       {/* Floating Action Button */}
-      <div className="absolute bottom-20 right-6 z-40 lg:hidden">
+      <div className="absolute bottom-20 right-6 z-40">
         <button 
           onClick={() => navigate('/explore')}
           className="p-4 bg-[var(--primary)] text-white rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border-2 border-white/20"
