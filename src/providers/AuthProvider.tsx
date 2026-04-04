@@ -27,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       console.log('Auth State Changed:', currentUser ? 'User Logged In' : 'No User');
+      setIsAuthReady(false); // Reset ready state on every change
       try {
         // Cleanup previous listeners if any
         if (unsubscribeDoc) unsubscribeDoc();
