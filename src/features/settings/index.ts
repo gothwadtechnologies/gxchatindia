@@ -1,4 +1,3 @@
-export { default as SettingsScreen } from './SettingsScreen';
 export { default as PrivacySettingsScreen } from './PrivacySettingsScreen';
 export { default as AppPreferencesScreen } from './AppPreferencesScreen';
 export { default as AccountSettingsScreen } from './AccountSettingsScreen';
