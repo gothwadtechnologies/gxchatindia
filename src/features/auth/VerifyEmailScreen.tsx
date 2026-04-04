@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { APP_CONFIG } from '../../config/appConfig';
 import { auth } from '../../services/firebase.ts';
 import { sendEmailVerification, signOut } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, RefreshCw, LogOut } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function VerifyEmailScreen() {
   const [loading, setLoading] = useState(false);
@@ -44,80 +45,86 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-[#f8faff] flex flex-col items-center relative">
-      {/* Dynamic Multi-color Gradient Background */}
-      <div className="fixed inset-0 w-full h-full bg-gradient-to-br from-[#1e3a8a] via-[#1d4ed8] to-[#2563eb] opacity-95"></div>
-      
-      <div className="w-full px-6 pt-12 pb-12 z-10 flex flex-col items-center min-h-full">
-        {/* Branding Area */}
-        <div className="flex flex-col items-center mb-10 text-white">
-          <img 
-            src={APP_CONFIG.LOGO_URL} 
-            alt={`${APP_CONFIG.NAME} Logo`} 
-            className="w-16 h-16 mb-4 object-contain brightness-0 invert"
-            referrerPolicy="no-referrer"
-          />
-          <h1 className="text-2xl font-black tracking-tighter italic">GxChat India</h1>
+    <div className="h-full overflow-y-auto bg-white flex flex-col items-center relative font-sans">
+      <div className="w-full max-w-md px-8 pt-16 pb-12 z-10 flex flex-col min-h-full relative">
+        {/* Branding Overlay */}
+        <div className="absolute top-6 left-0 right-0 flex items-center justify-center gap-2">
+          <div className="bg-zinc-50 px-3 py-1.5 rounded-full border border-zinc-100 flex items-center gap-2 shadow-sm">
+            <img 
+              src={APP_CONFIG.LOGO_URL} 
+              alt="Logo" 
+              className="w-4 h-4 object-contain"
+              referrerPolicy="no-referrer"
+            />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-800">GxChat India</span>
+          </div>
         </div>
 
-        {/* Main Card */}
-        <div className="w-full bg-white rounded-[40px] shadow-2xl shadow-indigo-100/50 px-8 py-10 flex flex-col">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Verify your email.</h2>
-            <p className="text-zinc-500 text-sm font-medium">
-              We've sent a verification link to <span className="font-bold text-indigo-600">{auth.currentUser?.email}</span>. 
-              Please click the link in your email to continue.
+        {/* Back Button (Sign out) */}
+        <button 
+          onClick={handleLogout}
+          className="absolute top-6 left-8 py-1.5 flex items-center text-xs font-bold text-zinc-800 hover:text-zinc-500 transition-colors"
+        >
+          Back
+        </button>
+
+        <div className="text-center mb-10 mt-8">
+          <h2 className="text-2xl font-bold text-zinc-900 mb-2">Verify your email</h2>
+          <p className="text-zinc-500 text-xs leading-relaxed max-w-[240px] mx-auto">
+            We've sent a verification link to <span className="font-bold text-[#375a7f]">{auth.currentUser?.email}</span>. Please click the link to continue.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+            <p className="text-[10px] text-amber-700 font-bold text-center leading-relaxed">
+              Don't forget to check your <span className="uppercase underline">Spam folder</span> if you don't see it!
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl">
-              <p className="text-xs text-amber-700 font-bold text-center leading-relaxed">
-                Don't forget to check your <span className="uppercase underline">Spam folder</span> if you don't see it!
-              </p>
-            </div>
+          {message && (
+            <motion.p 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-emerald-600 text-xs font-bold text-center bg-emerald-50 py-3 rounded-xl"
+            >
+              {message}
+            </motion.p>
+          )}
+          
+          {error && (
+            <motion.p 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-500 text-xs font-bold text-center bg-red-50 py-3 rounded-xl"
+            >
+              {error}
+            </motion.p>
+          )}
 
-            {message && (
-              <p className="text-emerald-600 text-xs font-bold text-center bg-emerald-50 py-2 rounded-lg">
-                {message}
-              </p>
+          <button 
+            onClick={handleResend}
+            disabled={loading}
+            style={{ backgroundColor: '#375a7f' }}
+            className="w-full text-white text-sm font-bold py-4 rounded-2xl transition-all disabled:opacity-70 flex items-center justify-center gap-2 active:scale-[0.98] shadow-sm"
+          >
+            {loading ? <RefreshCw className="animate-spin" size={18} /> : (
+              <>
+                <span>Resend Email</span>
+                <Mail size={18} />
+              </>
             )}
-            
-            {error && (
-              <p className="text-red-500 text-xs font-bold text-center bg-red-50 py-2 rounded-lg">
-                {error}
-              </p>
-            )}
-
-            <div className="space-y-3">
-              <button 
-                onClick={handleResend}
-                disabled={loading}
-                className="w-full bg-indigo-600 text-white text-sm font-bold py-4 rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 active:scale-[0.98]"
-              >
-                {loading ? <RefreshCw className="animate-spin" size={18} /> : (
-                  <>
-                    <span>Resend Email</span>
-                    <Mail size={18} />
-                  </>
-                )}
-              </button>
-              
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 text-zinc-400 font-bold py-2 hover:text-zinc-600 transition-colors text-xs uppercase tracking-widest"
-              >
-                <LogOut size={16} />
-                Sign out
-              </button>
-            </div>
-          </div>
+          </button>
         </div>
 
-        {/* Footer */}
-        <div className="mt-auto pt-10 pb-6 flex flex-col items-center gap-1">
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">© 2026 GxChat India</span>
-          <span className="text-[9px] font-medium text-zinc-300 uppercase tracking-[0.2em]">from Gothwad technologies</span>
+        {/* Footer at the very bottom */}
+        <div className="mt-auto pt-12 flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2 text-[10px] font-bold">
+            <Link to="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+            <span className="text-zinc-900">&</span>
+            <Link to="/terms" className="text-blue-600 hover:underline">Terms and Conditions</Link>
+          </div>
+          <span className="text-[9px] font-black text-zinc-900 uppercase tracking-widest">Gothwad Technologies</span>
         </div>
       </div>
     </div>
