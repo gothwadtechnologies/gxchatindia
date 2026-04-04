@@ -15,7 +15,7 @@ export default function MainLayout() {
   // Paths where BottomNav should be visible
   const tabPaths = ['/', '/stories', '/hub', '/calls', '/profile'];
   const isChatScreen = location.pathname.startsWith('/chat/');
-  const showBottomNav = tabPaths.includes(location.pathname) || isChatScreen;
+  const showBottomNav = tabPaths.includes(location.pathname);
   
   // Paths where TopNav should be visible
   const showTopNav = tabPaths.includes(location.pathname) && !isChatScreen;
@@ -36,11 +36,11 @@ export default function MainLayout() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {showTopNav && <div className="lg:hidden"><TopNav /></div>}
+      {showTopNav && <div><TopNav /></div>}
       
       <div 
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden relative no-scrollbar"
+        className={`flex-1 overflow-x-hidden relative no-scrollbar ${isChatScreen ? 'overflow-y-hidden' : 'overflow-y-auto'}`}
       >
         <AnimatePresence>
           {currentTab && isResourcesNavOpen && (
@@ -49,7 +49,7 @@ export default function MainLayout() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="overflow-hidden shrink-0 lg:hidden"
+              className="overflow-hidden shrink-0"
             >
               <ResourcesNav tab={currentTab} />
             </motion.div>
