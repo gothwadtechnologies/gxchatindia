@@ -254,7 +254,6 @@ export default function SignupScreen() {
               />
               <label htmlFor="remember" className="text-xs font-bold text-zinc-800 cursor-pointer">Remember me</label>
             </div>
-            <button type="button" className="text-xs font-bold text-red-500 hover:text-red-600">Forgot password?</button>
           </div>
           
           <button 
