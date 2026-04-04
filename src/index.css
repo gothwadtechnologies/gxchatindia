@@ -28,6 +28,7 @@
     --header-text: #ffffff;
     --nav-bg: #375a7f;
     --nav-text: #ffffff;
+    --brand-color: #375a7f;
   }
 
   [data-theme='dark'] {
@@ -49,6 +50,7 @@
     --header-text: #ffffff;
     --nav-bg: #375a7f;
     --nav-text: #ffffff;
+    --brand-color: #ffffff;
   }
 
   body {
