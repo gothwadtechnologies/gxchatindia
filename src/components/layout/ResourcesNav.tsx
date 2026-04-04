@@ -68,7 +68,7 @@ export default function ResourcesNav({ tab }: ResourcesNavProps) {
 
   if (tab === 'chats') {
     return (
-      <div className="w-full bg-[var(--bg-card)] shrink-0 z-40 lg:hidden">
+      <div className="w-full bg-[var(--bg-card)] shrink-0 z-40">
         <div className="flex items-center gap-2 px-4 py-2 pb-3 overflow-x-auto no-scrollbar">
           {filters.map((filter) => {
             const isActive = activeFilter.toLowerCase() === filter.id.toLowerCase();
@@ -93,7 +93,7 @@ export default function ResourcesNav({ tab }: ResourcesNavProps) {
   }
 
   return (
-    <div className="w-full bg-[var(--header-bg)] border-b border-[var(--border-color)] shrink-0 z-40 lg:hidden">
+    <div className="w-full bg-[var(--header-bg)] border-b border-[var(--border-color)] shrink-0 z-40">
       <div className="flex px-2">
         {filters.map((filter) => {
           const isActive = activeFilter.toLowerCase() === filter.id.toLowerCase();
@@ -104,7 +104,7 @@ export default function ResourcesNav({ tab }: ResourcesNavProps) {
               key={filter.id}
               onClick={() => setActiveFilter(tab, filter.id)}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 transition-all relative min-w-0 ${
-                isActive ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                isActive ? 'text-[var(--header-text)]' : 'text-[var(--header-text)]/60 hover:text-[var(--header-text)]'
               }`}
             >
               <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" />
@@ -115,7 +115,7 @@ export default function ResourcesNav({ tab }: ResourcesNavProps) {
               {isActive && (
                 <motion.div 
                   layoutId={`nav-indicator-${tab}`}
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)]"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--header-text)]"
                   initial={false}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
