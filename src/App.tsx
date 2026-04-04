@@ -8,6 +8,7 @@ import DesktopSidebar from './components/layout/DesktopSidebar';
 import { motion } from 'motion/react';
 import { useAuth } from './providers/AuthProvider';
 import { ErrorBoundary } from 'react-error-boundary';
+import SplashScreen from './components/SplashScreen';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -93,10 +94,7 @@ export default function App() {
     
     CacheService.clearOldCache();
     
-    const timer = setTimeout(() => {
-      setSplashLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    // Splash screen now waits for user interaction
   }, [user]);
 
   // Global Back Button Handler for Mobile
@@ -113,34 +111,10 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <div className="flex-1 flex flex-col items-center justify-center z-10">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-            className="flex flex-col items-center gap-6"
-          >
-            <div className="w-24 h-24 bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border-color)] flex items-center justify-center shadow-sm">
-              <img 
-                src={APP_CONFIG.LOGO_URL} 
-                alt={`${APP_CONFIG.NAME} Logo`} 
-                className="w-16 h-16 object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter italic mb-1">GxChat India</h1>
-              <p className="text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-[0.4em]">Social World</p>
-            </div>
-          </motion.div>
-        </div>
-        
-        <div className="pb-12 flex flex-col items-center gap-1.5 z-10 opacity-40">
-          <span className="text-[var(--text-primary)] text-[9px] font-black uppercase tracking-[0.3em]">from</span>
-          <span className="text-[var(--text-primary)] font-black tracking-[0.2em] uppercase text-[10px]">{APP_CONFIG.DEVELOPER}</span>
-        </div>
-      </div>
+      <SplashScreen 
+        developerName={APP_CONFIG.DEVELOPER} 
+        onGetStarted={() => setSplashLoading(false)} 
+      />
     );
   }
 
