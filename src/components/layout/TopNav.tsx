@@ -39,7 +39,7 @@ export default function TopNav() {
                 setIsSearchOpen(false);
                 setSearchTerm('');
               }}
-              className="ml-4 text-[var(--primary)] text-sm font-bold"
+              className="ml-4 text-[var(--header-text)] text-sm font-bold"
             >
               Cancel
             </button>
@@ -48,7 +48,7 @@ export default function TopNav() {
           <>
             <div className="flex items-center">
               <Link to="/" className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter italic">
+                <h1 className="text-2xl font-black text-[var(--header-text)] tracking-tighter italic">
                   GxChat India
                 </h1>
               </Link>
@@ -56,15 +56,12 @@ export default function TopNav() {
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 hover:bg-[var(--bg-chat)] rounded-full transition-colors cursor-pointer"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
               >
-                <Search size={22} className="text-[var(--text-primary)]" />
+                <Search size={22} className="text-[var(--header-text)]" />
               </button>
-              <Link to="/notifications" className="p-2 hover:bg-[var(--bg-chat)] rounded-full transition-colors cursor-pointer">
-                <Bell size={22} className="text-[var(--text-primary)]" />
-              </Link>
-              <Link to="/settings" className="p-2 hover:bg-[var(--bg-chat)] rounded-full transition-colors cursor-pointer">
-                <Settings size={22} className="text-[var(--text-primary)]" />
+              <Link to="/notifications" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+                <Bell size={22} className="text-[var(--header-text)]" />
               </Link>
             </div>
           </>
