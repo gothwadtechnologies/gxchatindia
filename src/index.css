@@ -24,8 +24,10 @@
     --bubble-other: #f1f5f9;
     --bubble-text-own: #1e293b;
     --bubble-text-other: #1e293b;
-    --header-bg: #f8fafc;
-    --nav-bg: #f8fafc;
+    --header-bg: #375a7f;
+    --header-text: #ffffff;
+    --nav-bg: #375a7f;
+    --nav-text: #ffffff;
   }
 
   [data-theme='dark'] {
@@ -43,19 +45,39 @@
     --bubble-other: #1e293b;
     --bubble-text-own: #ffffff;
     --bubble-text-other: #f8fafc;
-    --header-bg: #020617;
-    --nav-bg: #020617;
+    --header-bg: #375a7f;
+    --header-text: #ffffff;
+    --nav-bg: #375a7f;
+    --nav-text: #ffffff;
   }
 
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
-    @apply antialiased overflow-x-hidden;
+    @apply antialiased overflow-x-hidden w-full h-[100dvh] fixed inset-0;
     font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   html {
-    @apply overflow-x-hidden;
+    @apply overflow-hidden w-full h-[100dvh] fixed inset-0;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  #root {
+    @apply w-full h-full overflow-hidden flex justify-center bg-zinc-100;
+  }
+
+  /* Global Fluid Container */
+  .app-container {
+    @apply w-full max-w-[450px] h-full bg-[var(--bg-card)] shadow-[0_0_40px_rgba(0,0,0,0.1)] relative overflow-hidden flex flex-col;
+  }
+
+  /* Prevent any element from breaking layout */
+  * {
+    box-sizing: border-box;
+    max-width: 100vw;
   }
 }
 
