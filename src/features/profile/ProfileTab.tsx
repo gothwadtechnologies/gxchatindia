@@ -1,35 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Camera,
-  Grid,
-  User,
-  Bookmark,
-  Settings,
   PlusSquare,
-  Menu,
-  Share2,
-  Clapperboard,
-  Video
+  LogOut, 
+  Shield, 
+  Bell, 
+  HelpCircle, 
+  ChevronRight, 
+  Info,
+  Key,
+  Globe,
+  Database,
+  Smartphone,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { auth, db } from '../../services/firebase.ts';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
-import ProfileContent from './components/ProfileContent.tsx';
-
 export default function ProfileTab() {
   const [userData, setUserData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('Post');
   const navigate = useNavigate();
 
   const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
-  // Mock posts for the grid
-  const mockPosts = Array.from({ length: 9 }).map((_, i) => ({
-    id: i,
-    url: `https://picsum.photos/seed/post${i}/400/400`
-  }));
 
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -44,18 +38,89 @@ export default function ProfileTab() {
     return () => unsubscribe();
   }, []);
 
-  const tabs = [
-    { id: 'Post', icon: Grid, label: 'Posts' },
-    { id: 'Videos', icon: Clapperboard, label: 'Videos' },
-    { id: 'Upload', icon: PlusSquare, label: 'Upload' }
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  const menuSections = [
+    {
+      title: 'ACCOUNT SETTINGS',
+      items: [
+        { 
+          icon: Key, 
+          label: 'Account', 
+          sub: 'Security notifications, change number', 
+          color: 'text-primary',
+          onClick: () => navigate('/account-settings')
+        },
+        {
+          icon: Shield,
+          label: 'Privacy',
+          sub: 'Block contacts, disappearing messages',
+          color: 'text-emerald-500',
+          onClick: () => navigate('/privacy-settings')
+        },
+        { 
+          icon: Smartphone, 
+          label: 'App lock', 
+          sub: 'Extra security for your app', 
+          color: 'text-indigo-500',
+          onClick: () => navigate('/app-lock')
+        },
+      ]
+    },
+    {
+      title: 'PREFERENCES',
+      items: [
+        { 
+          icon: Bell, 
+          label: 'Notifications', 
+          sub: 'Message, group & call tones', 
+          color: 'text-orange-500',
+          onClick: () => navigate('/notifications-settings')
+        },
+        { icon: Database, label: 'Storage and data', sub: 'Network usage, auto-download', color: 'text-zinc-500' },
+        { 
+          icon: Globe, 
+          label: 'App Preferences', 
+          sub: "Language, Theme", 
+          color: 'text-cyan-500',
+          onClick: () => navigate('/app-preferences')
+        },
+      ]
+    },
+    {
+      title: 'SUPPORT',
+      items: [
+        { 
+          icon: HelpCircle, 
+          label: 'Help', 
+          sub: 'Help center, contact us, privacy policy', 
+          color: 'text-zinc-500',
+          onClick: () => navigate('/help')
+        },
+        { 
+          icon: Info, 
+          label: 'App info', 
+          sub: 'Version 1.0.0 (Beta)', 
+          color: 'text-zinc-400',
+          onClick: () => navigate('/app-info')
+        },
+      ]
+    }
   ];
 
   return (
     <div className="flex flex-col bg-[var(--bg-card)] font-sans h-full overflow-y-auto no-scrollbar">
       <div className="flex-1 pb-24">
-        {/* Instagram Style Header */}
-        <div className="px-4 pt-6 pb-4">
-          <div className="flex items-center gap-8 mb-4">
+        {/* Profile Header */}
+        <div className="px-4 pt-6 pb-4 bg-[var(--bg-card)]">
+          <div className="flex items-center gap-6 mb-6">
             {/* Profile Picture */}
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-full p-0.5 bg-[var(--primary)]">
@@ -76,76 +141,92 @@ export default function ProfileTab() {
               </button>
             </div>
 
-            {/* Stats */}
-            <div className="flex-1 flex justify-around items-center">
-              <div className="flex flex-col items-center">
-                <span className="text-lg font-bold text-[var(--text-primary)]">0</span>
-                <span className="text-xs text-[var(--text-secondary)]">Posts</span>
-              </div>
-              <button 
-                onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
-                className="flex flex-col items-center"
-              >
-                <span className="text-lg font-bold text-[var(--text-primary)]">{userData?.followers?.length || 0}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Followers</span>
-              </button>
-              <button 
-                onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
-                className="flex flex-col items-center"
-              >
-                <span className="text-lg font-bold text-[var(--text-primary)]">{userData?.following?.length || 0}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Following</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Name, Username and Edit Button Row */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex flex-col">
-              <h2 className="text-sm font-bold text-[var(--text-primary)] leading-tight">
+            {/* Name & Username */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-black text-[var(--text-primary)] leading-tight truncate">
                 {userData?.fullName || 'GxChat User'}
               </h2>
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-[var(--text-secondary)] font-medium">
                 @{userData?.username || 'username'}
               </p>
+              <button 
+                onClick={() => navigate('/edit-profile')}
+                className="mt-2 text-[var(--primary)] text-xs font-black uppercase tracking-widest"
+              >
+                Edit Profile
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Stats Row */}
+          <div className="flex items-center justify-between px-2 py-3 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)]">
+            <div className="flex-1 flex flex-col items-center border-r border-[var(--border-color)]">
+              <span className="text-sm font-black text-[var(--text-primary)]">0</span>
+              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">Posts</span>
             </div>
             <button 
-              onClick={() => navigate('/edit-profile')}
-              className="px-6 py-1.5 bg-[var(--bg-chat)] hover:bg-[var(--bg-chat)]/80 text-[var(--text-primary)] text-sm font-semibold rounded-lg transition-colors border border-[var(--border-color)]"
+              onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
+              className="flex-1 flex flex-col items-center border-r border-[var(--border-color)]"
             >
-              Edit Profile
+              <span className="text-sm font-black text-[var(--text-primary)]">{userData?.followers?.length || 0}</span>
+              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">Followers</span>
+            </button>
+            <button 
+              onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
+              className="flex-1 flex flex-col items-center"
+            >
+              <span className="text-sm font-black text-[var(--text-primary)]">{userData?.following?.length || 0}</span>
+              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">Following</span>
             </button>
           </div>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex border-t border-[var(--border-color)]">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex flex-col items-center py-3 transition-all relative ${
-                activeTab === tab.id ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)]'
-              }`}
-            >
-              <tab.icon size={20} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
-              {activeTab === tab.id && (
-                <motion.div 
-                  layoutId="profile-tab-indicator"
-                  className="absolute top-0 w-full h-0.5 bg-[var(--primary)]"
-                />
-              )}
-            </button>
+        {/* Telegram Style Settings List */}
+        <div className="mt-2">
+          {menuSections.map((section) => (
+            <div key={section.title} className="mb-4">
+              <h3 className="px-6 mb-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">
+                {section.title}
+              </h3>
+              <div className="bg-[var(--bg-card)]">
+                {section.items.map((item, index) => (
+                  <button 
+                    key={item.label}
+                    onClick={item.onClick}
+                    className={`w-full flex items-center gap-4 px-6 py-3.5 hover:bg-[var(--bg-main)] transition-colors group ${
+                      index !== section.items.length - 1 ? 'border-b border-[var(--border-color)]/50' : ''
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl bg-[var(--bg-main)] ${item.color} group-active:scale-90 transition-transform`}>
+                      <item.icon size={18} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h4 className="text-[14px] font-bold text-[var(--text-primary)]">{item.label}</h4>
+                      <p className="text-[11px] text-[var(--text-secondary)] opacity-70">{item.sub}</p>
+                    </div>
+                    <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-20" />
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
-        </div>
 
-        {/* Profile Content (Tabs & Grid) */}
-        <ProfileContent posts={mockPosts} activeTab={activeTab} />
+          {/* Logout Button */}
+          <div className="mt-6 px-6">
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-3 bg-red-500/5 hover:bg-red-500/10 text-red-500 py-4 rounded-2xl font-black text-sm transition-all border border-red-500/10 active:scale-[0.98]"
+            >
+              <LogOut size={18} />
+              <span className="uppercase tracking-widest">Log Out</span>
+            </button>
+          </div>
+        </div>
 
         {/* Branding Footer */}
         <div className="py-12 flex flex-col items-center gap-1 opacity-40">
-          <span className="text-[var(--text-secondary)] text-sm font-medium">from</span>
-          <span className="text-[var(--text-primary)] text-[10px] font-black tracking-[0.3em] uppercase">Gothwad technologies</span>
+          <span className="text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest">from</span>
+          <span className="text-[var(--text-primary)] text-[11px] font-black tracking-[0.4em] uppercase">Gothwad technologies</span>
           <span className="text-[var(--text-secondary)] text-[8px] uppercase tracking-tighter mt-1">made in india</span>
         </div>
       </div>
