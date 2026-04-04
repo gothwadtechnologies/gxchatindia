@@ -5,7 +5,3 @@ coverage/
 *.log
 .env*
 !.env.example
-pnpm-lock.yaml
-pnpm-workspace.yaml
-dist/
-*.local
