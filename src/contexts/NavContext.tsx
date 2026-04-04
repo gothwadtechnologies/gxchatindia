@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface NavContextType {
   isResourcesNavOpen: boolean;
-  setIsResourcesNavOpen: (open: boolean) => void;
+  setIsResourcesNavOpen: (isOpen: boolean) => void;
 }
 
 const NavContext = createContext<NavContextType | undefined>(undefined);
