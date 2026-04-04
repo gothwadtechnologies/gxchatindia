@@ -1,23 +1,27 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface LayoutContextType {
-  activeFilters: { [key: string]: string };
-  setActiveFilter: (tab: string, filter: string) => void;
+  activeFilters: Record<string, string>;
+  setActiveFilter: (tab: string, filterId: string) => void;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
 
 export function LayoutProvider({ children }: { children: ReactNode }) {
-  const [activeFilters, setActiveFilters] = useState<{ [key: string]: string }>({
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({
     home: 'For You',
-    reels: 'Trending',
+    stories: 'For You',
+    hub: 'Explore',
     chats: 'All',
-    hub: 'Apps',
-    profile: 'Posts'
+    calls: 'All',
+    profile: 'Post',
   });
 
-  const setActiveFilter = (tab: string, filter: string) => {
-    setActiveFilters(prev => ({ ...prev, [tab]: filter }));
+  const setActiveFilter = (tab: string, filterId: string) => {
+    setActiveFilters((prev) => ({
+      ...prev,
+      [tab]: filterId,
+    }));
   };
 
   return (
