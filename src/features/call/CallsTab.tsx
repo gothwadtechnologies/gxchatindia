@@ -56,12 +56,8 @@ export default function CallsTab() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-main)]">
-      <div className="px-4 pt-6 pb-2">
-        <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter italic italic">Calls</h2>
-        <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] mt-1">Recent History</p>
-      </div>
       {/* Call List */}
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-24 pt-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
