@@ -36,7 +36,7 @@ const ChatLayout = React.lazy(() => import('./features/chat').then(m => ({ defau
 const ChatScreen = React.lazy(() => import('./features/chat').then(m => ({ default: m.ChatScreen })));
 const MessagesListScreen = React.lazy(() => import('./features/chat').then(m => ({ default: m.MessagesListScreen })));
 
-const HomeTab = React.lazy(() => import('./features/home').then(m => ({ default: m.HomeTab })));
+const StoriesTab = React.lazy(() => import('./features/home').then(m => ({ default: m.StoriesTab })));
 const CreatePostScreen = React.lazy(() => import('./features/home').then(m => ({ default: m.CreatePostScreen })));
 const NotificationsScreen = React.lazy(() => import('./features/home').then(m => ({ default: m.NotificationsScreen })));
 
@@ -49,11 +49,12 @@ const ReelsTab = React.lazy(() => import('./features/reels').then(m => ({ defaul
 const ReelsScreen = React.lazy(() => import('./features/reels').then(m => ({ default: m.ReelsScreen })));
 
 const CallsTab = React.lazy(() => import('./features/call').then(m => ({ default: m.CallsTab })));
-const ChannelsTab = React.lazy(() => import('./features/channels').then(m => ({ default: m.ChannelsTab })));
+const HubTab = React.lazy(() => import('./features/channels').then(m => ({ default: m.HubTab })));
 const CameraTab = React.lazy(() => import('./features/camera').then(m => ({ default: m.CameraTab })));
 
 const PrivacySettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.PrivacySettingsScreen })));
 const AppPreferencesScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.AppPreferencesScreen })));
+const SettingsScreen = React.lazy(() => import('./features/settings/SettingsScreen'));
 const AccountSettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.AccountSettingsScreen })));
 const NotificationsSettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.NotificationsSettingsScreen })));
 const HelpScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.HelpScreen })));
@@ -148,8 +149,8 @@ export default function App() {
                         needsProfileCompletion ? <Navigate to="/complete-profile" /> :
                         <ChatsTab />
                       } />
-                      <Route path="/stories" element={user ? <HomeTab /> : <Navigate to="/login" />} />
-                      <Route path="/hub" element={user ? <ChannelsTab /> : <Navigate to="/login" />} />
+                      <Route path="/stories" element={user ? <StoriesTab /> : <Navigate to="/login" />} />
+                      <Route path="/hub" element={user ? <HubTab /> : <Navigate to="/login" />} />
                       <Route element={<ChatLayout />}>
                         <Route path="/chats" element={<Navigate to="/" replace />} />
                         <Route path="/chat/:id" element={user ? <ChatScreen /> : <Navigate to="/login" />} />
@@ -169,6 +170,7 @@ export default function App() {
                     <Route path="/call/:id" element={user ? <CallScreen /> : <Navigate to="/login" />} />
                     <Route path="/create" element={user ? <CreatePostScreen /> : <Navigate to="/login" />} />
                     <Route path="/notifications" element={user ? <NotificationsScreen /> : <Navigate to="/login" />} />
+                    <Route path="/settings" element={user ? <SettingsScreen /> : <Navigate to="/login" />} />
                     <Route path="/edit-profile" element={user ? <EditProfileScreen /> : <Navigate to="/login" />} />
                     <Route path="/privacy-settings" element={user ? <PrivacySettingsScreen /> : <Navigate to="/login" />} />
                     <Route path="/app-preferences" element={user ? <AppPreferencesScreen /> : <Navigate to="/login" />} />
