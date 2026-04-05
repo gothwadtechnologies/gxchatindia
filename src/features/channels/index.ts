@@ -1,1 +1,1 @@
-export { default as ChannelsTab } from './ChannelsTab';
+export { default as HubTab } from './HubTab';
