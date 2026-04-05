@@ -44,7 +44,6 @@ const tabFilters: Record<TabType, { id: string; label: string; icon: any }[]> = 
   ],
   chats: [
     { id: 'All', label: 'All', icon: MessageSquare },
-    { id: 'Unread', label: 'Unread', icon: Bell },
     { id: 'Chats', label: 'Chats', icon: MessageSquare },
     { id: 'Groups', label: 'Groups', icon: Users },
     { id: 'Requests', label: 'Requests', icon: UserPlus }
