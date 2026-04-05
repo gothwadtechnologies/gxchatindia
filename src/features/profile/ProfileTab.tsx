@@ -1,26 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  Camera,
   PlusSquare,
-  LogOut, 
-  Shield, 
-  Bell, 
-  HelpCircle, 
-  ChevronRight, 
-  Info,
-  Key,
-  Globe,
-  Database,
-  Smartphone,
-  Settings as SettingsIcon
+  Grid,
+  Bookmark,
+  UserSquare,
+  Camera,
 } from 'lucide-react';
 import { auth, db } from '../../services/firebase.ts';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
 export default function ProfileTab() {
   const [userData, setUserData] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'tagged'>('posts');
   const navigate = useNavigate();
 
   const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -35,96 +29,28 @@ export default function ProfileTab() {
       }
     });
 
+    // Fetch user posts
+    const fetchPosts = async () => {
+      const q = query(collection(db, "posts"), where("userId", "==", auth.currentUser?.uid));
+      const querySnapshot = await getDocs(q);
+      const userPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(userPosts);
+    };
+    fetchPosts();
+
     return () => unsubscribe();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
-
-  const menuSections = [
-    {
-      title: 'ACCOUNT SETTINGS',
-      items: [
-        { 
-          icon: Key, 
-          label: 'Account', 
-          sub: 'Security notifications, change number', 
-          color: 'text-primary',
-          onClick: () => navigate('/account-settings')
-        },
-        {
-          icon: Shield,
-          label: 'Privacy',
-          sub: 'Block contacts, disappearing messages',
-          color: 'text-emerald-500',
-          onClick: () => navigate('/privacy-settings')
-        },
-        { 
-          icon: Smartphone, 
-          label: 'App lock', 
-          sub: 'Extra security for your app', 
-          color: 'text-indigo-500',
-          onClick: () => navigate('/app-lock')
-        },
-      ]
-    },
-    {
-      title: 'PREFERENCES',
-      items: [
-        { 
-          icon: Bell, 
-          label: 'Notifications', 
-          sub: 'Message, group & call tones', 
-          color: 'text-orange-500',
-          onClick: () => navigate('/notifications-settings')
-        },
-        { icon: Database, label: 'Storage and data', sub: 'Network usage, auto-download', color: 'text-zinc-500' },
-        { 
-          icon: Globe, 
-          label: 'App Preferences', 
-          sub: "Language, Theme", 
-          color: 'text-cyan-500',
-          onClick: () => navigate('/app-preferences')
-        },
-      ]
-    },
-    {
-      title: 'SUPPORT',
-      items: [
-        { 
-          icon: HelpCircle, 
-          label: 'Help', 
-          sub: 'Help center, contact us, privacy policy', 
-          color: 'text-zinc-500',
-          onClick: () => navigate('/help')
-        },
-        { 
-          icon: Info, 
-          label: 'App info', 
-          sub: 'Version 1.0.0 (Beta)', 
-          color: 'text-zinc-400',
-          onClick: () => navigate('/app-info')
-        },
-      ]
-    }
-  ];
-
   return (
-    <div className="flex flex-col bg-[var(--bg-card)] font-sans h-full overflow-y-auto no-scrollbar">
+    <div className="flex flex-col bg-[var(--bg-main)] font-sans h-full overflow-y-auto no-scrollbar">
       <div className="flex-1 pb-24">
         {/* Profile Header */}
-        <div className="px-4 pt-6 pb-4 bg-[var(--bg-card)]">
-          <div className="flex items-center gap-6 mb-6">
+        <div className="px-4 pt-6 pb-4">
+          <div className="flex items-center gap-8 mb-6">
             {/* Profile Picture */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-full p-0.5 bg-[var(--primary)]">
-                <div className="w-full h-full rounded-full border-2 border-[var(--bg-card)] overflow-hidden bg-zinc-100">
+              <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+                <div className="w-full h-full rounded-full border-2 border-[var(--bg-main)] overflow-hidden bg-zinc-100">
                   <img 
                     src={userData?.photoURL || DEFAULT_LOGO} 
                     className="w-full h-full object-cover"
@@ -135,99 +61,108 @@ export default function ProfileTab() {
               </div>
               <button 
                 onClick={() => navigate('/edit-profile')}
-                className="absolute bottom-0 right-0 w-6 h-6 bg-[var(--primary)] text-white rounded-full border-2 border-[var(--bg-card)] flex items-center justify-center shadow-sm"
+                className="absolute bottom-0 right-0 w-6 h-6 bg-[var(--primary)] text-white rounded-full border-2 border-[var(--bg-main)] flex items-center justify-center shadow-sm"
               >
                 <PlusSquare size={14} />
               </button>
             </div>
 
-            {/* Name & Username */}
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-black text-[var(--text-primary)] leading-tight truncate">
-                {userData?.fullName || 'GxChat User'}
-              </h2>
-              <p className="text-sm text-[var(--text-secondary)] font-medium">
-                @{userData?.username || 'username'}
-              </p>
+            {/* Stats Row */}
+            <div className="flex-1 flex justify-between items-center pr-4">
+              <div className="flex flex-col items-center">
+                <span className="text-base font-bold text-[var(--text-primary)]">{posts.length}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Posts</span>
+              </div>
               <button 
-                onClick={() => navigate('/edit-profile')}
-                className="mt-2 text-[var(--primary)] text-xs font-black uppercase tracking-widest"
+                onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
+                className="flex flex-col items-center"
               >
-                Edit Profile
+                <span className="text-base font-bold text-[var(--text-primary)]">{userData?.followers?.length || 0}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Followers</span>
+              </button>
+              <button 
+                onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
+                className="flex flex-col items-center"
+              >
+                <span className="text-base font-bold text-[var(--text-primary)]">{userData?.following?.length || 0}</span>
+                <span className="text-xs text-[var(--text-secondary)]">Following</span>
               </button>
             </div>
           </div>
 
-          {/* Quick Stats Row */}
-          <div className="flex items-center justify-between px-2 py-3 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)]">
-            <div className="flex-1 flex flex-col items-center border-r border-[var(--border-color)]">
-              <span className="text-sm font-black text-[var(--text-primary)]">0</span>
-              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">Posts</span>
-            </div>
+          {/* Name & Bio */}
+          <div className="mb-6">
+            <h2 className="text-sm font-bold text-[var(--text-primary)]">
+              {userData?.fullName || 'GxChat User'}
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)] font-medium">
+              @{userData?.username || 'username'}
+            </p>
+            {userData?.bio && (
+              <p className="text-sm text-[var(--text-primary)] mt-1 whitespace-pre-wrap">
+                {userData.bio}
+              </p>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mb-8">
             <button 
-              onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
-              className="flex-1 flex flex-col items-center border-r border-[var(--border-color)]"
+              onClick={() => navigate('/edit-profile')}
+              className="flex-1 bg-[var(--bg-chat)] text-[var(--text-primary)] py-2 rounded-lg text-sm font-bold border border-[var(--border-color)] active:scale-[0.98] transition-all"
             >
-              <span className="text-sm font-black text-[var(--text-primary)]">{userData?.followers?.length || 0}</span>
-              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">Followers</span>
+              Edit Profile
             </button>
             <button 
-              onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
-              className="flex-1 flex flex-col items-center"
+              className="flex-1 bg-[var(--bg-chat)] text-[var(--text-primary)] py-2 rounded-lg text-sm font-bold border border-[var(--border-color)] active:scale-[0.98] transition-all"
             >
-              <span className="text-sm font-black text-[var(--text-primary)]">{userData?.following?.length || 0}</span>
-              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-tighter">Following</span>
+              Share Profile
             </button>
           </div>
         </div>
 
-        {/* Telegram Style Settings List */}
-        <div className="mt-2">
-          {menuSections.map((section) => (
-            <div key={section.title} className="mb-4">
-              <h3 className="px-6 mb-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">
-                {section.title}
-              </h3>
-              <div className="bg-[var(--bg-card)]">
-                {section.items.map((item, index) => (
-                  <button 
-                    key={item.label}
-                    onClick={item.onClick}
-                    className={`w-full flex items-center gap-4 px-6 py-3.5 hover:bg-[var(--bg-main)] transition-colors group ${
-                      index !== section.items.length - 1 ? 'border-b border-[var(--border-color)]/50' : ''
-                    }`}
-                  >
-                    <div className={`p-2 rounded-xl bg-[var(--bg-main)] ${item.color} group-active:scale-90 transition-transform`}>
-                      <item.icon size={18} />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h4 className="text-[14px] font-bold text-[var(--text-primary)]">{item.label}</h4>
-                      <p className="text-[11px] text-[var(--text-secondary)] opacity-70">{item.sub}</p>
-                    </div>
-                    <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-20" />
-                  </button>
-                ))}
+        {/* Tabs */}
+        <div className="flex border-t border-[var(--border-color)]">
+          <button 
+            onClick={() => setActiveTab('posts')}
+            className={`flex-1 flex justify-center py-3 border-t-2 transition-colors ${activeTab === 'posts' ? 'border-[var(--text-primary)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'}`}
+          >
+            <Grid size={22} />
+          </button>
+          <button 
+            onClick={() => setActiveTab('saved')}
+            className={`flex-1 flex justify-center py-3 border-t-2 transition-colors ${activeTab === 'saved' ? 'border-[var(--text-primary)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'}`}
+          >
+            <Bookmark size={22} />
+          </button>
+          <button 
+            onClick={() => setActiveTab('tagged')}
+            className={`flex-1 flex justify-center py-3 border-t-2 transition-colors ${activeTab === 'tagged' ? 'border-[var(--text-primary)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'}`}
+          >
+            <UserSquare size={22} />
+          </button>
+        </div>
+
+        {/* Posts Grid */}
+        <div className="grid grid-cols-3 gap-0.5">
+          {posts.length > 0 ? (
+            posts.map((post) => (
+              <div key={post.id} className="aspect-square bg-zinc-100 relative group overflow-hidden">
+                <img 
+                  src={post.imageUrl || `https://picsum.photos/seed/${post.id}/400/400`} 
+                  className="w-full h-full object-cover"
+                  alt="Post"
+                />
               </div>
+            ))
+          ) : (
+            <div className="col-span-3 py-20 flex flex-col items-center justify-center text-[var(--text-secondary)]">
+              <div className="w-16 h-16 rounded-full border-2 border-[var(--text-secondary)] flex items-center justify-center mb-4">
+                <Camera size={32} />
+              </div>
+              <p className="text-sm font-bold">No posts yet</p>
             </div>
-          ))}
-
-          {/* Logout Button */}
-          <div className="mt-6 px-6">
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-3 bg-red-500/5 hover:bg-red-500/10 text-red-500 py-4 rounded-2xl font-black text-sm transition-all border border-red-500/10 active:scale-[0.98]"
-            >
-              <LogOut size={18} />
-              <span className="uppercase tracking-widest">Log Out</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Branding Footer */}
-        <div className="py-12 flex flex-col items-center gap-1 opacity-40">
-          <span className="text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest">from</span>
-          <span className="text-[var(--text-primary)] text-[11px] font-black tracking-[0.4em] uppercase">Gothwad technologies</span>
-          <span className="text-[var(--text-secondary)] text-[8px] uppercase tracking-tighter mt-1">made in india</span>
+          )}
         </div>
       </div>
     </div>
