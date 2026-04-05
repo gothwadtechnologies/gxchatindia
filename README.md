@@ -36,25 +36,5 @@ GxChat India is a comprehensive, high-performance social media and real-time mes
 - `/admin`: Admin-specific dashboard and tools.
 - `/user`: Authentication and profile setup screens.
 
-## 📦 Getting Started
-
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Environment Setup**:
-   Copy `.env.example` to `.env` and fill in your Firebase configuration.
-
-3. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Build for Production**:
-   ```bash
-   npm run build
-   ```
-
 ---
 Developed with ❤️ by Gothwad Technologies.
