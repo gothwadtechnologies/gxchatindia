@@ -13,17 +13,16 @@ export default function MainLayout() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Paths where BottomNav should be visible
-  const tabPaths = ['/', '/stories', '/hub', '/calls', '/profile'];
+  const tabPaths = ['/', '/stories', '/hub', '/calls', '/profile', '/notifications'];
   const isChatScreen = location.pathname.startsWith('/chat/');
   const showBottomNav = tabPaths.includes(location.pathname);
   
   // Paths where TopNav should be visible
-  const showTopNav = tabPaths.includes(location.pathname) && !isChatScreen;
+  const showTopNav = tabPaths.includes(location.pathname) || isChatScreen;
 
   // Determine current tab for ResourcesNav
   const getTab = (path: string): TabType | null => {
     if (path === '/') return 'chats';
-    if (path === '/calls') return 'calls';
     return null;
   };
 
@@ -36,7 +35,7 @@ export default function MainLayout() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      {showTopNav && <div><TopNav /></div>}
+      {showTopNav && <TopNav />}
       
       <div 
         ref={scrollContainerRef}
