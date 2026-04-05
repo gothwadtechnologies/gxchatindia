@@ -6,7 +6,6 @@ async function startServer() {
   const app = express();
   app.use(express.json());
   const PORT = 3000;
-  //const PORT = process.env.PORT ? parseInt(process.env.PORT) : 5173;
 
   // API routes
   app.get("/api/health", (req, res) => {
