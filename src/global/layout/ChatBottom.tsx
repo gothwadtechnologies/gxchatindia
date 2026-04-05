@@ -1,0 +1,188 @@
+import React from 'react';
+import { X, Send, Loader2 } from 'lucide-react';
+import { 
+  ChatMessageMenu, 
+  ChatEditPreview, 
+  ChatReplyPreview, 
+  ChatPlusMenu, 
+  EmojiPickerMenu 
+} from '../../components/ChatUIComponents.tsx';
+
+interface ChatBottomProps {
+  activeMessageMenu: any;
+  setActiveMessageMenu: (msg: any) => void;
+  setReplyingTo: (msg: any) => void;
+  startEdit: (msg: any) => void;
+  deleteMessage: (id: string) => void;
+  currentUserUid: string | undefined;
+  setShowReactionPicker: (msg: any) => void;
+  editingMessage: any;
+  setEditingMessage: (msg: any) => void;
+  newMessage: string;
+  setNewMessage: (text: string | ((prev: string) => string)) => void;
+  replyingTo: any;
+  receiver: any;
+  handleSendMessage: (e: React.FormEvent) => void;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  showPlusMenu: boolean;
+  setShowPlusMenu: (show: boolean) => void;
+  plusMenuRef: React.RefObject<HTMLDivElement | null>;
+  chatId: string | undefined;
+  imagePreviewUrl: string | null;
+  isUploading: boolean;
+  uploadProgress: number;
+  setSelectedImageFile: (file: File | null) => void;
+  setImagePreviewUrl: (url: string | null) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  handleTyping: () => void;
+  showEmojiPicker: boolean;
+  setShowEmojiPicker: (show: boolean) => void;
+  emojiPickerRef: React.RefObject<HTMLDivElement | null>;
+  isSending: boolean;
+  selectedImageFile: File | null;
+}
+
+export default function ChatBottom({
+  activeMessageMenu,
+  setActiveMessageMenu,
+  setReplyingTo,
+  startEdit,
+  deleteMessage,
+  currentUserUid,
+  setShowReactionPicker,
+  editingMessage,
+  setEditingMessage,
+  newMessage,
+  setNewMessage,
+  replyingTo,
+  receiver,
+  handleSendMessage,
+  fileInputRef,
+  handleFileChange,
+  showPlusMenu,
+  setShowPlusMenu,
+  plusMenuRef,
+  chatId,
+  imagePreviewUrl,
+  isUploading,
+  uploadProgress,
+  setSelectedImageFile,
+  setImagePreviewUrl,
+  textareaRef,
+  handleTyping,
+  showEmojiPicker,
+  setShowEmojiPicker,
+  emojiPickerRef,
+  isSending,
+  selectedImageFile
+}: ChatBottomProps) {
+  return (
+    <div className="shrink-0 bg-[var(--nav-bg)] px-4 py-1.5 pb-safe z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] relative border-t border-white/10 w-full max-w-full rounded-t-2xl">
+      <ChatMessageMenu 
+        activeMessageMenu={activeMessageMenu}
+        setActiveMessageMenu={setActiveMessageMenu}
+        setReplyingTo={setReplyingTo}
+        startEdit={startEdit}
+        deleteMessage={deleteMessage}
+        currentUserUid={currentUserUid}
+        setShowReactionPicker={setShowReactionPicker}
+      />
+
+      <ChatEditPreview 
+        editingMessage={editingMessage}
+        setEditingMessage={setEditingMessage}
+        setNewMessage={(text) => setNewMessage(text)}
+      />
+
+      <ChatReplyPreview 
+        replyingTo={replyingTo}
+        setReplyingTo={setReplyingTo}
+        receiver={receiver}
+        currentUserUid={currentUserUid}
+      />
+
+      <form onSubmit={handleSendMessage} className="flex items-center gap-2 w-full max-w-full">
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleFileChange}
+        />
+        <ChatPlusMenu 
+          showPlusMenu={showPlusMenu}
+          setShowPlusMenu={setShowPlusMenu}
+          plusMenuRef={plusMenuRef}
+          onMediaClick={() => fileInputRef.current?.click()}
+          chatId={chatId}
+        />
+
+        <div className="flex-1 bg-white/10 rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-white/10">
+          {imagePreviewUrl && (
+            <div className="mb-2 relative w-fit group">
+              <div className="relative rounded-xl overflow-hidden border border-white/20 shadow-lg max-w-[120px]">
+                <img src={imagePreviewUrl} alt="Preview" className="w-full h-auto" />
+                {isUploading && (
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                    <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mb-1" />
+                    <span className="text-white text-[10px] font-bold">{uploadProgress}%</span>
+                  </div>
+                )}
+                {!isUploading && (
+                  <button 
+                    type="button"
+                    onClick={() => { setSelectedImageFile(null); setImagePreviewUrl(null); }}
+                    className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          <div className="flex items-end w-full">
+            <textarea 
+              ref={textareaRef}
+              placeholder="Type a message"
+              value={newMessage}
+              onChange={(e) => {
+                setNewMessage(e.target.value);
+                handleTyping();
+                // Auto-expand
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              }}
+              rows={1}
+              className="flex-1 bg-transparent text-[16px] focus:outline-none text-white placeholder:text-white/50 py-1.5 resize-none max-h-[120px] leading-tight"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e as any);
+                }
+              }}
+            />
+            <EmojiPickerMenu 
+              showEmojiPicker={showEmojiPicker}
+              setShowEmojiPicker={setShowEmojiPicker}
+              emojiPickerRef={emojiPickerRef}
+              onEmojiSelect={(emoji) => {
+                setNewMessage(prev => prev + emoji);
+                setShowEmojiPicker(false);
+                textareaRef.current?.focus();
+              }}
+            />
+          </div>
+        </div>
+
+        <button 
+          type="submit"
+          disabled={(!newMessage.trim() && !selectedImageFile) || isSending || isUploading}
+          className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-[var(--nav-bg)] disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
+        >
+          {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
+        </button>
+      </form>
+    </div>
+  );
+}
