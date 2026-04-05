@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { APP_CONFIG } from '../../config/appConfig';
 import { Camera, Bell, MoreVertical, Settings, Search, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSearch } from '../../contexts/SearchContext.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function TopNav() {
   const { searchTerm, setSearchTerm, isSearchOpen, setIsSearchOpen } = useSearch();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isProfilePage = location.pathname === '/profile';
 
   return (
-    <div className="w-full bg-[var(--header-bg)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-[var(--border-color)] shadow-sm">
+    <div className="w-full bg-[var(--header-bg)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-[var(--border-color)] shadow-sm rounded-b-2xl">
       <AnimatePresence>
         {isSearchOpen ? (
           <motion.div 
@@ -63,6 +66,18 @@ export default function TopNav() {
               <Link to="/notifications" className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
                 <Bell size={22} className="text-[var(--header-text)]" />
               </Link>
+              {isProfilePage ? (
+                <button 
+                  onClick={() => navigate('/settings')}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+                >
+                  <Settings size={22} className="text-[var(--header-text)]" />
+                </button>
+              ) : (
+                <button className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+                  <MoreVertical size={22} className="text-[var(--header-text)]" />
+                </button>
+              )}
             </div>
           </>
         )}
