@@ -1,0 +1,10 @@
+{
+  "name": "GxChat India | The Ultimate Social Messaging App",
+  "description": "GxChat India - A high-performance social messaging app for India. Features real-time chat, reels, media sharing, and secure communication.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation",
+    "notifications"
+  ]
+}
