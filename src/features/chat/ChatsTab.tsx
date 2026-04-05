@@ -153,10 +153,6 @@ export default function ChatsTab() {
 
   return (
     <div className="h-full flex flex-col bg-[var(--bg-card)] overflow-hidden">
-      <div className="px-4 pt-6 pb-2">
-        <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter italic italic">Chats</h2>
-        <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] mt-1">Messages</p>
-      </div>
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
         {/* User List (Chats) */}
         <div className="flex flex-col">
@@ -227,12 +223,12 @@ export default function ChatsTab() {
       </div>
 
       {/* Floating Action Button */}
-      <div className="absolute bottom-20 right-6 z-40">
+      <div className="absolute bottom-4 right-6 z-40">
         <button 
           onClick={() => navigate('/explore')}
-          className="p-4 bg-[var(--primary)] text-white rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border-2 border-white/20"
+          className="p-3.5 bg-[var(--header-bg)] text-[var(--header-text)] rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border border-[var(--border-color)] flex items-center justify-center"
         >
-          <Plus size={24} />
+          <Plus size={22} strokeWidth={3} />
         </button>
       </div>
     </div>
