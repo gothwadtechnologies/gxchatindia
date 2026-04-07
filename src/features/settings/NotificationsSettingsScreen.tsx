@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Bell, MessageSquare, Phone, Users, Volume2, Vibrate, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function NotificationsSettingsScreen() {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function NotificationsSettingsScreen() {
                 <p className="text-[11px] text-[var(--text-secondary)]">Default (Skyline)</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-zinc-300" />
+            <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-40" />
           </button>
           <button className="w-full flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)]">
             <div className="flex items-center gap-4">
@@ -71,7 +71,7 @@ export default function NotificationsSettingsScreen() {
                 <p className="text-[11px] text-[var(--text-secondary)]">Default</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-zinc-300" />
+            <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-40" />
           </button>
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
@@ -100,7 +100,7 @@ export default function NotificationsSettingsScreen() {
                 <p className="text-[11px] text-[var(--text-secondary)]">Default (Breeze)</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-zinc-300" />
+            <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-40" />
           </button>
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
@@ -129,7 +129,7 @@ export default function NotificationsSettingsScreen() {
                 <p className="text-[11px] text-[var(--text-secondary)]">Default (GxChat India)</p>
               </div>
             </div>
-            <ChevronRight size={16} className="text-zinc-300" />
+            <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-40" />
           </button>
         </div>
       </div>
