@@ -10,7 +10,7 @@ import {
   Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function HelpScreen() {
   const navigate = useNavigate();
@@ -20,25 +20,29 @@ export default function HelpScreen() {
       icon: HelpCircle,
       label: 'Help Center',
       sub: 'Get help with GxChat features',
-      color: 'text-primary'
+      color: 'text-primary',
+      path: '/help'
     },
     {
       icon: FileText,
       label: 'Terms of Service',
       sub: 'Read our terms and conditions',
-      color: 'text-emerald-500'
+      color: 'text-emerald-500',
+      path: '/terms'
     },
     {
       icon: Shield,
       label: 'Privacy Policy',
       sub: 'How we handle your data',
-      color: 'text-indigo-500'
+      color: 'text-indigo-500',
+      path: '/privacy-policy'
     },
     {
       icon: Mail,
       label: 'Contact Us',
       sub: 'Reach out to our support team',
-      color: 'text-red-500'
+      color: 'text-red-500',
+      path: '/help'
     }
   ];
 
@@ -53,6 +57,7 @@ export default function HelpScreen() {
           {helpItems.map((item, index) => (
             <button 
               key={item.label}
+              onClick={() => navigate(item.path)}
               className={`w-full flex items-center justify-between px-6 py-4 hover:bg-zinc-50/10 transition-colors ${
                 index !== helpItems.length - 1 ? 'border-b border-[var(--border-color)]' : ''
               }`}
@@ -66,7 +71,7 @@ export default function HelpScreen() {
                   <p className="text-[11px] text-[var(--text-secondary)]">{item.sub}</p>
                 </div>
               </div>
-              <ChevronRight size={18} className="text-zinc-300" />
+              <ChevronRight size={18} className="text-[var(--text-secondary)] opacity-40" />
             </button>
           ))}
         </div>
