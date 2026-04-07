@@ -18,7 +18,11 @@ import {
   UserCheck,
   LockKeyhole,
   PlusSquare,
-  X
+  X,
+  Loader2,
+  Clapperboard,
+  UserSquare2,
+  Upload
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { auth, db } from '../../services/firebase.ts';
@@ -35,7 +39,7 @@ export default function UserProfileScreen() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('Post');
+  const [activeFilter, setActiveFilter] = useState('posts');
   const [showMenu, setShowMenu] = useState(false);
 
   const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -125,17 +129,17 @@ export default function UserProfileScreen() {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="h-full flex items-center justify-center bg-[var(--bg-main)]">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-white p-6 text-center">
-        <p className="text-zinc-500 mb-4">User not found or has been removed.</p>
-        <button onClick={() => navigate(-1)} className="text-primary font-bold">Go Back</button>
+      <div className="h-full flex flex-col items-center justify-center bg-[var(--bg-main)] p-6 text-center">
+        <p className="text-[var(--text-secondary)] mb-4">User not found or has been removed.</p>
+        <button onClick={() => navigate(-1)} className="text-[var(--primary)] font-bold">Go Back</button>
       </div>
     );
   }
@@ -144,34 +148,33 @@ export default function UserProfileScreen() {
 
   return (
     <div className="h-full flex flex-col bg-[var(--bg-main)] overflow-hidden font-sans">
-      {/* Header matching TopNav style but with back button */}
-      <div className="w-full bg-[var(--header-gradient)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-white/10 shadow-lg">
+      {/* Header */}
+      <div className="w-full bg-[var(--header-bg)] px-4 h-14 flex justify-between items-center z-50 shrink-0 relative border-b border-[var(--border-color)] shadow-sm rounded-b-2xl">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="hover:bg-white/10 p-2 rounded-full transition-colors cursor-pointer">
-            <ArrowLeft size={22} className="text-white" />
+            <ArrowLeft size={22} className="text-[var(--header-text)]" />
           </button>
           <div className="flex flex-col">
-            <h1 className="text-lg font-bold text-white tracking-tight">{user.fullName || 'GxChat User'}</h1>
+            <h1 className="text-lg font-bold text-[var(--header-text)] tracking-tight">{user.fullName || 'GxChat User'}</h1>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <button className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-            <Bell size={22} className="text-white/80" />
+            <Bell size={22} className="text-[var(--header-text)] opacity-80" />
           </button>
           <button 
             onClick={() => setShowMenu(true)}
             className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
           >
-            <MoreVertical size={22} className="text-white/80" />
+            <MoreVertical size={22} className="text-[var(--header-text)] opacity-80" />
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
-        {/* Instagram Style Header */}
-        <div className="px-4 pt-6 pb-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-          <div className="flex items-center gap-8 mb-4">
-            {/* Profile Picture */}
+        <div className="px-4 pt-6">
+          {/* Profile Picture & Stats Row */}
+          <div className="flex items-center gap-4 mb-6">
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
                 <div className="w-full h-full rounded-full border-2 border-[var(--bg-card)] overflow-hidden bg-[var(--bg-main)]">
@@ -185,59 +188,65 @@ export default function UserProfileScreen() {
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="flex-1 flex justify-around items-center">
-              <div className="flex flex-col items-center">
-                <span className="text-lg font-bold text-[var(--text-primary)]">0</span>
-                <span className="text-xs text-[var(--text-secondary)]">Posts</span>
+            {/* Stats Box (Single) */}
+            <div className="flex-1 bg-[var(--box-bg)] rounded-xl p-2 flex justify-between items-center min-h-[60px]">
+              <div className="flex flex-col items-center flex-1">
+                <span className="text-sm font-bold text-[var(--box-text)]">0</span>
+                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Reels</span>
               </div>
               <button 
                 onClick={() => !isPrivate && navigate(`/user/${userId}/followers`)}
-                className={`flex flex-col items-center ${isPrivate ? 'opacity-50 cursor-default' : ''}`}
+                className={`flex flex-col items-center flex-1 active:scale-95 transition-all ${isPrivate ? 'opacity-50 cursor-default' : ''}`}
               >
-                <span className="text-lg font-bold text-[var(--text-primary)]">{user.followers?.length || 0}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Followers</span>
+                <span className="text-sm font-bold text-[var(--box-text)]">{user.followers?.length || 0}</span>
+                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Followers</span>
               </button>
               <button 
                 onClick={() => !isPrivate && navigate(`/user/${userId}/following`)}
-                className={`flex flex-col items-center ${isPrivate ? 'opacity-50 cursor-default' : ''}`}
+                className={`flex flex-col items-center flex-1 active:scale-95 transition-all ${isPrivate ? 'opacity-50 cursor-default' : ''}`}
               >
-                <span className="text-lg font-bold text-[var(--text-primary)]">{user.following?.length || 0}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Following</span>
+                <span className="text-sm font-bold text-[var(--box-text)]">{user.following?.length || 0}</span>
+                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Following</span>
               </button>
             </div>
           </div>
 
-          {/* Name, Username and Action Buttons Row */}
-          <div className="flex flex-col mb-4">
-            <div className="flex flex-col mb-4">
-              <h2 className="text-sm font-bold text-[var(--text-primary)] leading-tight">
+          {/* 4 Boxes Layout */}
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            {/* Name & Username Box */}
+            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px]">
+              <h2 className="text-[13px] font-bold leading-tight truncate">
                 {user.fullName || 'GxChat User'}
               </h2>
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-[11px] opacity-80 truncate">
                 @{user.username || 'username'}
               </p>
             </div>
-            
-            <div className="flex gap-2">
-              <button 
-                onClick={handleToggleFollow}
-                disabled={followLoading}
-                className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors border ${
-                  isFollowing 
-                  ? 'bg-[var(--bg-main)] text-[var(--text-primary)] border-[var(--border-color)]' 
-                  : 'bg-[var(--primary)] text-white border-[var(--primary)]/20'
-                }`}
-              >
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
-              <button 
-                onClick={() => navigate(`/chat/${userId}`)}
-                className="flex-1 py-1.5 bg-[var(--bg-main)] hover:bg-[var(--bg-card)] text-[var(--text-primary)] text-sm font-semibold rounded-lg transition-colors border border-[var(--border-color)]"
-              >
-                Message
-              </button>
+
+            {/* Bio Box */}
+            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px]">
+              <p className="text-[11px] leading-tight line-clamp-3">
+                {user.bio || 'Available'}
+              </p>
             </div>
+
+            {/* Follow Button Box */}
+            <button 
+              onClick={handleToggleFollow}
+              disabled={followLoading}
+              className={`bg-[var(--box-bg)] text-[var(--box-text)] px-4 py-3 rounded-xl text-[13px] font-bold active:scale-[0.98] transition-all text-left flex items-center justify-between ${isFollowing ? 'opacity-90' : ''}`}
+            >
+              <span>{isFollowing ? 'Following' : 'Follow'}</span>
+              {followLoading && <Loader2 size={14} className="animate-spin" />}
+            </button>
+
+            {/* Message Box */}
+            <button 
+              onClick={() => navigate(`/chat/${userId}`)}
+              className="bg-[var(--box-bg)] text-[var(--box-text)] px-4 py-3 rounded-xl text-[13px] font-bold active:scale-[0.98] transition-all text-left"
+            >
+              Message
+            </button>
           </div>
         </div>
 
@@ -253,7 +262,30 @@ export default function UserProfileScreen() {
             </p>
           </div>
         ) : (
-          <ProfileContent posts={mockPosts} activeTab={activeFilter} />
+          <div className="px-4">
+            {/* Tabs Strip */}
+            <div className="flex bg-[var(--box-bg)] rounded-xl mb-4 overflow-hidden h-[46px] items-stretch">
+              <button 
+                onClick={() => setActiveFilter('posts')}
+                className={`flex-1 flex justify-center items-center transition-colors ${activeFilter === 'posts' ? 'bg-white/10 text-[var(--box-text)]' : 'text-[var(--box-text)] opacity-50'}`}
+              >
+                <Clapperboard size={20} />
+              </button>
+              <button 
+                onClick={() => setActiveFilter('tagged')}
+                className={`flex-1 flex justify-center items-center transition-colors ${activeFilter === 'tagged' ? 'bg-white/10 text-[var(--box-text)]' : 'text-[var(--box-text)] opacity-50'}`}
+              >
+                <UserSquare2 size={20} />
+              </button>
+              <button 
+                onClick={() => setActiveFilter('saved')}
+                className={`flex-1 flex justify-center items-center transition-colors ${activeFilter === 'saved' ? 'bg-white/10 text-[var(--box-text)]' : 'text-[var(--box-text)] opacity-50'}`}
+              >
+                <Upload size={20} />
+              </button>
+            </div>
+            <ProfileContent posts={mockPosts} activeTab={activeFilter} />
+          </div>
         )}
 
         {/* Branding Footer */}
