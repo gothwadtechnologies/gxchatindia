@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { 
   LogOut, 
   Shield, 
@@ -9,34 +9,16 @@ import {
   Key,
   Globe,
   Database,
-  Smartphone,
-  ChevronLeft
+  Smartphone
 } from 'lucide-react';
-import { auth, db } from '../../services/firebase.ts';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { auth } from '../../services/firebase.ts';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function SettingsScreen() {
-  const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
-
-  const DEFAULT_LOGO = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const docRef = doc(db, "users", auth.currentUser.uid);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setUserData(docSnap.data());
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -88,7 +70,7 @@ export default function SettingsScreen() {
         { 
           icon: Globe, 
           label: 'App Preferences', 
-          sub: "Language, Theme", 
+          sub: "Theme", 
           color: 'text-cyan-500',
           onClick: () => navigate('/app-preferences')
         },
@@ -120,28 +102,6 @@ export default function SettingsScreen() {
       <SettingHeader title="Settings" />
 
       <div className="flex-1 pb-24">
-        {/* Profile Header (Mini) */}
-        <div className="px-6 py-8 flex items-center gap-4 bg-[var(--bg-card)]">
-          <div className="w-16 h-16 rounded-full p-0.5 bg-[var(--primary)]">
-            <div className="w-full h-full rounded-full border-2 border-[var(--bg-card)] overflow-hidden bg-zinc-100">
-              <img 
-                src={userData?.photoURL || DEFAULT_LOGO} 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-                alt="Profile"
-              />
-            </div>
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-[var(--text-primary)] leading-tight">
-              {userData?.fullName || 'GxChat User'}
-            </h2>
-            <p className="text-sm text-[var(--text-secondary)] font-medium">
-              @{userData?.username || 'username'}
-            </p>
-          </div>
-        </div>
-
         {/* Settings List */}
         <div className="mt-2">
           {menuSections.map((section) => (
@@ -163,9 +123,9 @@ export default function SettingsScreen() {
                     </div>
                     <div className="flex-1 text-left">
                       <h4 className="text-[14px] font-bold text-[var(--text-primary)]">{item.label}</h4>
-                      <p className="text-[11px] text-[var(--text-secondary)] opacity-70">{item.sub}</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">{item.sub}</p>
                     </div>
-                    <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-20" />
+                    <ChevronRight size={16} className="text-[var(--text-secondary)] opacity-40" />
                   </button>
                 ))}
               </div>
