@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../services/firebase.ts';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function PrivacySettingsScreen() {
   const navigate = useNavigate();
@@ -161,7 +161,7 @@ export default function PrivacySettingsScreen() {
                   onClick={() => navigate('/app-lock')}
                   className="p-2 hover:bg-zinc-50/10 rounded-full transition-colors"
                 >
-                  <ChevronRight size={18} className="text-zinc-300" />
+                  <ChevronRight size={18} className="text-[var(--text-secondary)] opacity-40" />
                 </button>
               ) : (
                 <Toggle active={userData?.[item.id]} onClick={() => updatePrivacySetting(item.id, !userData?.[item.id])} />
