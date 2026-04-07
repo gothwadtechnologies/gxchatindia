@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Camera, X, RefreshCw, Zap, ZapOff, Image as ImageIcon, ArrowLeft, Send, Check, RotateCcw } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { storage as firebaseStorage, db, auth } from '../../services/firebase.ts';
-import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import { db, auth } from '../../services/firebase.ts';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 
