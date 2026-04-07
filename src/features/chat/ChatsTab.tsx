@@ -25,8 +25,6 @@ export default function ChatsTab() {
     if (activeFilter === 'Calls') return;
 
     // Optimized query: Fetch messages involving the user
-    // We'll use two queries to get messages where user is sender or receiver
-    // We remove orderBy and limit to avoid needing composite indexes
     const qSender = query(
       collection(db, "messages"),
       where("senderId", "==", auth.currentUser.uid)
@@ -68,9 +66,8 @@ export default function ChatsTab() {
       // Filter out cached users
       const uncachedIds = otherUserIds.filter(id => !CacheService.getUser(id));
       
-      // Fetch uncached users in chunks of 30 (Firestore limit for 'in' query)
+      // Fetch uncached users in chunks of 30
       const userMap = new Map();
-      // Add cached users to map
       otherUserIds.forEach(id => {
         const cached = CacheService.getUser(id);
         if (cached) userMap.set(id, cached);
@@ -90,6 +87,10 @@ export default function ChatsTab() {
 
       const chatList = sortedChats.map((chat) => {
         const otherUserId = chat.senderId === auth.currentUser?.uid ? chat.receiverId : chat.senderId;
+        
+        // Skip AI user if it accidentally got into Firebase
+        if (otherUserId === 'gx-ai') return null;
+
         const userData = userMap.get(otherUserId);
         
         const unreadCount = allMsgs.filter(m => 
@@ -111,24 +112,9 @@ export default function ChatsTab() {
           unreadCount,
           isOnline: userData?.isOnline || false
         };
-      });
+      }).filter(Boolean);
 
-      // Add GxChat Ai to the list
-      const aiChat = {
-        id: 'gx-ai-chat',
-        otherUserId: 'gx-ai',
-        user: 'GxChat Ai',
-        username: 'gxchat_ai',
-        fullName: 'GxChat Ai',
-        lastMsg: 'Hello! I am GxChat AI. How can I help you today?',
-        time: 'Now',
-        avatar: '/assets/favicon.png',
-        unread: true,
-        unreadCount: 1,
-        isOnline: true
-      };
-
-      setConversations([aiChat, ...chatList]);
+      setConversations(chatList);
       setLoading(false);
     };
 
@@ -251,18 +237,18 @@ export default function ChatsTab() {
                     key={call.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-4 px-4 py-4 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group"
+                    className="flex items-center gap-[15px] px-4 py-3 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group"
                   >
-                    <div className="relative">
+                    <div className="relative shrink-0">
                       <img 
                         src={call.avatar} 
                         alt={call.user} 
-                        className="w-14 h-14 rounded-full object-cover border-2 border-[var(--bg-card)] shadow-sm group-hover:scale-105 transition-transform"
+                        className="w-[52px] h-[52px] rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform"
                         referrerPolicy="no-referrer"
                       />
                     </div>
                     
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 border-b border-[var(--border-color)]/50 pb-3 group-last:border-0">
                       <div className="flex justify-between items-baseline mb-0.5">
                         <h3 className={`text-[15px] truncate font-bold ${call.isMissed ? 'text-rose-500' : 'text-[var(--text-primary)]'}`}>
                           {call.user}
@@ -295,63 +281,103 @@ export default function ChatsTab() {
                 ))}
               </div>
             )
-          ) : filteredConversations.length > 0 ? (
-            filteredConversations.map(chat => (
-              <Link 
-                to={`/chat/${chat.otherUserId}`} 
-                key={chat.id} 
-                className="flex items-center gap-4 px-4 py-4 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group"
+          ) : (
+            <>
+              {/* GxChat AI - Always at top */}
+              <div 
+                onClick={() => navigate('/chat/gx-ai')}
+                className="flex items-center gap-[15px] px-4 py-3 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group cursor-pointer"
               >
-                <div className="relative">
+                <div 
+                  className="relative shrink-0 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/profile/gx-ai');
+                  }}
+                >
                   <img 
-                    src={chat.avatar} 
-                    className="w-14 h-14 rounded-full object-cover border-2 border-[var(--bg-card)] shadow-sm group-hover:scale-105 transition-transform"
+                    src="/assets/favicon.png" 
+                    className="w-[52px] h-[52px] rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform"
                     referrerPolicy="no-referrer"
                   />
-                  {chat.isOnline && (
-                    <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[var(--bg-card)] rounded-full"></div>
-                  )}
+                  <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[var(--bg-card)] rounded-full"></div>
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 border-b border-[var(--border-color)]/50 pb-3">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <h3 className={`text-[15px] truncate ${chat.unread ? 'font-black text-[var(--text-primary)]' : 'font-bold text-[var(--text-primary)]'}`}>
-                      {chat.user}
+                    <h3 className="text-[15px] truncate font-bold text-[var(--text-primary)]">
+                      GxChat AI
                     </h3>
-                    <span className={`text-[10px] whitespace-nowrap ${chat.unread ? 'text-[var(--primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
-                      {chat.time}
+                    <span className="text-[10px] whitespace-nowrap text-[var(--text-secondary)]">
+                      Online
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <p className={`text-xs truncate ${chat.unread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
-                      {chat.lastMsg}
+                    <p className="text-xs truncate text-[var(--text-secondary)] font-medium">
+                      Ask me anything! I'm here to help.
                     </p>
-                    {chat.unread && (
-                      <div className="min-w-[18px] h-[18px] px-1 bg-[var(--primary)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--primary-shadow)] ml-2">
-                        <span className="text-[10px] text-white font-bold">{chat.unreadCount}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
-              </Link>
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-10 text-center gap-4">
-              <div className="p-4 bg-[var(--bg-main)] rounded-full text-[var(--text-secondary)]">
-                <MessageCircle size={40} />
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">No messages yet</h3>
-                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                  Start a conversation with your friends in GxChat India.
-                </p>
-              </div>
-              <button 
-                onClick={() => navigate('/explore')}
-                className="mt-2 bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-[var(--primary-shadow)] hover:opacity-90 transition-all"
-              >
-                Find Friends
-              </button>
-            </div>
+
+              {filteredConversations.length > 0 ? (
+                filteredConversations.map(chat => (
+                  <Link 
+                    to={`/chat/${chat.otherUserId}`} 
+                    key={chat.id} 
+                    className="flex items-center gap-[15px] px-4 py-3 hover:bg-[var(--bg-main)] transition-all active:scale-[0.98] group"
+                  >
+                    <div className="relative shrink-0">
+                      <img 
+                        src={chat.avatar} 
+                        className="w-[52px] h-[52px] rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform"
+                        referrerPolicy="no-referrer"
+                      />
+                      {chat.isOnline && (
+                        <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[var(--bg-card)] rounded-full"></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 border-b border-[var(--border-color)]/50 pb-3 group-last:border-0">
+                      <div className="flex justify-between items-baseline mb-0.5">
+                        <h3 className={`text-[15px] truncate ${chat.unread ? 'font-black text-[var(--text-primary)]' : 'font-bold text-[var(--text-primary)]'}`}>
+                          {chat.user}
+                        </h3>
+                        <span className={`text-[10px] whitespace-nowrap ${chat.unread ? 'text-[var(--primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
+                          {chat.time}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <p className={`text-xs truncate ${chat.unread ? 'text-[var(--text-primary)] font-bold' : 'text-[var(--text-secondary)]'}`}>
+                          {chat.lastMsg}
+                        </p>
+                        {chat.unread && (
+                          <div className="min-w-[18px] h-[18px] px-1 bg-[var(--primary)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--primary-shadow)] ml-2">
+                            <span className="text-[10px] text-white font-bold">{chat.unreadCount}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 px-10 text-center gap-4">
+                  <div className="p-4 bg-[var(--bg-main)] rounded-full text-[var(--text-secondary)]">
+                    <MessageCircle size={40} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-1">No messages yet</h3>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                      Start a conversation with your friends in GxChat India.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => navigate('/explore')}
+                    className="mt-2 bg-[var(--primary)] text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-[var(--primary-shadow)] hover:opacity-90 transition-all"
+                  >
+                    Find Friends
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -359,7 +385,7 @@ export default function ChatsTab() {
       {/* Floating Action Button */}
       <div className="absolute bottom-4 right-6 z-40">
         <button 
-          onClick={() => navigate('/explore')}
+          onClick={() => navigate('/search-user')}
           className="p-3.5 bg-[var(--header-bg)] text-[var(--header-text)] rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border border-[var(--border-color)] flex items-center justify-center"
         >
           <Plus size={22} strokeWidth={3} />
