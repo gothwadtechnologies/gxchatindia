@@ -304,7 +304,7 @@ export default function CallScreen() {
 
       {/* Controls */}
       <div className="relative z-10 w-full px-8 pb-16">
-        <div className="max-w-md mx-auto bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 flex items-center justify-between border border-white/10 shadow-2xl">
+        <div className="w-full mx-auto bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-6 flex items-center justify-between border border-white/10 shadow-2xl">
           <button 
             onClick={() => setIsSpeakerOn(!isSpeakerOn)}
             className={`p-4 rounded-full transition-all ${isSpeakerOn ? 'bg-white/10 text-white' : 'bg-white text-zinc-900'}`}
