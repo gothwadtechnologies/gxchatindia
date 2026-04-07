@@ -1,14 +1,36 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { storage } from '../services/StorageService';
 
-type Theme = 'original' | 'dark';
-type Language = 'en';
+export type Theme = 'original-light' | 'light' | 'original-dark' | 'dark';
+export type Language = 'hi-in' | 'en-us';
+
+const translations = {
+  'hi-in': {
+    settings: 'सेटिंग्स',
+    preferences: 'पसंद',
+    language: 'भाषा',
+    theme: 'थीम',
+    chats: 'चैट',
+    status: 'स्टेटस',
+    calls: 'कॉल',
+  },
+  'en-us': {
+    settings: 'Settings',
+    preferences: 'Preferences',
+    language: 'Language',
+    theme: 'Theme',
+    chats: 'Chats',
+    status: 'Status',
+    calls: 'Calls',
+  }
+};
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   language: Language;
   setLanguage: (lang: Language) => void;
+  t: (key: keyof typeof translations['en-us']) => string;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -16,13 +38,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = storage.getItem('app-theme');
-    return (saved as Theme) || 'original';
+    return (saved as Theme) || 'original-light';
   });
 
   const [language, setLanguage] = useState<Language>(() => {
     const saved = storage.getItem('app-lang');
-    return (saved as Language) || 'en';
+    return (saved as Language) || 'hi-in';
   });
+
+  const t = (key: keyof typeof translations['en-us']) => {
+    return translations[language][key] || translations['en-us'][key];
+  };
 
   useEffect(() => {
     storage.setItem('app-theme', theme);
@@ -34,7 +60,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, language, setLanguage }}>
+    <ThemeContext.Provider value={{ theme, setTheme, language, setLanguage, t }}>
       {children}
     </ThemeContext.Provider>
   );
