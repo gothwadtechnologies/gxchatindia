@@ -12,7 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { LockService } from '../../services/LockService.ts';
 import { motion } from 'motion/react';
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function AppLockScreen() {
   const navigate = useNavigate();
