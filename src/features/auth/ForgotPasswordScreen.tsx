@@ -56,7 +56,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <div className="h-full overflow-y-auto bg-white flex flex-col items-center relative font-sans">
-      <div className="w-full max-w-md px-8 pt-16 pb-12 z-10 flex flex-col min-h-full relative">
+      <div className="w-full px-8 pt-16 pb-12 z-10 flex flex-col min-h-full relative">
         {/* Branding Overlay */}
         <div className="absolute top-6 left-0 right-0 flex items-center justify-center gap-2">
           <div className="bg-zinc-50 px-3 py-1.5 rounded-full border border-zinc-100 flex items-center gap-2 shadow-sm">
@@ -152,16 +152,6 @@ export default function ForgotPasswordScreen() {
             </div>
           </form>
         )}
-
-        {/* Footer */}
-        <div className="mt-auto pt-12 flex flex-col items-center gap-1">
-          <div className="flex items-center gap-2 text-[10px] font-bold">
-            <Link to="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
-            <span className="text-zinc-900">&</span>
-            <Link to="/terms" className="text-blue-600 hover:underline">Terms and Conditions</Link>
-          </div>
-          <span className="text-[9px] font-black text-zinc-900 uppercase tracking-widest">Gothwad Technologies</span>
-        </div>
       </div>
     </div>
   );
