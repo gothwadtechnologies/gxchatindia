@@ -69,78 +69,83 @@ export default function ProfileTab() {
               </button>
             </div>
 
-            {/* Stats Row */}
-            <div className="flex-1 flex justify-between items-center pr-4">
-              <div className="flex flex-col items-center">
-                <span className="text-base font-bold text-[var(--text-primary)]">{posts.length}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Posts</span>
+            {/* Stats Box (Single) */}
+            <div className="flex-1 bg-[var(--box-bg)] rounded-xl p-2 flex justify-between items-center min-h-[60px]">
+              <div className="flex flex-col items-center flex-1">
+                <span className="text-sm font-bold text-[var(--box-text)]">{posts.length}</span>
+                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Reels</span>
               </div>
               <button 
                 onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
-                className="flex flex-col items-center"
+                className="flex flex-col items-center flex-1 active:scale-95 transition-all"
               >
-                <span className="text-base font-bold text-[var(--text-primary)]">{userData?.followers?.length || 0}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Followers</span>
+                <span className="text-sm font-bold text-[var(--box-text)]">{userData?.followers?.length || 0}</span>
+                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Followers</span>
               </button>
               <button 
                 onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
-                className="flex flex-col items-center"
+                className="flex flex-col items-center flex-1 active:scale-95 transition-all"
               >
-                <span className="text-base font-bold text-[var(--text-primary)]">{userData?.following?.length || 0}</span>
-                <span className="text-xs text-[var(--text-secondary)]">Following</span>
+                <span className="text-sm font-bold text-[var(--box-text)]">{userData?.following?.length || 0}</span>
+                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Following</span>
               </button>
             </div>
           </div>
 
-          {/* Name & Bio */}
-          <div className="mb-6">
-            <h2 className="text-sm font-bold text-[var(--text-primary)]">
-              {userData?.fullName || 'GxChat User'}
-            </h2>
-            <p className="text-sm text-[var(--text-secondary)] font-medium">
-              @{userData?.username || 'username'}
-            </p>
-            {userData?.bio && (
-              <p className="text-sm text-[var(--text-primary)] mt-1 whitespace-pre-wrap">
-                {userData.bio}
+          {/* 4 Boxes Layout */}
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            {/* Name & Username Box */}
+            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px]">
+              <h2 className="text-[13px] font-bold leading-tight truncate">
+                {userData?.fullName || 'GxChat User'}
+              </h2>
+              <p className="text-[11px] opacity-80 truncate">
+                @{userData?.username || 'username'}
               </p>
-            )}
-          </div>
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 mb-6">
+            {/* Bio Box */}
+            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px]">
+              <p className="text-[11px] leading-tight line-clamp-3">
+                {userData?.bio || 'Available'}
+              </p>
+            </div>
+
+            {/* Edit Profile Box */}
             <button 
               onClick={() => navigate('/edit-profile')}
-              className="flex-1 bg-[var(--bg-chat)] text-[var(--text-primary)] py-2 rounded-lg text-sm font-bold border border-[var(--border-color)] active:scale-[0.98] transition-all"
+              className="bg-[var(--box-bg)] text-[var(--box-text)] px-4 py-3 rounded-xl text-[13px] font-bold active:scale-[0.98] transition-all text-left"
             >
               Edit Profile
             </button>
+
+            {/* Share Profile Box */}
             <button 
-              className="flex-1 bg-[var(--bg-chat)] text-[var(--text-primary)] py-2 rounded-lg text-sm font-bold border border-[var(--border-color)] active:scale-[0.98] transition-all"
+              className="bg-[var(--box-bg)] text-[var(--box-text)] px-4 py-3 rounded-xl text-[13px] font-bold active:scale-[0.98] transition-all text-left"
             >
               Share Profile
             </button>
           </div>
 
-          {/* Tabs - Moved here */}
-          <div className="flex border-t border-b border-[var(--border-color)] mb-4">
+          {/* Tabs Strip */}
+          <div className="flex bg-[var(--box-bg)] rounded-xl mb-4 overflow-hidden h-[46px] items-stretch">
             <button 
               onClick={() => setActiveTab('posts')}
-              className={`flex-1 flex justify-center py-3 border-b-2 transition-colors ${activeTab === 'posts' ? 'border-[var(--text-primary)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'}`}
+              className={`flex-1 flex justify-center items-center transition-colors ${activeTab === 'posts' ? 'bg-white/10 text-[var(--box-text)]' : 'text-[var(--box-text)] opacity-50'}`}
             >
-              <Clapperboard size={22} />
+              <Clapperboard size={20} />
             </button>
             <button 
               onClick={() => setActiveTab('tagged')}
-              className={`flex-1 flex justify-center py-3 border-b-2 transition-colors ${activeTab === 'tagged' ? 'border-[var(--text-primary)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'}`}
+              className={`flex-1 flex justify-center items-center transition-colors ${activeTab === 'tagged' ? 'bg-white/10 text-[var(--box-text)]' : 'text-[var(--box-text)] opacity-50'}`}
             >
-              <UserSquare size={22} />
+              <UserSquare size={20} />
             </button>
             <button 
-              onClick={() => setActiveTab('saved')} // Reusing saved for upload icon as requested
-              className={`flex-1 flex justify-center py-3 border-b-2 transition-colors ${activeTab === 'saved' ? 'border-[var(--text-primary)] text-[var(--text-primary)]' : 'border-transparent text-[var(--text-secondary)]'}`}
+              onClick={() => setActiveTab('saved')}
+              className={`flex-1 flex justify-center items-center transition-colors ${activeTab === 'saved' ? 'bg-white/10 text-[var(--box-text)]' : 'text-[var(--box-text)] opacity-50'}`}
             >
-              <Upload size={22} />
+              <Upload size={20} />
             </button>
           </div>
         </div>
