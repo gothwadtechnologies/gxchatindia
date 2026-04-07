@@ -35,21 +35,29 @@ const ChatsTab = React.lazy(() => import('./features/chat').then(m => ({ default
 const ChatLayout = React.lazy(() => import('./features/chat').then(m => ({ default: m.ChatLayout })));
 const ChatScreen = React.lazy(() => import('./features/chat').then(m => ({ default: m.ChatScreen })));
 const MessagesListScreen = React.lazy(() => import('./features/chat').then(m => ({ default: m.MessagesListScreen })));
+const SearchUserScreen = React.lazy(() => import('./features/chat/SearchUserScreen'));
 
-const StatusTab = React.lazy(() => import('./features/home').then(m => ({ default: m.StatusTab })));
+const StatusTab = React.lazy(() => import('./features/status').then(m => ({ default: m.StatusTab })));
+const StatusMakerScreen = React.lazy(() => import('./features/status').then(m => ({ default: m.StatusMakerScreen })));
+const StatusWatcherScreen = React.lazy(() => import('./features/status').then(m => ({ default: m.StatusWatcherScreen })));
 const CreatePostScreen = React.lazy(() => import('./features/home').then(m => ({ default: m.CreatePostScreen })));
-const NotificationsScreen = React.lazy(() => import('./features/home').then(m => ({ default: m.NotificationsScreen })));
+const NotificationsScreen = React.lazy(() => import('./features/notifications/NotificationsScreen.tsx'));
 
 const ProfileTab = React.lazy(() => import('./features/profile').then(m => ({ default: m.ProfileTab })));
 const EditProfileScreen = React.lazy(() => import('./features/profile').then(m => ({ default: m.EditProfileScreen })));
 const UserProfileScreen = React.lazy(() => import('./features/profile').then(m => ({ default: m.UserProfileScreen })));
 const FollowListScreen = React.lazy(() => import('./features/profile').then(m => ({ default: m.FollowListScreen })));
+const GxChatAIProfile = React.lazy(() => import('./features/profile').then(m => ({ default: m.GxChatAIProfile })));
 
 const ReelsTab = React.lazy(() => import('./features/reels').then(m => ({ default: m.ReelsTab })));
 const ReelsScreen = React.lazy(() => import('./features/reels').then(m => ({ default: m.ReelsScreen })));
+const ReelsMakerScreen = React.lazy(() => import('./features/reels/ReelsMakerScreen'));
+const ReelWatcherScreen = React.lazy(() => import('./features/reels/ReelWatcherScreen'));
 
 const CallsTab = React.lazy(() => import('./features/call').then(m => ({ default: m.CallsTab })));
-const HubTab = React.lazy(() => import('./features/channels').then(m => ({ default: m.HubTab })));
+const HubTab = React.lazy(() => import('./features/hub').then(m => ({ default: m.HubTab })));
+const GithubScreen = React.lazy(() => import('./features/hub/github').then(m => ({ default: m.GithubScreen })));
+const GithubRepoDetailScreen = React.lazy(() => import('./features/hub/github').then(m => ({ default: m.GithubRepoDetailScreen })));
 const CameraTab = React.lazy(() => import('./features/camera').then(m => ({ default: m.CameraTab })));
 
 const PrivacySettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.PrivacySettingsScreen })));
@@ -117,9 +125,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <SplashScreen 
-        developerName={APP_CONFIG.DEVELOPER} 
-      />
+      <SplashScreen />
     );
   }
 
@@ -175,6 +181,10 @@ export default function App() {
                     <Route path="/call/:id" element={user ? <CallScreen /> : <Navigate to="/login" />} />
                     <Route path="/create" element={user ? <CreatePostScreen /> : <Navigate to="/login" />} />
                     <Route path="/notifications" element={user ? <NotificationsScreen /> : <Navigate to="/login" />} />
+                    <Route path="/status/create" element={user ? <StatusMakerScreen /> : <Navigate to="/login" />} />
+                    <Route path="/reels/create" element={user ? <ReelsMakerScreen /> : <Navigate to="/login" />} />
+                    <Route path="/reels/watch/:id" element={user ? <ReelWatcherScreen /> : <Navigate to="/login" />} />
+                    <Route path="/status/view/:userId" element={user ? <StatusWatcherScreen /> : <Navigate to="/login" />} />
                     <Route path="/settings" element={user ? <SettingsScreen /> : <Navigate to="/login" />} />
                     <Route path="/edit-profile" element={user ? <EditProfileScreen /> : <Navigate to="/login" />} />
                     <Route path="/privacy-settings" element={user ? <PrivacySettingsScreen /> : <Navigate to="/login" />} />
@@ -192,8 +202,12 @@ export default function App() {
                     <Route path="/privacy-policy" element={<PrivacyPolicyScreen />} />
                     <Route path="/terms" element={<TermsAndConditionsScreen />} />
                     <Route path="/messages" element={user ? <MessagesListScreen /> : <Navigate to="/login" />} />
+                    <Route path="/search-user" element={user ? <SearchUserScreen /> : <Navigate to="/login" />} />
                     <Route path="/user/:id" element={user ? <UserProfileScreen /> : <Navigate to="/login" />} />
                     <Route path="/user/:id/:type" element={user ? <FollowListScreen /> : <Navigate to="/login" />} />
+                    <Route path="/profile/gx-ai" element={user ? <GxChatAIProfile /> : <Navigate to="/login" />} />
+                    <Route path="/hub/github" element={user ? <GithubScreen /> : <Navigate to="/login" />} />
+                    <Route path="/hub/github/repo/:owner/:repo" element={user ? <GithubRepoDetailScreen /> : <Navigate to="/login" />} />
                   </Routes>
                 </React.Suspense>
               </div>
