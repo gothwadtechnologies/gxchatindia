@@ -14,14 +14,13 @@ import {
   X
 } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import ChatHeader from '../../global/layout/ChatHeader.tsx';
-import ChatBottom from '../../global/layout/ChatBottom.tsx';
+import ChatHeader from '../../components/layout/ChatHeader.tsx';
+import ChatBottom from '../../components/layout/ChatBottom.tsx';
 import { 
   ChatMessageReactions
 } from '../../components/ChatUIComponents';
-import { auth, db, rtdb, storage as firebaseStorage } from '../../services/firebase.ts';
+import { auth, db, rtdb } from '../../services/firebase.ts';
 import { ref as rtdbRef, onValue, update } from 'firebase/database';
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, uploadBytesResumable } from 'firebase/storage';
 import { toDate, formatLastSeen } from '../../utils/dateUtils.ts';
 import { 
   collection, 
@@ -45,6 +44,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { CacheService } from '../../services/CacheService.ts';
 import { GoogleGenAI } from "@google/genai";
+import { ImageService } from '../../services/ImageService.ts';
 
 const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined;
 const ai = new GoogleGenAI({ apiKey: apiKey || '' });
@@ -254,6 +254,10 @@ export default function ChatScreen() {
   }, []);
 
   useEffect(() => {
+    if (receiverId === 'gx-ai') {
+      navigate('/chat/gx-ai', { replace: true });
+      return;
+    }
     if (!receiverId || !auth.currentUser) return;
 
     const localKey = `msgs_${chatId}`;
@@ -270,63 +274,51 @@ export default function ChatScreen() {
     setMessages(savedMsgs);
     setLoading(false);
 
-    if (receiverId === 'gx-ai') {
-      setReceiver({
-        fullName: 'GxChat Ai',
-        username: 'gxai',
-        photoURL: '/assets/favicon.png',
-        isOnline: true,
-        isAI: true
-      });
-      setReceiverStatus('online');
-      setLoading(false);
-    } else {
-      // Use Cache for receiver info
-      const cachedReceiver = CacheService.getUser(receiverId);
-      if (cachedReceiver) {
-        setReceiver(cachedReceiver);
+    // Use Cache for receiver info
+    const cachedReceiver = CacheService.getUser(receiverId);
+    if (cachedReceiver) {
+      setReceiver(cachedReceiver);
+    }
+
+    // Listen for receiver info
+    const receiverUnsubscribe = onSnapshot(doc(db, "users", receiverId), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setReceiver(data);
+        CacheService.saveUser(receiverId, data);
       }
+    });
 
-      // Listen for receiver info
-      const receiverUnsubscribe = onSnapshot(doc(db, "users", receiverId), (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setReceiver(data);
-          CacheService.saveUser(receiverId, data);
-        }
-      });
+    // Listen for receiver RTDB status
+    const statusRef = rtdbRef(rtdb, `/status/${receiverId}`);
+    const statusUnsubscribe = onValue(statusRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        setReceiverStatus(val.state);
+        setReceiverActiveChatId(val.activeChatId || null);
+        setReceiverLastSeen(val.last_changed || null);
+      } else {
+        setReceiverStatus('offline');
+        setReceiverActiveChatId(null);
+        setReceiverLastSeen(null);
+      }
+    });
 
-      // Listen for receiver RTDB status
-      const statusRef = rtdbRef(rtdb, `/status/${receiverId}`);
-      const statusUnsubscribe = onValue(statusRef, (snapshot) => {
-        const val = snapshot.val();
-        if (val) {
-          setReceiverStatus(val.state);
-          setReceiverActiveChatId(val.activeChatId || null);
-          setReceiverLastSeen(val.last_changed || null);
-        } else {
-          setReceiverStatus('offline');
-          setReceiverActiveChatId(null);
-          setReceiverLastSeen(null);
-        }
-      });
+    // Set my active chat ID in RTDB
+    if (auth.currentUser) {
+      const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
+      update(myStatusRef, { activeChatId: receiverId }).catch(err => console.error("Error updating activeChatId:", err));
+    }
 
-      // Set my active chat ID in RTDB
+    return () => {
+      receiverUnsubscribe();
+      statusUnsubscribe();
+      // Clear my active chat ID
       if (auth.currentUser) {
         const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
-        update(myStatusRef, { activeChatId: receiverId }).catch(err => console.error("Error updating activeChatId:", err));
+        update(myStatusRef, { activeChatId: null }).catch(err => console.error("Error clearing activeChatId:", err));
       }
-
-      return () => {
-        receiverUnsubscribe();
-        statusUnsubscribe();
-        // Clear my active chat ID
-        if (auth.currentUser) {
-          const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
-          update(myStatusRef, { activeChatId: null }).catch(err => console.error("Error clearing activeChatId:", err));
-        }
-      };
-    }
+    };
   }, [receiverId, chatId, scrollToBottom, messageLimit]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -518,15 +510,7 @@ export default function ChatScreen() {
         
         for (const msgDoc of snapshot.docs) {
           const data = msgDoc.data();
-          // Delete from storage if it has an image
-          if (data.imageUrl && data.storagePath) {
-            try {
-              const sRef = storageRef(firebaseStorage, data.storagePath);
-              await deleteObject(sRef);
-            } catch (e) {
-              console.error("Error deleting image from storage:", e);
-            }
-          }
+          // We don't delete from ImgBB as it requires a delete hash we don't store yet
           batch.delete(msgDoc.ref);
         }
         
@@ -605,43 +589,33 @@ export default function ChatScreen() {
         setIsSending(false);
       } else if (selectedImageFile) {
         setIsUploading(true);
-        const timestamp = Date.now();
-        const path = `chats/${chatId}/${timestamp}_${selectedImageFile.name}`;
-        const sRef = storageRef(firebaseStorage, path);
-        
-        const uploadTask = uploadBytesResumable(sRef, selectedImageFile);
-
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(Math.round(progress));
-          }, 
-          (error) => {
-            console.error("Upload error:", error);
-            setIsUploading(false);
-            setIsSending(false);
-            alert("Failed to upload image.");
-          }, 
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            await addDoc(collection(db, "messages"), {
-              chatId,
-              senderId: auth.currentUser?.uid,
-              receiverId,
-              text: textToSend,
-              imageUrl: url,
-              storagePath: path,
-              timestamp: serverTimestamp(),
-              isRead: false,
-              type: 'image'
-            });
-            setIsUploading(false);
-            setIsSending(false);
-            setSelectedImageFile(null);
-            setImagePreviewUrl(null);
-            setUploadProgress(0);
-          }
-        );
+        try {
+          const url = await ImageService.uploadImage(selectedImageFile, (progress) => {
+            setUploadProgress(progress);
+          });
+          
+          await addDoc(collection(db, "messages"), {
+            chatId,
+            senderId: auth.currentUser?.uid,
+            receiverId,
+            text: textToSend,
+            imageUrl: url,
+            timestamp: serverTimestamp(),
+            isRead: false,
+            type: 'image'
+          });
+          
+          setIsUploading(false);
+          setIsSending(false);
+          setSelectedImageFile(null);
+          setImagePreviewUrl(null);
+          setUploadProgress(0);
+        } catch (error) {
+          console.error("Upload error:", error);
+          setIsUploading(false);
+          setIsSending(false);
+          alert("Failed to upload image to ImgBB.");
+        }
       } else {
         await addDoc(collection(db, "messages"), {
           chatId,
@@ -652,36 +626,6 @@ export default function ChatScreen() {
           isRead: false,
           replyTo: replyContext
         }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'messages'));
-
-        // AI Logic
-        if (receiverId === 'gx-ai') {
-          setIsOtherTyping(true);
-          try {
-            const result = await ai.models.generateContent({
-              model: "gemini-3-flash-preview",
-              contents: [{ role: 'user', parts: [{ text: textToSend }] }],
-              config: {
-                systemInstruction: "You are GxChat Ai, a helpful and friendly assistant in the GxChat India app. Keep your responses concise and helpful."
-              }
-            });
-            
-            const aiResponse = result.text;
-            
-            await addDoc(collection(db, "messages"), {
-              chatId,
-              senderId: 'gx-ai',
-              receiverId: auth.currentUser.uid,
-              text: aiResponse,
-              timestamp: serverTimestamp(),
-              isRead: true,
-              replyTo: { id: 'user-msg', text: textToSend, senderId: auth.currentUser.uid }
-            });
-          } catch (aiErr) {
-            console.error("AI Error:", aiErr);
-          } finally {
-            setIsOtherTyping(false);
-          }
-        }
 
         // Cleanup: Keep only 50 messages in Firebase for this chat (Run in background)
         setTimeout(async () => {
