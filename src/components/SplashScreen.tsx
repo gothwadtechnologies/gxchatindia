@@ -3,10 +3,9 @@ import { motion } from 'motion/react';
 import { APP_CONFIG } from '../config/appConfig';
 
 interface SplashScreenProps {
-  developerName: string;
 }
 
-export default function SplashScreen({ developerName }: SplashScreenProps) {
+export default function SplashScreen({ }: SplashScreenProps) {
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999] font-sans overflow-hidden">
       {/* Center Logo */}
@@ -32,19 +31,6 @@ export default function SplashScreen({ developerName }: SplashScreenProps) {
           GxChat India
         </motion.span>
       </div>
-
-      {/* Bottom Branding */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="pb-12 flex flex-col items-center gap-1"
-      >
-        <span className="text-zinc-400 text-[10px] font-medium tracking-wide">from</span>
-        <span className="text-zinc-900 text-[12px] font-bold tracking-[0.2em] uppercase">
-          {developerName}
-        </span>
-      </motion.div>
     </div>
   );
 }
