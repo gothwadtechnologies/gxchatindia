@@ -9,15 +9,16 @@
 }
 
 @layer base {
-  :root {
-    --primary: #0095f6; /* Instagram Blue */
+  /* Original Light Theme (Default) */
+  :root, [data-theme='original-light'] {
+    --primary: #0095f6;
     --primary-foreground: #ffffff;
     --primary-shadow: rgba(0, 149, 246, 0.1);
     --bg-main: #ffffff;
     --bg-card: #ffffff;
     --bg-chat: #ffffff;
     --text-primary: #000000;
-    --text-secondary: #64748b;
+    --text-secondary: #475569;
     --border-color: #f1f5f9;
     --accent-color: #0095f6;
     --bubble-own: #e7f3ff;
@@ -29,17 +30,45 @@
     --nav-bg: #375a7f;
     --nav-text: #ffffff;
     --brand-color: #375a7f;
+    --box-bg: #375a7f;
+    --box-text: #ffffff;
   }
 
-  [data-theme='dark'] {
+  /* Light Theme (White Headers) */
+  [data-theme='light'] {
+    --primary: #0095f6;
+    --primary-foreground: #ffffff;
+    --primary-shadow: rgba(0, 149, 246, 0.1);
+    --bg-main: #ffffff;
+    --bg-card: #ffffff;
+    --bg-chat: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #475569;
+    --border-color: #f1f5f9;
+    --accent-color: #0095f6;
+    --bubble-own: #e7f3ff;
+    --bubble-other: #f1f5f9;
+    --bubble-text-own: #1e293b;
+    --bubble-text-other: #1e293b;
+    --header-bg: #ffffff;
+    --header-text: #000000;
+    --nav-bg: #ffffff;
+    --nav-text: #000000;
+    --brand-color: #0095f6;
+    --box-bg: #f8fafc;
+    --box-text: #000000;
+  }
+
+  /* Original Dark Theme (Dark with Blue Headers) */
+  [data-theme='original-dark'] {
     --primary: #0095f6;
     --primary-foreground: #ffffff;
     --primary-shadow: rgba(0, 149, 246, 0.2);
-    --bg-main: #0f172a; /* Softer slate-dark background */
-    --bg-card: #1e293b; /* Slightly lighter slate for cards */
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
     --bg-chat: #0f172a;
-    --text-primary: #f8fafc; /* Off-white for better readability */
-    --text-secondary: #94a3b8;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
     --border-color: #1e293b;
     --accent-color: #0095f6;
     --bubble-own: #1d4ed8;
@@ -51,6 +80,33 @@
     --nav-bg: #375a7f;
     --nav-text: #ffffff;
     --brand-color: #ffffff;
+    --box-bg: #375a7f;
+    --box-text: #ffffff;
+  }
+
+  /* Dark Theme (All Dark) */
+  [data-theme='dark'] {
+    --primary: #0095f6;
+    --primary-foreground: #ffffff;
+    --primary-shadow: rgba(0, 149, 246, 0.2);
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --bg-chat: #0f172a;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --border-color: #1e293b;
+    --accent-color: #0095f6;
+    --bubble-own: #1d4ed8;
+    --bubble-other: #1e293b;
+    --bubble-text-own: #ffffff;
+    --bubble-text-other: #f8fafc;
+    --header-bg: #0f172a;
+    --header-text: #f8fafc;
+    --nav-bg: #0f172a;
+    --nav-text: #f8fafc;
+    --brand-color: #0095f6;
+    --box-bg: #1e293b;
+    --box-text: #f8fafc;
   }
 
   body {
@@ -70,12 +126,12 @@
   }
 
   #root {
-    @apply w-full h-full overflow-hidden flex justify-center bg-zinc-100;
+    @apply w-full h-full overflow-hidden flex bg-[var(--bg-main)];
   }
 
   /* Global Fluid Container */
   .app-container {
-    @apply w-full max-w-[450px] h-full bg-[var(--bg-card)] shadow-[0_0_40px_rgba(0,0,0,0.1)] relative overflow-hidden flex flex-col;
+    @apply w-full h-full bg-[var(--bg-card)] relative overflow-hidden flex flex-col;
   }
 
   /* Prevent any element from breaking layout */
