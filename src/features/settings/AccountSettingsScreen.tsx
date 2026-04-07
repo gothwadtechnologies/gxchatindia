@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Shield, Smartphone, Key, UserX, FileText, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function AccountSettingsScreen() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function AccountSettingsScreen() {
                 <h4 className="text-sm font-bold text-[var(--text-primary)]">{item.label}</h4>
                 <p className="text-[11px] text-[var(--text-secondary)]">{item.sub}</p>
               </div>
-              <ChevronRight size={18} className="text-zinc-300" />
+              <ChevronRight size={18} className="text-[var(--text-secondary)] opacity-40" />
             </button>
           ))}
         </div>
