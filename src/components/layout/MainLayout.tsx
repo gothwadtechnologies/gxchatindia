@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import TopNav from './TopNav.tsx';
-import TabBottom from '../../global/layout/TabBottom.tsx';
+import TabBottom from './TabBottom.tsx';
 import ResourcesNav, { TabType } from './ResourcesNav.tsx';
 import { useNav } from '../../contexts/NavContext.tsx';
 import { motion, AnimatePresence } from 'motion/react';
