@@ -2,7 +2,7 @@ import React from 'react';
 import { APP_CONFIG } from '../../config/appConfig';
 import { ArrowLeft, Info, ShieldCheck, Globe, Code } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import SettingHeader from '../../global/layout/SettingHeader.tsx';
+import SettingHeader from '../../components/layout/SettingHeader.tsx';
 
 export default function AppInfoScreen() {
   const navigate = useNavigate();
