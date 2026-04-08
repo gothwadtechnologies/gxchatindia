@@ -26,8 +26,8 @@ async function startServer() {
       return res.status(500).json({ error: "GITHUB_CLIENT_ID is not set in environment variables" });
     }
     
-    // Using the explicit App URL from context as recommended for AI Studio environment
-    const appUrl = "https://ais-dev-nwobf3f2q5csbl7f3thoeo-382376324296.asia-southeast1.run.app";
+    // Use APP_URL from env, or fallback to AI Studio URL for preview
+    const appUrl = process.env.APP_URL || "https://ais-dev-nwobf3f2q5csbl7f3thoeo-382376324296.asia-southeast1.run.app";
     const redirectUri = `${appUrl}/auth/github/callback`;
     
     const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
@@ -124,9 +124,19 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`GxChat India Server running on http://localhost:${PORT}`);
+  // Export for Vercel
+  return app;
+}
+
+// Start server if not running as a module (e.g., in Vercel)
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  startServer().then(app => {
+    const PORT = 3000;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`GxChat India Server running on http://localhost:${PORT}`);
+    });
   });
 }
 
-startServer();
+export default startServer;
+
