@@ -13,7 +13,7 @@ export default function ChatsTab() {
   const navigate = useNavigate();
   const { searchTerm } = useSearch();
   const { activeFilters } = useLayout();
-  const activeFilter = activeFilters['chats'] || 'All';
+  const activeFilter = activeFilters['chats'] || 'Chats';
   
   const [conversations, setConversations] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
@@ -211,7 +211,7 @@ export default function ChatsTab() {
     <div className="h-full flex flex-col bg-[var(--bg-card)] overflow-hidden">
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
         {/* User List (Chats or Calls) */}
-        <div className="flex flex-col">
+        <div className="flex flex-col h-full">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
@@ -380,16 +380,6 @@ export default function ChatsTab() {
             </>
           )}
         </div>
-      </div>
-
-      {/* Floating Action Button */}
-      <div className="absolute bottom-4 right-6 z-40">
-        <button 
-          onClick={() => navigate('/search-user')}
-          className="p-3.5 bg-[var(--header-bg)] text-[var(--header-text)] rounded-full shadow-xl hover:opacity-90 transition-all active:scale-95 border border-[var(--border-color)] flex items-center justify-center"
-        >
-          <Plus size={22} strokeWidth={3} />
-        </button>
       </div>
     </div>
   );
