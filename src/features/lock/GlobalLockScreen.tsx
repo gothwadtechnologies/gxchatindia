@@ -127,7 +127,7 @@ export default function GlobalLockScreen({ onUnlock }: GlobalLockScreenProps) {
                 ))}
               </div>
             ) : (
-              <div className="w-full max-w-[280px]">
+              <div className="w-full">
                 <div className="relative">
                   <input 
                     type="password"
@@ -189,7 +189,7 @@ export default function GlobalLockScreen({ onUnlock }: GlobalLockScreenProps) {
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="w-full max-w-[400px] bg-white rounded-[2.5rem] p-8 shadow-2xl"
+              className="w-full bg-white rounded-[2.5rem] p-8 shadow-2xl"
             >
               <div className="flex justify-between items-center mb-6">
                 <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500">
