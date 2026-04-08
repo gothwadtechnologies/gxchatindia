@@ -12,7 +12,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     home: 'For You',
     post: 'For You',
     hub: 'Explore',
-    chats: 'All',
+    chats: 'Chats',
     reels: 'Trending',
     profile: 'Post',
   });
