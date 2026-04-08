@@ -6,37 +6,41 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-async function startServer() {
-  const app = express();
-  app.use(express.json({ limit: '50mb' }));
-  const PORT = 3000;
+const app = express();
+app.use(express.json({ limit: '50mb' }));
 
-  // GitHub OAuth Config
-  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+// GitHub OAuth Config
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
-  // API routes
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", message: "GxChat India Server is running" });
+// API routes
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", message: "GxChat India Server is running" });
+});
+
+// Debug endpoint to check env vars (without showing secrets)
+app.get("/api/github/debug", (req, res) => {
+  res.json({
+    hasClientId: !!GITHUB_CLIENT_ID,
+    hasClientSecret: !!GITHUB_CLIENT_SECRET,
+    appUrl: process.env.APP_URL || "Not Set",
+    nodeEnv: process.env.NODE_ENV,
+    isVercel: !!process.env.VERCEL
   });
+});
 
-  // GitHub Auth URL
-  app.get("/api/github/auth-url", (req, res) => {
-    console.log("GitHub Auth URL requested. Client ID status:", !!GITHUB_CLIENT_ID);
-    
-    if (!GITHUB_CLIENT_ID) {
-      console.error("GITHUB_CLIENT_ID is missing!");
-      return res.status(500).json({ error: "GITHUB_CLIENT_ID is not set in environment variables" });
-    }
-    
-    // Use APP_URL from env, or fallback to AI Studio URL for preview
-    const appUrl = process.env.APP_URL || "https://ais-dev-nwobf3f2q5csbl7f3thoeo-382376324296.asia-southeast1.run.app";
-    const redirectUri = `${appUrl}/auth/github/callback`;
-    
-    const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
-    console.log("Generated Auth URL:", url);
-    res.json({ url });
-  });
+// GitHub Auth URL
+app.get("/api/github/auth-url", (req, res) => {
+  if (!GITHUB_CLIENT_ID) {
+    return res.status(500).json({ error: "GITHUB_CLIENT_ID is not set in environment variables" });
+  }
+  
+  const appUrl = process.env.APP_URL || "https://ais-dev-nwobf3f2q5csbl7f3thoeo-382376324296.asia-southeast1.run.app";
+  const redirectUri = `${appUrl}/auth/github/callback`;
+  
+  const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
+  res.json({ url });
+});
 
   // GitHub Callback
   app.get(["/auth/github/callback", "/auth/github/callback/"], async (req, res) => {
@@ -112,34 +116,31 @@ async function startServer() {
     }
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+// Vite middleware for development
+async function setupVite() {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    // Production static serving
     const distPath = path.resolve(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.resolve(distPath, "index.html"));
     });
   }
-
-  // Export for Vercel
-  return app;
 }
 
-// Start server if not running as a module (e.g., in Vercel)
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  startServer().then(app => {
-    const PORT = 3000;
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`GxChat India Server running on http://localhost:${PORT}`);
-    });
+setupVite();
+
+// Start server if not in Vercel
+if (!process.env.VERCEL) {
+  const PORT = 3000;
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`GxChat India Server running on http://localhost:${PORT}`);
   });
 }
 
-export default startServer;
+export default app;
