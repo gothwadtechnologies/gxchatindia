@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  PlusSquare,
   Grid,
   Bookmark,
   UserSquare,
   Camera,
   Clapperboard,
-  Upload
+  Upload,
+  Pencil
 } from 'lucide-react';
 import { auth, db } from '../../services/firebase.ts';
 import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
@@ -48,10 +48,10 @@ export default function ProfileTab() {
       <div className="flex-1 pb-24">
         {/* Profile Header */}
         <div className="px-4 pt-6 pb-4">
-          <div className="flex items-center gap-8 mb-6">
+          <div className="flex items-center gap-6 mb-6">
             {/* Profile Picture */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+              <div className="w-20 h-20 rounded-full p-0.5 bg-[#375a7f]">
                 <div className="w-full h-full rounded-full border-2 border-[var(--bg-main)] overflow-hidden bg-zinc-100">
                   <img 
                     src={userData?.photoURL || DEFAULT_LOGO} 
@@ -65,65 +65,46 @@ export default function ProfileTab() {
                 onClick={() => navigate('/edit-profile')}
                 className="absolute bottom-0 right-0 w-6 h-6 bg-[var(--primary)] text-white rounded-full border-2 border-[var(--bg-main)] flex items-center justify-center shadow-sm"
               >
-                <PlusSquare size={14} />
+                <Pencil size={12} />
               </button>
             </div>
 
-            {/* Stats Box (Single) */}
-            <div className="flex-1 bg-[var(--box-bg)] rounded-xl p-2 flex justify-between items-center min-h-[60px]">
-              <div className="flex flex-col items-center flex-1">
-                <span className="text-sm font-bold text-[var(--box-text)]">{posts.length}</span>
-                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Reels</span>
-              </div>
-              <button 
-                onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
-                className="flex flex-col items-center flex-1 active:scale-95 transition-all"
-              >
-                <span className="text-sm font-bold text-[var(--box-text)]">{userData?.followers?.length || 0}</span>
-                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Followers</span>
-              </button>
-              <button 
-                onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
-                className="flex flex-col items-center flex-1 active:scale-95 transition-all"
-              >
-                <span className="text-sm font-bold text-[var(--box-text)]">{userData?.following?.length || 0}</span>
-                <span className="text-[10px] text-[var(--box-text)] opacity-80 uppercase font-bold tracking-wider">Following</span>
-              </button>
+            {/* Bio Box (Fixed height to match profile pic 80px) */}
+            <div className="flex-1 bg-[var(--box-bg)] rounded-xl p-3 flex flex-col justify-center h-20 overflow-hidden">
+              <p className="text-[12px] leading-tight text-[var(--box-text)] font-medium line-clamp-3">
+                {userData?.bio || 'Available'}
+              </p>
             </div>
           </div>
 
-          {/* 4 Boxes Layout */}
+          {/* Grid Layout */}
           <div className="grid grid-cols-2 gap-2 mb-6">
             {/* Name & Username Box */}
-            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px]">
-              <h2 className="text-[13px] font-bold leading-tight truncate">
+            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px] col-span-2">
+              <h2 className="text-[14px] font-bold leading-tight truncate">
                 {userData?.fullName || 'GxChat User'}
               </h2>
-              <p className="text-[11px] opacity-80 truncate">
+              <p className="text-[12px] opacity-80 truncate">
                 @{userData?.username || 'username'}
               </p>
             </div>
 
-            {/* Bio Box */}
-            <div className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col justify-center min-h-[60px]">
-              <p className="text-[11px] leading-tight line-clamp-3">
-                {userData?.bio || 'Available'}
-              </p>
-            </div>
-
-            {/* Edit Profile Box */}
+            {/* Followers Box */}
             <button 
-              onClick={() => navigate('/edit-profile')}
-              className="bg-[var(--box-bg)] text-[var(--box-text)] px-4 py-3 rounded-xl text-[13px] font-bold active:scale-[0.98] transition-all text-left"
+              onClick={() => navigate(`/user/${auth.currentUser?.uid}/followers`)}
+              className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col items-center justify-center min-h-[60px] active:scale-[0.98] transition-all"
             >
-              Edit Profile
+              <span className="text-sm font-bold">{userData?.followers?.length || 0}</span>
+              <span className="text-[10px] opacity-80 uppercase font-bold tracking-wider">Followers</span>
             </button>
 
-            {/* Share Profile Box */}
+            {/* Following Box */}
             <button 
-              className="bg-[var(--box-bg)] text-[var(--box-text)] px-4 py-3 rounded-xl text-[13px] font-bold active:scale-[0.98] transition-all text-left"
+              onClick={() => navigate(`/user/${auth.currentUser?.uid}/following`)}
+              className="bg-[var(--box-bg)] p-3 rounded-xl text-[var(--box-text)] flex flex-col items-center justify-center min-h-[60px] active:scale-[0.98] transition-all"
             >
-              Share Profile
+              <span className="text-sm font-bold">{userData?.following?.length || 0}</span>
+              <span className="text-[10px] opacity-80 uppercase font-bold tracking-wider">Following</span>
             </button>
           </div>
 
