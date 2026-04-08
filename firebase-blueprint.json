@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user account information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "fullName": { "type": "string" },
+        "username": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "gender": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "isAdmin": { "type": "boolean" },
+        "lastSeen": { "type": "object" },
+        "status": { "type": "string", "enum": ["online", "offline"] },
+        "followers": { "type": "array", "items": { "type": "string" } },
+        "following": { "type": "array", "items": { "type": "string" } },
+        "blockedUsers": { "type": "array", "items": { "type": "string" } },
+        "fcmTokens": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["uid", "email", "username"]
+    },
+    "Reel": {
+      "title": "Reel",
+      "description": "Short video content shared by users.",
+      "type": "object",
+      "properties": {
+        "youtubeId": { "type": "string" },
+        "caption": { "type": "string" },
+        "cover": { "type": "string" },
+        "userUid": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "likes": { "type": "number" },
+        "comments": { "type": "number" },
+        "createdAt": { "type": "object" },
+        "audio": { "type": "string" },
+        "likedBy": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["youtubeId", "userUid", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A message sent between users.",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "object" },
+        "isRead": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["text", "image", "video", "audio", "file"] },
+        "imageUrl": { "type": "string" },
+        "isEdited": { "type": "boolean" },
+        "reactions": { "type": "object" },
+        "expiresAt": { "type": "object" }
+      },
+      "required": ["chatId", "senderId", "receiverId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "/reels/{reelId}": {
+      "schema": "Reel",
+      "description": "Reel content documents."
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Chat messages."
+    },
+    "/chats/{chatId}": {
+      "schema": "object",
+      "description": "Chat room metadata."
+    },
+    "/typing/{typingId}": {
+      "schema": "object",
+      "description": "Real-time typing indicators."
+    },
+    "/stories/{storyId}": {
+      "schema": "object",
+      "description": "User story updates (ephemeral)."
+    },
+    "/calls/{callId}": {
+      "schema": "object",
+      "description": "Call signaling data."
+    }
+  }
+}
