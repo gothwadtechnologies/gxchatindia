@@ -32,14 +32,14 @@ function ErrorFallback({ error }: { error: Error }) {
 
 // Lazy Loading Features & Screens
 const ChatsTab = React.lazy(() => import('./features/chat').then(m => ({ default: m.ChatsTab })));
+const HomeTab = React.lazy(() => import('./features/home').then(m => ({ default: m.HomeTab })));
 const ChatLayout = React.lazy(() => import('./features/chat').then(m => ({ default: m.ChatLayout })));
 const ChatScreen = React.lazy(() => import('./features/chat').then(m => ({ default: m.ChatScreen })));
 const MessagesListScreen = React.lazy(() => import('./features/chat').then(m => ({ default: m.MessagesListScreen })));
 const SearchUserScreen = React.lazy(() => import('./features/chat/SearchUserScreen'));
 
-const StatusTab = React.lazy(() => import('./features/status').then(m => ({ default: m.StatusTab })));
-const StatusMakerScreen = React.lazy(() => import('./features/status').then(m => ({ default: m.StatusMakerScreen })));
-const StatusWatcherScreen = React.lazy(() => import('./features/status').then(m => ({ default: m.StatusWatcherScreen })));
+const StoryMakerScreen = React.lazy(() => import('./features/stories').then(m => ({ default: m.StoryMakerScreen })));
+const StoryWatcherScreen = React.lazy(() => import('./features/stories').then(m => ({ default: m.StoryWatcherScreen })));
 const CreatePostScreen = React.lazy(() => import('./features/home').then(m => ({ default: m.CreatePostScreen })));
 const NotificationsScreen = React.lazy(() => import('./features/notifications/NotificationsScreen.tsx'));
 
@@ -57,7 +57,6 @@ const ReelWatcherScreen = React.lazy(() => import('./features/reels/ReelWatcherS
 const CallsTab = React.lazy(() => import('./features/call').then(m => ({ default: m.CallsTab })));
 const HubTab = React.lazy(() => import('./features/hub').then(m => ({ default: m.HubTab })));
 const GithubScreen = React.lazy(() => import('./features/hub/github').then(m => ({ default: m.GithubScreen })));
-const GithubRepoDetailScreen = React.lazy(() => import('./features/hub/github').then(m => ({ default: m.GithubRepoDetailScreen })));
 const CameraTab = React.lazy(() => import('./features/camera').then(m => ({ default: m.CameraTab })));
 
 const PrivacySettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.PrivacySettingsScreen })));
@@ -157,13 +156,12 @@ export default function App() {
                         !user ? <Navigate to="/login" /> : 
                         needsVerification ? <Navigate to="/verify-email" /> :
                         needsProfileCompletion ? <Navigate to="/complete-profile" /> :
-                        <ChatsTab />
+                        <HomeTab />
                       } />
-                      <Route path="/status" element={user ? <StatusTab /> : <Navigate to="/login" />} />
+                      <Route path="/chats" element={user ? <ChatsTab /> : <Navigate to="/login" />} />
                       <Route path="/hub" element={user ? <HubTab /> : <Navigate to="/login" />} />
                       <Route path="/reels" element={user ? <ReelsTab /> : <Navigate to="/login" />} />
                       <Route element={<ChatLayout />}>
-                        <Route path="/chats" element={<Navigate to="/" replace />} />
                         <Route path="/chat/:id" element={user ? <ChatScreen /> : <Navigate to="/login" />} />
                       </Route>
                       <Route path="/calls" element={user ? <CallsTab /> : <Navigate to="/login" />} />
@@ -181,10 +179,10 @@ export default function App() {
                     <Route path="/call/:id" element={user ? <CallScreen /> : <Navigate to="/login" />} />
                     <Route path="/create" element={user ? <CreatePostScreen /> : <Navigate to="/login" />} />
                     <Route path="/notifications" element={user ? <NotificationsScreen /> : <Navigate to="/login" />} />
-                    <Route path="/status/create" element={user ? <StatusMakerScreen /> : <Navigate to="/login" />} />
+                    <Route path="/stories/create" element={user ? <StoryMakerScreen /> : <Navigate to="/login" />} />
                     <Route path="/reels/create" element={user ? <ReelsMakerScreen /> : <Navigate to="/login" />} />
                     <Route path="/reels/watch/:id" element={user ? <ReelWatcherScreen /> : <Navigate to="/login" />} />
-                    <Route path="/status/view/:userId" element={user ? <StatusWatcherScreen /> : <Navigate to="/login" />} />
+                    <Route path="/stories/view/:userId" element={user ? <StoryWatcherScreen /> : <Navigate to="/login" />} />
                     <Route path="/settings" element={user ? <SettingsScreen /> : <Navigate to="/login" />} />
                     <Route path="/edit-profile" element={user ? <EditProfileScreen /> : <Navigate to="/login" />} />
                     <Route path="/privacy-settings" element={user ? <PrivacySettingsScreen /> : <Navigate to="/login" />} />
@@ -207,7 +205,6 @@ export default function App() {
                     <Route path="/user/:id/:type" element={user ? <FollowListScreen /> : <Navigate to="/login" />} />
                     <Route path="/profile/gx-ai" element={user ? <GxChatAIProfile /> : <Navigate to="/login" />} />
                     <Route path="/hub/github" element={user ? <GithubScreen /> : <Navigate to="/login" />} />
-                    <Route path="/hub/github/repo/:owner/:repo" element={user ? <GithubRepoDetailScreen /> : <Navigate to="/login" />} />
                   </Routes>
                 </React.Suspense>
               </div>
