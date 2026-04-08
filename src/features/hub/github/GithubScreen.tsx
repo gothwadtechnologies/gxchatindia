@@ -1,208 +1,183 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Github, 
-  Plus, 
-  Search, 
-  ExternalLink, 
-  Star, 
-  GitFork, 
-  Lock, 
-  Globe,
-  RefreshCw,
-  LogOut,
-  ChevronRight
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import SettingHeader from '../../../components/layout/SettingHeader.tsx';
+import { githubApi, GithubRepo } from './githubApi.ts';
+import { Github, LogOut, Search, ExternalLink, ChevronRight, Folder } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import GithubRepoDetail from './GithubRepoDetail.tsx';
 import { storage } from '../../../services/StorageService.ts';
-import { Button, Card, Input } from '../../../components/ui';
 
 export default function GithubScreen() {
-  const navigate = useNavigate();
-  const [isConnected, setIsConnected] = useState(false);
+  const [token, setToken] = useState<string | null>(storage.getItem('github_token'));
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [repos, setRepos] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRepo, setSelectedRepo] = useState<GithubRepo | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const token = storage.getItem('github_token');
     if (token) {
-      setIsConnected(true);
-      fetchRepos(token);
+      fetchData();
     }
-  }, []);
 
-  const fetchRepos = async (token: string) => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GITHUB_AUTH_SUCCESS') {
+        const newToken = event.data.token;
+        setToken(newToken);
+        storage.setItem('github_token', newToken);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [token]);
+
+  const fetchData = async () => {
+    if (!token) return;
     setLoading(true);
     try {
-      const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
-        headers: {
-          'Authorization': `token ${token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setRepos(data);
-      } else {
-        // Token might be invalid
-        storage.removeItem('github_token');
-        setIsConnected(false);
-      }
+      const [reposData, userData] = await Promise.all([
+        githubApi.getRepos(token),
+        githubApi.getUser(token)
+      ]);
+      setRepos(reposData);
+      setUser(userData);
     } catch (error) {
-      console.error('Error fetching repos:', error);
+      console.error("Failed to fetch GitHub data:", error);
+      if ((error as any).response?.status === 401) {
+        handleLogout();
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleConnect = () => {
-    // For now, we'll use a prompt to get the token as a simple way to "connect"
-    // In a real app, this would be an OAuth flow.
-    const token = window.prompt('Please enter your GitHub Personal Access Token (with repo scope):');
-    if (token) {
-      storage.setItem('github_token', token);
-      setIsConnected(true);
-      fetchRepos(token);
+  const handleConnect = async () => {
+    try {
+      const url = await githubApi.getAuthUrl();
+      window.open(url, 'github_oauth', 'width=600,height=700');
+    } catch (error) {
+      console.error("Failed to get auth URL:", error);
     }
   };
 
-  const handleDisconnect = () => {
-    storage.removeItem('github_token');
-    setIsConnected(false);
+  const handleLogout = () => {
+    setToken(null);
     setRepos([]);
+    setUser(null);
+    storage.removeItem('github_token');
   };
 
   const filteredRepos = repos.filter(repo => 
-    repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+    repo.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="flex flex-col h-full bg-[var(--bg-main)] font-sans overflow-hidden">
-      <SettingHeader 
-        title="GitHub" 
-        rightElement={
-          isConnected && (
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={handleDisconnect}
-              className="text-red-500 hover:bg-red-500/10"
-              icon={LogOut}
-            />
-          )
-        }
+  if (selectedRepo) {
+    return (
+      <GithubRepoDetail 
+        repo={selectedRepo} 
+        token={token!} 
+        onBack={() => setSelectedRepo(null)} 
       />
+    );
+  }
 
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        {!isConnected ? (
-          <div className="flex flex-col items-center justify-center h-full px-8 text-center">
-            <div className="w-24 h-24 bg-zinc-900 rounded-[2rem] flex items-center justify-center text-white shadow-2xl mb-8">
-              <Github size={48} />
-            </div>
-            <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tight mb-3">Connect GitHub</h2>
-            <p className="text-[var(--text-secondary)] font-medium mb-8 leading-relaxed">
-              Connect your GitHub account to manage your repositories, upload files, and more directly from GxChat.
-            </p>
-            <Button 
-              onClick={handleConnect}
-              icon={Github}
-              fullWidth
-              className="max-w-xs bg-zinc-900"
-            >
-              Connect with GitHub
-            </Button>
+  return (
+    <div className="flex flex-col h-full bg-[var(--bg-main)]">
+      {!token ? (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
+            <Github size={40} className="text-white" />
           </div>
-        ) : (
-          <div className="p-6 space-y-6">
-            {/* Search Bar */}
-            <Input 
-              placeholder="Search repositories..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              icon={Search}
-            />
-
-            {/* Repos List */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-[11px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Your Repositories</h3>
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => fetchRepos(storage.getItem('github_token') || '')}
-                  className="text-[var(--primary)]"
-                  icon={RefreshCw}
-                  loading={loading && repos.length > 0}
-                />
+          <h2 className="text-2xl font-black text-[var(--text-primary)] mb-2">Connect GitHub</h2>
+          <p className="text-[var(--text-secondary)] text-sm mb-8 max-w-xs">
+            Sync your projects, upload files, and manage your repositories directly from GxChat.
+          </p>
+          <button 
+            onClick={handleConnect}
+            className="w-full max-w-xs bg-zinc-900 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl"
+          >
+            <Github size={20} />
+            Connect with GitHub
+          </button>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img src={user?.avatar_url} className="w-10 h-10 rounded-full border-2 border-[var(--primary)]" />
+                <div>
+                  <h3 className="font-bold text-[var(--text-primary)] leading-none">{user?.name || user?.login}</h3>
+                  <span className="text-[10px] text-[var(--text-secondary)] font-medium uppercase tracking-wider">@{user?.login}</span>
+                </div>
               </div>
+              <button 
+                onClick={handleLogout}
+                className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-full transition-colors"
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
 
-              {loading && repos.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4">
-                  <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Fetching Repositories...</p>
-                </div>
-              ) : filteredRepos.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3">
-                  {filteredRepos.map((repo) => (
-                    <Card
-                      key={repo.id}
-                      hoverable
-                      onClick={() => navigate(`/hub/github/repo/${repo.owner.login}/${repo.name}`)}
-                      className="group"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-zinc-100 rounded-xl flex items-center justify-center text-zinc-900">
-                            {repo.private ? <Lock size={18} /> : <Globe size={18} />}
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="text-[15px] font-black text-[var(--text-primary)] truncate group-hover:text-[var(--primary)] transition-colors">
-                              {repo.name}
-                            </h4>
-                            <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">
-                              {repo.owner.login}
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight size={18} className="text-[var(--text-secondary)] group-hover:text-[var(--primary)] transition-colors" />
-                      </div>
-
-                      {repo.description && (
-                        <p className="text-xs text-[var(--text-secondary)] font-medium mb-4 line-clamp-2 leading-relaxed">
-                          {repo.description}
-                        </p>
-                      )}
-
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-secondary)]">
-                          <Star size={14} className="text-amber-500" />
-                          {repo.stargazers_count}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-secondary)]">
-                          <GitFork size={14} className="text-blue-500" />
-                          {repo.forks_count}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-secondary)] ml-auto">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                          {repo.language || 'Mixed'}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center px-10">
-                  <div className="w-16 h-16 bg-[var(--bg-card)] rounded-2xl flex items-center justify-center text-[var(--text-secondary)] mb-4">
-                    <Search size={32} />
-                  </div>
-                  <p className="text-sm font-bold text-[var(--text-secondary)]">No repositories found matching your search.</p>
-                </div>
-              )}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search repositories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-[var(--bg-main)] border border-[var(--border-color)] rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium focus:outline-none focus:border-[var(--primary)] transition-colors"
+              />
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Repo List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <div className="w-8 h-8 border-4 border-[var(--primary)]/20 border-t-[var(--primary)] rounded-full animate-spin" />
+                <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Fetching Repositories...</p>
+              </div>
+            ) : filteredRepos.length === 0 ? (
+              <div className="text-center py-20">
+                <Folder size={48} className="mx-auto text-[var(--text-secondary)] opacity-20 mb-4" />
+                <p className="text-[var(--text-secondary)] font-bold">No repositories found</p>
+              </div>
+            ) : (
+              filteredRepos.map(repo => (
+                <motion.div 
+                  key={repo.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => setSelectedRepo(repo)}
+                  className="bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--border-color)] hover:border-[var(--primary)] transition-all cursor-pointer group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold text-[var(--text-primary)] truncate">{repo.name}</h4>
+                        {repo.private && (
+                          <span className="text-[8px] font-black uppercase bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">Private</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[var(--text-secondary)] line-clamp-1 mb-2">
+                        {repo.description || "No description provided"}
+                      </p>
+                      <div className="flex items-center gap-3 text-[10px] font-bold text-[var(--text-secondary)]">
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-[var(--primary)]" />
+                          Updated {new Date(repo.updated_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight size={20} className="text-[var(--text-secondary)] group-hover:text-[var(--primary)] transition-colors" />
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
