@@ -13,7 +13,7 @@ export default function MainLayout() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Paths where BottomNav should be visible
-  const tabPaths = ['/', '/status', '/hub', '/reels', '/profile', '/notifications'];
+  const tabPaths = ['/', '/chats', '/hub', '/reels', '/profile', '/notifications'];
   const isChatScreen = location.pathname.startsWith('/chat/');
   const showBottomNav = tabPaths.includes(location.pathname);
   
@@ -22,7 +22,7 @@ export default function MainLayout() {
 
   // Determine current tab for ResourcesNav
   const getTab = (path: string): TabType | null => {
-    if (path === '/') return 'chats';
+    if (path === '/chats') return 'chats';
     return null;
   };
 
