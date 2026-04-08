@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MessageCircle, Compass, LayoutGrid, UserCircle, Clapperboard } from 'lucide-react';
+import { MessageCircle, Compass, LayoutGrid, UserCircle, Clapperboard, Home } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { auth, db } from '../../services/firebase.ts';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
@@ -26,9 +26,9 @@ export default function TabBottom() {
   }, []);
   
   const navItems = [
-    { icon: MessageCircle, path: '/', label: 'Chats', badge: unreadCount },
-    { icon: Compass, path: '/status', label: 'Status' },
+    { icon: Home, path: '/', label: 'Home' },
     { icon: Clapperboard, path: '/reels', label: 'Reels' },
+    { icon: MessageCircle, path: '/chats', label: 'Chats', badge: unreadCount },
     { icon: LayoutGrid, path: '/hub', label: 'Hub' },
     { icon: UserCircle, path: '/profile', label: 'Profile' },
   ];
