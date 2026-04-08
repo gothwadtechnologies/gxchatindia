@@ -22,7 +22,10 @@ async function startServer() {
 
   // GitHub Auth URL
   app.get("/api/github/auth-url", (req, res) => {
+    console.log("GitHub Auth URL requested. Client ID status:", !!GITHUB_CLIENT_ID);
+    
     if (!GITHUB_CLIENT_ID) {
+      console.error("GITHUB_CLIENT_ID is missing!");
       return res.status(500).json({ error: "GITHUB_CLIENT_ID is not set in environment variables" });
     }
     
@@ -31,6 +34,7 @@ async function startServer() {
     const redirectUri = `${appUrl}/auth/github/callback`;
     
     const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
+    console.log("Generated Auth URL:", url);
     res.json({ url });
   });
 
