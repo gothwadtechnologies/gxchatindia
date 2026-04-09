@@ -3,6 +3,7 @@ import { GithubRepo, githubApi } from './githubApi.ts';
 import { ArrowLeft, FileArchive, Upload, CheckCircle2, AlertCircle, File, Loader2, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import JSZip from 'jszip';
+import GithubHeader from './GithubHeader.tsx';
 
 interface Props {
   repo: GithubRepo;
@@ -98,18 +99,10 @@ export default function GithubZipHandler({ repo, token, onBack }: Props) {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-main)]">
-      {/* Header */}
-      <div className="p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)] flex items-center gap-4">
-        <button onClick={onBack} disabled={isPushing} className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors disabled:opacity-50">
-          <ArrowLeft size={20} className="text-[var(--text-primary)]" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-[var(--text-primary)] truncate">Upload via ZIP</h3>
-          <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
-            {repo.full_name}
-          </p>
-        </div>
-      </div>
+      <GithubHeader 
+        title="Upload via ZIP" 
+        onBack={onBack}
+      />
 
       <div className="flex-1 overflow-hidden flex flex-col p-4">
         {files.length === 0 ? (
