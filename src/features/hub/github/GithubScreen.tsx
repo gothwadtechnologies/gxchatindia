@@ -4,6 +4,7 @@ import { Github, LogOut, Search, ExternalLink, ChevronRight, Folder } from 'luci
 import { motion, AnimatePresence } from 'motion/react';
 import GithubRepoDetail from './GithubRepoDetail.tsx';
 import { storage } from '../../../services/StorageService.ts';
+import GithubHeader from './GithubHeader.tsx';
 
 export default function GithubScreen() {
   const [token, setToken] = useState<string | null>(storage.getItem('github_token'));
@@ -82,6 +83,7 @@ export default function GithubScreen() {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-main)]">
+      <GithubHeader title="GitHub" />
       {!token ? (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
           <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
