@@ -3,6 +3,7 @@ import { GithubRepo } from './githubApi.ts';
 import { ArrowLeft, Upload, FileArchive, ChevronRight, Globe, Lock, ExternalLink, Github } from 'lucide-react';
 import { motion } from 'motion/react';
 import GithubZipHandler from './GithubZipHandler.tsx';
+import GithubHeader from './GithubHeader.tsx';
 
 interface Props {
   repo: GithubRepo;
@@ -25,28 +26,21 @@ export default function GithubRepoDetail({ repo, token, onBack }: Props) {
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-main)]">
-      {/* Header */}
-      <div className="p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)] flex items-center gap-4">
-        <button onClick={onBack} className="p-2 hover:bg-[var(--bg-main)] rounded-full transition-colors">
-          <ArrowLeft size={20} className="text-[var(--text-primary)]" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-[var(--text-primary)] truncate">{repo.name}</h3>
-          <div className="flex items-center gap-2 text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">
-            {repo.private ? <Lock size={10} /> : <Globe size={10} />}
-            {repo.private ? 'Private Repository' : 'Public Repository'}
-          </div>
-        </div>
-        <a 
-          href={repo.html_url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="p-2 text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-full transition-colors"
-        >
-          <ExternalLink size={20} />
-        </a>
-      </div>
-
+      <GithubHeader 
+        title={repo.name} 
+        onBack={onBack}
+        rightElement={
+          <a 
+            href={repo.html_url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <ExternalLink size={20} />
+          </a>
+        }
+      />
+      
       {/* Options */}
       <div className="flex-1 p-6 space-y-4">
         <h4 className="text-xs font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] mb-2">Upload Methods</h4>
