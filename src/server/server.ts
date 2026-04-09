@@ -2,6 +2,9 @@ import express from "express";
 import path from "path";
 import axios from "axios";
 import dotenv from "dotenv";
+import multer from "multer";
+import FormData from "form-data";
+import fs from "fs";
 
 dotenv.config();
 
@@ -12,9 +15,44 @@ app.use(express.json({ limit: '50mb' }));
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
+// Configure Multer for temporary storage
+const upload = multer({ dest: 'uploads/' });
+
 // API routes
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "GxChat India Server is running" });
+});
+
+// File Upload Proxy to Catbox.moe (for direct download links)
+app.post("/api/upload-file", upload.single('file'), async (req: any, res) => {
+  if (!req.file) {
+    return res.status(400).json({ status: 'error', message: 'No file uploaded' });
+  }
+
+  try {
+    const form = new FormData();
+    form.append('reqtype', 'fileupload');
+    form.append('fileToUpload', fs.createReadStream(req.file.path));
+
+    const response = await axios.post('https://catbox.moe/user/api.php', form, {
+      headers: {
+        ...form.getHeaders(),
+      },
+    });
+
+    // Clean up temp file
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    if (typeof response.data === 'string' && response.data.startsWith('https://')) {
+      res.json({ status: 'ok', downloadUrl: response.data });
+    } else {
+      throw new Error(response.data || 'Failed to upload to Catbox');
+    }
+  } catch (error: any) {
+    console.error('Upload proxy error:', error);
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ status: 'error', message: error.message });
+  }
 });
 
 // Debug endpoint
@@ -33,7 +71,17 @@ app.get("/api/github/auth-url", (req, res) => {
   if (!GITHUB_CLIENT_ID) {
     return res.status(500).json({ error: "GITHUB_CLIENT_ID is not set" });
   }
-  const appUrl = process.env.APP_URL || "https://ais-dev-nwobf3f2q5csbl7f3thoeo-382376324296.asia-southeast1.run.app";
+  
+  // Better fallback logic for APP_URL
+  let appUrl = process.env.APP_URL;
+  
+  // If APP_URL is missing or looks like a hash instead of a URL
+  if (!appUrl || !appUrl.startsWith('http')) {
+    const host = req.get('host');
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    appUrl = `${protocol}://${host}`;
+  }
+  
   const redirectUri = `${appUrl}/auth/github/callback`;
   const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
   res.json({ url });
