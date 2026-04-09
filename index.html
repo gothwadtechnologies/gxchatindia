@@ -32,14 +32,17 @@
     <link rel="manifest" href="/manifest.json" />
     <title>GxChat India | The Ultimate Social Messaging App</title>
     <script>
-      // Silent check for service worker support
-      try {
-        if ('serviceWorker' in navigator && window.self === window.top) {
-          // Only attempt service worker operations if not in an iframe
-          console.log('Service Worker supported and not in iframe');
-        }
-      } catch (e) {
-        // Silent catch
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+            })
+            .catch(registrationError => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
       }
     </script>
   </head>
