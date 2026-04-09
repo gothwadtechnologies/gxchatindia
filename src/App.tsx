@@ -66,6 +66,12 @@ const AccountSettingsScreen = React.lazy(() => import('./features/settings').the
 const NotificationsSettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.NotificationsSettingsScreen })));
 const HelpScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.HelpScreen })));
 const AppInfoScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.AppInfoScreen })));
+const TimeSpentScreen = React.lazy(() => import('./features/settings/TimeSpentScreen'));
+const FavoritesScreen = React.lazy(() => import('./features/settings/FavoritesScreen'));
+const BlockedAccountsScreen = React.lazy(() => import('./features/settings/BlockedAccountsScreen'));
+const LanguageSettingsScreen = React.lazy(() => import('./features/settings/LanguageSettingsScreen'));
+const MutedAccountsScreen = React.lazy(() => import('./features/settings/MutedAccountsScreen'));
+const AccessibilitySettingsScreen = React.lazy(() => import('./features/settings/AccessibilitySettingsScreen'));
 
 const LoginScreen = React.lazy(() => import('./features/auth').then(m => ({ default: m.LoginScreen })));
 const SignupScreen = React.lazy(() => import('./features/auth').then(m => ({ default: m.SignupScreen })));
@@ -194,6 +200,12 @@ export default function App() {
                     <Route path="/notifications-settings" element={user ? <NotificationsSettingsScreen /> : <Navigate to="/login" />} />
                     <Route path="/help" element={user ? <HelpScreen /> : <Navigate to="/login" />} />
                     <Route path="/app-info" element={user ? <AppInfoScreen /> : <Navigate to="/login" />} />
+                    <Route path="/time-spent" element={user ? <TimeSpentScreen /> : <Navigate to="/login" />} />
+                    <Route path="/favorites" element={user ? <FavoritesScreen /> : <Navigate to="/login" />} />
+                    <Route path="/blocked-accounts" element={user ? <BlockedAccountsScreen /> : <Navigate to="/login" />} />
+                    <Route path="/language-settings" element={user ? <LanguageSettingsScreen /> : <Navigate to="/login" />} />
+                    <Route path="/muted-accounts" element={user ? <MutedAccountsScreen /> : <Navigate to="/login" />} />
+                    <Route path="/accessibility-settings" element={user ? <AccessibilitySettingsScreen /> : <Navigate to="/login" />} />
                     <Route path="/login" element={!user ? <LoginScreen /> : <Navigate to="/" />} />
                     <Route path="/signup" element={!user ? <SignupScreen /> : <Navigate to="/" />} />
                     <Route path="/forgot-password" element={!user ? <ForgotPasswordScreen /> : <Navigate to="/" />} />
