@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import multer from "multer";
 import FormData from "form-data";
 import fs from "fs";
+import os from "os";
 
 dotenv.config();
 
@@ -15,43 +16,99 @@ app.use(express.json({ limit: '50mb' }));
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
-// Configure Multer for temporary storage
-const upload = multer({ dest: 'uploads/' });
+// Configure Multer for temporary storage in the OS temp directory
+const upload = multer({ 
+  dest: os.tmpdir(),
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
+});
 
 // API routes
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "GxChat India Server is running" });
 });
 
-// File Upload Proxy to Catbox.moe (for direct download links)
-app.post("/api/upload-file", upload.single('file'), async (req: any, res) => {
+// File Upload Proxy to file.io (with Oshi.at fallback)
+app.post("/api/upload-file", (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ status: 'error', message: `Multer error: ${err.message}` });
+    } else if (err) {
+      return res.status(500).json({ status: 'error', message: `Unknown upload error: ${err.message}` });
+    }
+    next();
+  });
+}, async (req: any, res) => {
   if (!req.file) {
     return res.status(400).json({ status: 'error', message: 'No file uploaded' });
   }
 
+  // Try file.io first, then fallback to oshi.at
   try {
     const form = new FormData();
-    form.append('reqtype', 'fileupload');
-    form.append('fileToUpload', fs.createReadStream(req.file.path));
-
-    const response = await axios.post('https://catbox.moe/user/api.php', form, {
-      headers: {
-        ...form.getHeaders(),
-      },
+    form.append('file', fs.createReadStream(req.file.path), {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
     });
 
-    // Clean up temp file
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    try {
+      console.log('Attempting upload to file.io...');
+      const response = await axios.post('https://file.io', form, {
+        headers: form.getHeaders(),
+        timeout: 30000,
+      });
 
-    if (typeof response.data === 'string' && response.data.startsWith('https://')) {
-      res.json({ status: 'ok', downloadUrl: response.data });
-    } else {
-      throw new Error(response.data || 'Failed to upload to Catbox');
+      if (response.data && response.data.success) {
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.json({ 
+          status: 'ok', 
+          downloadUrl: response.data.link,
+          expires: response.data.expiry,
+          provider: 'file.io'
+        });
+      }
+      throw new Error('file.io success was false');
+    } catch (fileIoError: any) {
+      console.warn('file.io failed, trying oshi.at fallback...', fileIoError.message);
+      
+      // Fallback to Oshi.at (Privacy focused, one-time download support)
+      const oshiForm = new FormData();
+      oshiForm.append('f', fs.createReadStream(req.file.path), {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+      });
+      // 14 days in minutes = 20160
+      oshiForm.append('expire', '20160');
+
+      const oshiResponse = await axios.post('https://oshi.at', oshiForm, {
+        headers: oshiForm.getHeaders(),
+        timeout: 60000,
+      });
+
+      // Oshi.at returns plain text with the link if successful, or HTML on error
+      const oshiData = oshiResponse.data.toString();
+      if (oshiData.includes('https://oshi.at/')) {
+        // Extract the link (it's usually the first URL in the text response)
+        const linkMatch = oshiData.match(/https:\/\/oshi\.at\/[a-zA-Z0-9]+/);
+        const downloadUrl = linkMatch ? linkMatch[0] : null;
+
+        if (downloadUrl) {
+          if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          return res.json({ 
+            status: 'ok', 
+            downloadUrl: downloadUrl,
+            provider: 'oshi.at'
+          });
+        }
+      }
+      
+      throw new Error('Both file.io and oshi.at failed');
     }
   } catch (error: any) {
-    console.error('Upload proxy error:', error);
-    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-    res.status(500).json({ status: 'error', message: error.message });
+    console.error('Upload proxy exception:', error.message);
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ status: 'error', message: `Upload failed: ${error.message}` });
   }
 });
 
@@ -83,7 +140,7 @@ app.get("/api/github/auth-url", (req, res) => {
   }
   
   const redirectUri = `${appUrl}/auth/github/callback`;
-  const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
+  const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user,workflow`;
   res.json({ url });
 });
 
@@ -141,6 +198,64 @@ app.post("/api/github/push", async (req, res) => {
     });
     res.json(pushRes.data);
   } catch (error: any) {
+    res.status(error.response?.status || 500).json(error.response?.data || { message: error.message });
+  }
+});
+
+// GitHub Batch Push (Atomic commit for multiple files)
+app.post("/api/github/push-batch", async (req, res) => {
+  const { token, owner, repo, files, message, branch = 'main' } = req.body;
+  // files: Array<{ path: string, content: string }> (content is base64)
+  
+  try {
+    const headers = { 
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github.v3+json'
+    };
+
+    // 1. Get the latest commit SHA of the branch
+    const branchRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/branches/${branch}`, { headers });
+    const parentSha = branchRes.data.commit.sha;
+    const baseTreeSha = branchRes.data.commit.commit.tree.sha;
+
+    // 2. Create blobs for each file
+    const blobPromises = files.map(async (file: any) => {
+      const blobRes = await axios.post(`https://api.github.com/repos/${owner}/${repo}/git/blobs`, {
+        content: file.content,
+        encoding: 'base64'
+      }, { headers });
+      return {
+        path: file.path,
+        mode: '100644',
+        type: 'blob',
+        sha: blobRes.data.sha
+      };
+    });
+
+    const treeItems = await Promise.all(blobPromises);
+
+    // 3. Create a new tree
+    const treeRes = await axios.post(`https://api.github.com/repos/${owner}/${repo}/git/trees`, {
+      base_tree: baseTreeSha,
+      tree: treeItems
+    }, { headers });
+
+    // 4. Create a new commit
+    const commitRes = await axios.post(`https://api.github.com/repos/${owner}/${repo}/git/commits`, {
+      message,
+      tree: treeRes.data.sha,
+      parents: [parentSha]
+    }, { headers });
+
+    // 5. Update the branch reference
+    const refRes = await axios.patch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
+      sha: commitRes.data.sha,
+      force: false
+    }, { headers });
+
+    res.json(refRes.data);
+  } catch (error: any) {
+    console.error("Batch push error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json(error.response?.data || { message: error.message });
   }
 });
