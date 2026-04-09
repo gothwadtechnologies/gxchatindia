@@ -94,6 +94,8 @@ import MainLayout from './components/layout/MainLayout.tsx';
 import { LayoutProvider } from './contexts/LayoutContext.tsx';
 import { NavProvider } from './contexts/NavContext.tsx';
 
+const ImagePreviewScreen = React.lazy(() => import('./features/chat/ImagePreviewScreen'));
+
 export default function App() {
   const { user, userData, loading: authLoading, isAuthReady } = useAuth();
   const [splashLoading, setSplashLoading] = useState(true);
@@ -215,6 +217,7 @@ export default function App() {
                     <Route path="/search-user" element={user ? <SearchUserScreen /> : <Navigate to="/login" />} />
                     <Route path="/user/:id" element={user ? <UserProfileScreen /> : <Navigate to="/login" />} />
                     <Route path="/user/:id/:type" element={user ? <FollowListScreen /> : <Navigate to="/login" />} />
+                    <Route path="/chat/preview" element={user ? <ImagePreviewScreen /> : <Navigate to="/login" />} />
                     <Route path="/profile/gx-ai" element={user ? <GxChatAIProfile /> : <Navigate to="/login" />} />
                     <Route path="/hub/github" element={user ? <GithubScreen /> : <Navigate to="/login" />} />
                   </Routes>

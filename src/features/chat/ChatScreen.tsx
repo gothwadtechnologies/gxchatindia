@@ -13,7 +13,8 @@ import {
   Trash,
   X,
   FileIcon,
-  Download
+  Download,
+  ShieldAlert
 } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ChatHeader from '../../components/layout/ChatHeader.tsx';
@@ -434,7 +435,18 @@ export default function ChatScreen() {
 
                       <div className="flex flex-col min-w-[60px] max-w-full">
                         {msg.imageUrl && (
-                          <div className="mb-1 rounded-lg overflow-hidden border border-black/5">
+                          <div 
+                            className="mb-1 rounded-lg overflow-hidden border border-black/5 cursor-pointer active:opacity-80 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/chat/preview', { 
+                                state: { 
+                                  imageUrl: msg.imageUrl, 
+                                  senderName: isMe ? 'You' : receiver?.fullName 
+                                } 
+                              });
+                            }}
+                          >
                             <img 
                               src={msg.imageUrl} 
                               alt="Sent image" 
@@ -455,7 +467,9 @@ export default function ChatScreen() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-bold truncate text-[var(--text-primary)]">{msg.fileName || 'File'}</p>
-                              <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">Direct Download</p>
+                              <p className="text-[10px] text-red-500 uppercase font-black tracking-tighter flex items-center gap-1">
+                                <ShieldAlert size={10} /> One-Time Download
+                              </p>
                             </div>
                             <a 
                               href={msg.fileUrl} 

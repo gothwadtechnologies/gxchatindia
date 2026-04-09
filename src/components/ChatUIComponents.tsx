@@ -151,7 +151,7 @@ export const ChatPlusMenu: React.FC<{
   const navigate = useNavigate();
   return (
     <div className="relative" ref={plusMenuRef}>
-      <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className="p-2 text-white hover:bg-white/10 rounded-full transition-colors shrink-0">
+      <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className="p-2 text-[var(--text-primary)] hover:bg-[var(--bg-main)] rounded-full transition-colors shrink-0">
         <Plus size={24} />
       </button>
       {showPlusMenu && (
@@ -196,7 +196,7 @@ export const EmojiPickerMenu: React.FC<{
       <button 
         type="button" 
         onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
-        className="p-2 text-white hover:bg-white/10 rounded-full transition-colors shrink-0"
+        className="p-2 text-[var(--text-primary)] hover:bg-[var(--bg-main)] rounded-full transition-colors shrink-0"
       >
         <Smile size={24} />
       </button>

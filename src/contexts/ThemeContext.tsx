@@ -53,6 +53,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     storage.setItem('app-theme', theme);
     document.documentElement.setAttribute('data-theme', theme);
+    
+    // Update theme-color meta tag for PWA status bar
+    let themeColor = '#375a75'; // Default for original themes
+    if (theme === 'light') themeColor = '#ffffff';
+    if (theme === 'dark') themeColor = '#000000';
+    
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.setAttribute('content', themeColor);
   }, [theme]);
 
   useEffect(() => {

@@ -69,39 +69,32 @@ export default function GithubZipHandler({ repo, token, onBack }: Props) {
 
     const updatedFiles = [...files];
     
-    try {
-      // Mark all as uploading
-      updatedFiles.forEach(f => f.status = 'uploading');
+    for (let i = 0; i < updatedFiles.length; i++) {
+      const file = updatedFiles[i];
+      file.status = 'uploading';
       setFiles([...updatedFiles]);
 
-      // Prepare files for batch push
-      const filesToPush = files.map(f => ({
-        path: f.path,
-        content: f.content
-      }));
+      try {
+        await githubApi.pushFile(
+          token,
+          repo.owner.login,
+          repo.name,
+          file.path,
+          file.content,
+          `Sync ${file.path} via GxChat India`
+        );
+        file.status = 'success';
+      } catch (error: any) {
+        console.error(`Failed to push ${file.path}:`, error);
+        file.status = 'error';
+        file.error = error.response?.data?.message || error.message;
+      }
 
-      await githubApi.pushFilesBatch(
-        token,
-        repo.owner.login,
-        repo.name,
-        filesToPush,
-        `Sync ${files.length} files via GxChat India`
-      );
-
-      // Mark all as success
-      updatedFiles.forEach(f => f.status = 'success');
-      setPushProgress(100);
-    } catch (error: any) {
-      console.error(`Batch push failed:`, error);
-      // Mark all as error
-      updatedFiles.forEach(f => {
-        f.status = 'error';
-        f.error = error.response?.data?.message || error.message;
-      });
-    } finally {
+      setPushProgress(Math.round(((i + 1) / updatedFiles.length) * 100));
       setFiles([...updatedFiles]);
-      setIsPushing(false);
     }
+
+    setIsPushing(false);
   };
 
   return (

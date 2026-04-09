@@ -127,7 +127,7 @@ export default function ChatBottom({
           chatId={chatId}
         />
 
-        <div className="flex-1 bg-white/10 rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-white/10">
+        <div className="flex-1 bg-[var(--bg-main)] rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-[var(--border-color)]">
           {selectedFile && (
             <div className="mb-2 relative w-fit group">
               <div className="relative rounded-xl overflow-hidden border border-white/20 shadow-lg max-w-[120px] bg-white/5 p-2">
@@ -170,7 +170,7 @@ export default function ChatBottom({
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
               rows={1}
-              className="flex-1 bg-transparent text-[16px] focus:outline-none text-white placeholder:text-white/50 py-1.5 resize-none max-h-[120px] leading-tight"
+              className="flex-1 bg-transparent text-[16px] focus:outline-none text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] py-1.5 resize-none max-h-[120px] leading-tight"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

@@ -44,16 +44,5 @@ export const githubApi = {
       message
     });
     return res.data;
-  },
-
-  async pushFilesBatch(token: string, owner: string, repo: string, files: { path: string, content: string }[], message: string) {
-    const res = await axios.post('/api/github/push-batch', {
-      token,
-      owner,
-      repo,
-      files,
-      message
-    });
-    return res.data;
   }
 };

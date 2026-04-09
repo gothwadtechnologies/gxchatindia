@@ -93,6 +93,27 @@ export default function CameraTab() {
     startCamera();
   };
 
+  const handleGalleryClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setCapturedImage(event.target?.result as string);
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="h-full bg-black flex flex-col relative overflow-hidden">
       <AnimatePresence mode="wait">
@@ -145,7 +166,10 @@ export default function CameraTab() {
 
             {/* Bottom Controls */}
             <div className="absolute bottom-0 inset-x-0 p-10 flex justify-between items-center z-10 bg-gradient-to-t from-black/50 to-transparent">
-              <button className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all">
+              <button 
+                onClick={handleGalleryClick}
+                className="p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all"
+              >
                 <ImageIcon size={28} />
               </button>
 

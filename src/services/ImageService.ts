@@ -43,6 +43,10 @@ export class ImageService {
 
       const data = await response.json();
       
+      if (!data.data?.url) {
+        throw new Error("ImgBB upload successful but no URL returned");
+      }
+
       if (onProgress) onProgress(100);
       
       // Return the direct display URL

@@ -19,12 +19,23 @@ export const GofileService = {
         body: formData,
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Server returned non-JSON response:', responseText);
+        throw new Error(`Server error: ${responseText.substring(0, 100)}...`);
       }
       
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Upload failed');
+      }
+      
+      if (!data.downloadUrl) {
+        throw new Error('Upload successful but no download URL returned');
+      }
+      
       return data.downloadUrl;
     } catch (error) {
       console.error('File upload error:', error);
