@@ -24,23 +24,24 @@ interface ChatBottomProps {
   receiver: any;
   handleSendMessage: (e: React.FormEvent) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   showPlusMenu: boolean;
   setShowPlusMenu: (show: boolean) => void;
   plusMenuRef: React.RefObject<HTMLDivElement | null>;
   chatId: string | undefined;
-  imagePreviewUrl: string | null;
+  filePreviewUrl: string | null;
   isUploading: boolean;
   uploadProgress: number;
-  setSelectedImageFile: (file: File | null) => void;
-  setImagePreviewUrl: (url: string | null) => void;
+  setSelectedFile: (file: File | null) => void;
+  setFilePreviewUrl: (url: string | null) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   handleTyping: () => void;
   showEmojiPicker: boolean;
   setShowEmojiPicker: (show: boolean) => void;
   emojiPickerRef: React.RefObject<HTMLDivElement | null>;
   isSending: boolean;
-  selectedImageFile: File | null;
+  selectedFile: File | null;
 }
 
 export default function ChatBottom({
@@ -59,23 +60,24 @@ export default function ChatBottom({
   receiver,
   handleSendMessage,
   fileInputRef,
+  imageInputRef,
   handleFileChange,
   showPlusMenu,
   setShowPlusMenu,
   plusMenuRef,
   chatId,
-  imagePreviewUrl,
+  filePreviewUrl,
   isUploading,
   uploadProgress,
-  setSelectedImageFile,
-  setImagePreviewUrl,
+  setSelectedFile,
+  setFilePreviewUrl,
   textareaRef,
   handleTyping,
   showEmojiPicker,
   setShowEmojiPicker,
   emojiPickerRef,
   isSending,
-  selectedImageFile
+  selectedFile
 }: ChatBottomProps) {
   return (
     <div className="shrink-0 bg-[var(--nav-bg)] px-4 py-1.5 pb-safe z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] relative border-t border-white/10 w-full max-w-full rounded-t-2xl">
@@ -105,24 +107,38 @@ export default function ChatBottom({
       <form onSubmit={handleSendMessage} className="flex items-center gap-2 w-full max-w-full">
         <input 
           type="file" 
-          ref={fileInputRef} 
+          ref={imageInputRef} 
           className="hidden" 
           accept="image/*" 
+          onChange={handleFileChange}
+        />
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
           onChange={handleFileChange}
         />
         <ChatPlusMenu 
           showPlusMenu={showPlusMenu}
           setShowPlusMenu={setShowPlusMenu}
           plusMenuRef={plusMenuRef}
-          onMediaClick={() => fileInputRef.current?.click()}
+          onMediaClick={() => imageInputRef.current?.click()}
+          onFileClick={() => fileInputRef.current?.click()}
           chatId={chatId}
         />
 
         <div className="flex-1 bg-white/10 rounded-[20px] px-4 py-1.5 flex flex-col shadow-inner min-w-0 transition-all border border-white/10">
-          {imagePreviewUrl && (
+          {selectedFile && (
             <div className="mb-2 relative w-fit group">
-              <div className="relative rounded-xl overflow-hidden border border-white/20 shadow-lg max-w-[120px]">
-                <img src={imagePreviewUrl} alt="Preview" className="w-full h-auto" />
+              <div className="relative rounded-xl overflow-hidden border border-white/20 shadow-lg max-w-[120px] bg-white/5 p-2">
+                {filePreviewUrl ? (
+                  <img src={filePreviewUrl} alt="Preview" className="w-full h-auto rounded-lg" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 py-2 px-1">
+                    <X className="text-white/40" size={24} />
+                    <p className="text-[10px] text-white/60 font-bold truncate w-full text-center">{selectedFile.name}</p>
+                  </div>
+                )}
                 {isUploading && (
                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
                     <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mb-1" />
@@ -132,7 +148,7 @@ export default function ChatBottom({
                 {!isUploading && (
                   <button 
                     type="button"
-                    onClick={() => { setSelectedImageFile(null); setImagePreviewUrl(null); }}
+                    onClick={() => { setSelectedFile(null); setFilePreviewUrl(null); }}
                     className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-all"
                   >
                     <X size={12} />
@@ -177,7 +193,7 @@ export default function ChatBottom({
 
         <button 
           type="submit"
-          disabled={(!newMessage.trim() && !selectedImageFile) || isSending || isUploading}
+          disabled={(!newMessage.trim() && !selectedFile) || isSending || isUploading}
           className="bg-white w-11 h-11 flex items-center justify-center rounded-full text-[var(--nav-bg)] disabled:opacity-50 transition-all shadow-lg active:scale-95 shrink-0"
         >
           {isSending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} className="ml-0.5" />}
