@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Send, 
   Smile, 
@@ -11,107 +11,40 @@ import {
   Reply,
   MoreVertical,
   Trash,
-  X
+  X,
+  FileIcon,
+  Download
 } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ChatHeader from '../../components/layout/ChatHeader.tsx';
 import ChatBottom from '../../components/layout/ChatBottom.tsx';
 import { 
-  ChatMessageReactions
+  ChatMessageReactions,
+  ChatMessageMenu,
+  ChatReplyPreview,
+  ChatEditPreview,
+  ChatPlusMenu,
+  EmojiPickerMenu
 } from '../../components/ChatUIComponents';
 import { auth, db, rtdb } from '../../services/firebase.ts';
 import { ref as rtdbRef, onValue, update } from 'firebase/database';
 import { toDate, formatLastSeen } from '../../utils/dateUtils.ts';
 import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
+  doc, 
   onSnapshot, 
-  serverTimestamp,
-  doc,
-  updateDoc,
-  deleteDoc,
-  getDocs,
-  writeBatch,
-  orderBy,
-  limit,
-  getDoc,
-  setDoc,
-  Timestamp
 } from 'firebase/firestore';
 
 import { motion, AnimatePresence } from 'motion/react';
 import { CacheService } from '../../services/CacheService.ts';
-import { GoogleGenAI } from "@google/genai";
-import { ImageService } from '../../services/ImageService.ts';
-
-const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined;
-const ai = new GoogleGenAI({ apiKey: apiKey || '' });
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId: string | undefined;
-    email: string | null | undefined;
-    emailVerified: boolean | undefined;
-    isAnonymous: boolean | undefined;
-    tenantId: string | null | undefined;
-    providerInfo: {
-      providerId: string;
-      displayName: string | null;
-      email: string | null;
-      photoUrl: string | null;
-    }[];
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
-      providerInfo: auth.currentUser?.providerData.map(provider => ({
-        providerId: provider.providerId,
-        displayName: provider.displayName,
-        email: provider.email,
-        photoUrl: provider.photoURL
-      })) || []
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
-
-import { storage } from '../../services/StorageService';
+import { useChatMessages } from './hooks/useChatMessages';
+import { useChatActions } from './hooks/useChatActions';
+import { useTypingStatus } from './hooks/useTypingStatus';
 
 export default function ChatScreen() {
   const { id: receiverId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [messageLimit, setMessageLimit] = useState(15);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
+  
   const [receiver, setReceiver] = useState<any>(null);
   const [showOptions, setShowOptions] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
@@ -123,47 +56,65 @@ export default function ChatScreen() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [visibleButtonsId, setVisibleButtonsId] = useState<string | null>(null);
   const [lastTap, setLastTap] = useState<{id: string, time: number}>({id: '', time: 0});
-  const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [receiverStatus, setReceiverStatus] = useState<'online' | 'offline'>('offline');
   const [isSending, setIsSending] = useState(false);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [menuPosition, setMenuPosition] = useState<'top' | 'bottom'>('top');
+  const [newMessage, setNewMessage] = useState('');
   const [receiverActiveChatId, setReceiverActiveChatId] = useState<string | null>(null);
   const [receiverLastSeen, setReceiverLastSeen] = useState<any>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const chatId = [auth.currentUser?.uid, receiverId].sort().join('_');
 
+  // Hooks
+  const { 
+    messages, 
+    loading, 
+    messageLimit, 
+    loadingMore, 
+    loadMore,
+    lastMessageCount 
+  } = useChatMessages(chatId);
+
+  const { 
+    sendMessage: performSendMessage, 
+    editMessage: performEditMessage, 
+    deleteMessage: performDeleteMessage, 
+    reactToMessage: performReactToMessage, 
+    clearChat: performClearChat 
+  } = useChatActions(chatId, receiverId || '', receiver);
+
+  const { isOtherTyping, handleTyping } = useTypingStatus(chatId, receiverId || '');
+
   // Handle captured image from camera
   useEffect(() => {
     if (location.state?.capturedImage) {
       const dataUrl = location.state.capturedImage;
-      setImagePreviewUrl(dataUrl);
+      setFilePreviewUrl(dataUrl);
       
-      // Convert dataUrl to File
       fetch(dataUrl)
         .then(res => res.blob())
         .then(blob => {
           const file = new File([blob], "camera_photo.jpg", { type: "image/jpeg" });
-          setSelectedImageFile(file);
+          setSelectedFile(file);
         });
       
-      // Clear location state
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate]);
 
-  // Scroll to bottom helper
-  const scrollToBottom = React.useCallback((behavior: ScrollBehavior = 'smooth') => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
         top: scrollContainerRef.current.scrollHeight,
@@ -172,82 +123,11 @@ export default function ChatScreen() {
     }
   }, []);
 
-  // Typing status logic
-  useEffect(() => {
-    if (!chatId || !receiverId) return;
-
-    const typingRef = doc(db, "typing", `${chatId}_${receiverId}`);
-    const unsubscribe = onSnapshot(typingRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const lastTyped = data.timestamp?.toMillis() || 0;
-        const now = Date.now();
-        // If last typed was within 3 seconds, show typing
-        if (data.isTyping && now - lastTyped < 3000) {
-          setIsOtherTyping(true);
-        } else {
-          setIsOtherTyping(false);
-        }
-      } else {
-        setIsOtherTyping(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [chatId, receiverId]);
-
-  const updateTypingStatus = async (typing: boolean) => {
-    if (!auth.currentUser) return;
-    const myTypingRef = doc(db, "typing", `${chatId}_${auth.currentUser.uid}`);
-    await updateDoc(myTypingRef, {
-      isTyping: typing,
-      timestamp: serverTimestamp()
-    }).catch(async (err) => {
-      // If doc doesn't exist, create it
-      if (err.code === 'not-found') {
-        await setDoc(myTypingRef, {
-          isTyping: typing,
-          timestamp: serverTimestamp()
-        });
-      }
-    });
-  };
-
-  const typingTimeoutRef = useRef<any>(null);
-  const lastTypingUpdateRef = useRef<number>(0);
-  
-  const handleTyping = () => {
-    const now = Date.now();
-    // Only update Firestore if it's been more than 2 seconds since the last "typing" update
-    if (now - lastTypingUpdateRef.current > 2000) {
-      updateTypingStatus(true);
-      lastTypingUpdateRef.current = now;
-    }
-    
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      updateTypingStatus(false);
-      lastTypingUpdateRef.current = 0; // Reset so next keystroke triggers update
-    }, 3000);
-  };
-
-  useEffect(() => {
-    if (isOtherTyping) {
-      scrollToBottom('smooth');
-    }
-  }, [isOtherTyping, scrollToBottom]);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) {
-        setShowOptions(false);
-      }
-      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
-        setShowPlusMenu(false);
-      }
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
-        setShowEmojiPicker(false);
-      }
+      if (optionsRef.current && !optionsRef.current.contains(event.target as Node)) setShowOptions(false);
+      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) setShowPlusMenu(false);
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) setShowEmojiPicker(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -260,27 +140,9 @@ export default function ChatScreen() {
     }
     if (!receiverId || !auth.currentUser) return;
 
-    const localKey = `msgs_${chatId}`;
-    // Load from local storage first
-    let savedMsgs = [];
-    const data = storage.getItem(localKey);
-    if (data) {
-      try {
-        savedMsgs = JSON.parse(data);
-      } catch (e) {
-        console.warn('Error parsing cached messages');
-      }
-    }
-    setMessages(savedMsgs);
-    setLoading(false);
-
-    // Use Cache for receiver info
     const cachedReceiver = CacheService.getUser(receiverId);
-    if (cachedReceiver) {
-      setReceiver(cachedReceiver);
-    }
+    if (cachedReceiver) setReceiver(cachedReceiver);
 
-    // Listen for receiver info
     const receiverUnsubscribe = onSnapshot(doc(db, "users", receiverId), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -289,7 +151,6 @@ export default function ChatScreen() {
       }
     });
 
-    // Listen for receiver RTDB status
     const statusRef = rtdbRef(rtdb, `/status/${receiverId}`);
     const statusUnsubscribe = onValue(statusRef, (snapshot) => {
       const val = snapshot.val();
@@ -304,273 +165,64 @@ export default function ChatScreen() {
       }
     });
 
-    // Set my active chat ID in RTDB
     if (auth.currentUser) {
       const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
-      update(myStatusRef, { activeChatId: receiverId }).catch(err => console.error("Error updating activeChatId:", err));
+      update(myStatusRef, { activeChatId: receiverId });
     }
 
     return () => {
       receiverUnsubscribe();
       statusUnsubscribe();
-      // Clear my active chat ID
       if (auth.currentUser) {
         const myStatusRef = rtdbRef(rtdb, `/status/${auth.currentUser.uid}`);
-        update(myStatusRef, { activeChatId: null }).catch(err => console.error("Error clearing activeChatId:", err));
+        update(myStatusRef, { activeChatId: null });
       }
     };
-  }, [receiverId, chatId, scrollToBottom, messageLimit]);
+  }, [receiverId, chatId, navigate]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
-    // If we scroll to top and we have more messages in our local state than what we are showing
-    if (target.scrollTop === 0 && messages.length > messageLimit && !loadingMore && !loading) {
-      setLoadingMore(true);
-      // Store current height to maintain scroll position after loading
-      const currentHeight = target.scrollHeight;
-      
-      // Load 15 more from local state
-      setTimeout(() => {
-        setMessageLimit(prev => Math.min(prev + 15, messages.length));
-        setLoadingMore(false);
-
-        // After messages update, adjust scroll
-        setTimeout(() => {
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight - currentHeight;
-          }
-        }, 100);
-      }, 800); // Animation delay
+    if (target.scrollTop === 0) {
+      loadMore(target.scrollHeight, scrollContainerRef.current);
     }
   };
 
-  // Optimize scroll to bottom: Only scroll if we are already near the bottom or it's a new message from us
-  const lastMessageCount = useRef(0);
   useEffect(() => {
     if (messages.length > lastMessageCount.current) {
       const lastMsg = messages[messages.length - 1];
       const isFromMe = lastMsg?.senderId === auth.currentUser?.uid;
-      
-      if (isFromMe) {
-        scrollToBottom('smooth');
-      } else {
-        // Only scroll for others if we are already at the bottom
-        scrollToBottom('auto');
-      }
+      scrollToBottom(isFromMe ? 'smooth' : 'auto');
       lastMessageCount.current = messages.length;
     }
-  }, [messages, scrollToBottom]);
+  }, [messages, scrollToBottom, lastMessageCount]);
 
-  // Scroll to bottom when other user starts typing
   useEffect(() => {
     if (isOtherTyping) {
-      // Small delay to let the animation start and layout adjust
-      const timeout = setTimeout(() => {
-        scrollToBottom('smooth');
-      }, 100);
-      return () => clearTimeout(timeout);
+      setTimeout(() => scrollToBottom('smooth'), 100);
     }
   }, [isOtherTyping, scrollToBottom]);
-
-  const handleReact = React.useCallback(async (msgId: string, emoji: string) => {
-    if (!auth.currentUser) return;
-    try {
-      const msgRef = doc(db, "messages", msgId);
-      const msgDoc = await getDoc(msgRef);
-      if (msgDoc.exists()) {
-        const data = msgDoc.data();
-        const reactions = data.reactions || {};
-        // If user already reacted with same emoji, remove it
-        if (reactions[auth.currentUser.uid] === emoji) {
-          delete reactions[auth.currentUser.uid];
-        } else {
-          reactions[auth.currentUser.uid] = emoji;
-        }
-        await updateDoc(msgRef, { reactions });
-      }
-    } catch (error) {
-      console.error("Error reacting to message:", error);
-    }
-  }, []);
-
-  const handleMessageTap = React.useCallback((e: React.MouseEvent | React.TouchEvent, msg: any) => {
-    // Prevent default only if it's a touch event to avoid double-tap zoom
-    if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
-    e.stopPropagation();
-    
-    const now = Date.now();
-    if (lastTap.id === msg.id && now - lastTap.time < 300) {
-      // Double tap: Quick Reply
-      setReplyingTo(msg);
-      setVisibleButtonsId(null);
-      setShowReactionPicker(null);
-      setLastTap({id: '', time: 0});
-      if (window.navigator.vibrate) window.navigator.vibrate(10);
-    } else {
-      // Single tap: Show quick actions & reaction bar
-      setLastTap({id: msg.id, time: now});
-      setVisibleButtonsId(visibleButtonsId === msg.id ? null : msg.id);
-      setShowReactionPicker(showReactionPicker?.id === msg.id ? null : msg);
-    }
-  }, [lastTap, visibleButtonsId, showReactionPicker]);
-
-  useEffect(() => {
-    if (!receiverId || !auth.currentUser) return;
-
-    // Listen for messages - We query by chatId and sort in memory to avoid needing a composite index
-    // We fetch all messages for this chat (since we keep it at 50 max in Firebase)
-    const q = query(
-      collection(db, "messages"),
-      where("chatId", "==", chatId)
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLoading(false);
-      setLoadingMore(false);
-      
-      const firestoreMsgs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data({ serverTimestamps: 'estimate' })
-      })) as any[];
-      
-      // Handle removals explicitly
-      const removedIds = snapshot.docChanges()
-        .filter(change => change.type === 'removed')
-        .map(change => change.doc.id);
-
-      // Merge with local messages efficiently
-      setMessages(prev => {
-        const msgMap = new Map();
-        // Add existing messages to map (from local storage)
-        prev.forEach(m => msgMap.set(m.id, m));
-        
-        // Remove messages that were explicitly removed in this snapshot
-        removedIds.forEach(id => msgMap.delete(id));
-        
-        // Update/Add firestore messages
-        firestoreMsgs.forEach(fMsg => msgMap.set(fMsg.id, fMsg));
-
-        const merged = Array.from(msgMap.values());
-
-        // Sort by timestamp ascending for display
-        merged.sort((a, b) => {
-          const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-          const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-          return timeA - timeB;
-        });
-
-        // Save back to local storage (up to 5000 messages)
-        const limitedLocal = merged.slice(-5000);
-        const localKey = `msgs_${chatId}`;
-        storage.setItem(localKey, JSON.stringify(limitedLocal));
-        
-        return limitedLocal;
-      });
-
-      // Scroll to bottom on initial load only if we are not loading more
-      if (messageLimit === 15) {
-        requestAnimationFrame(() => {
-          scrollToBottom('auto');
-        });
-      }
-
-      // Mark as read if we are looking at the chat
-      const unreadMsgs = snapshot.docs.filter(doc => {
-        const data = doc.data();
-        return data.receiverId === auth.currentUser?.uid && !data.isRead;
-      });
-
-      if (unreadMsgs.length > 0) {
-        const batch = writeBatch(db);
-        unreadMsgs.forEach(msgDoc => {
-          batch.update(msgDoc.ref, { isRead: true });
-        });
-        batch.commit().catch(err => handleFirestoreError(err, OperationType.WRITE, 'messages'));
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'messages');
-    });
-
-    return () => unsubscribe();
-  }, [chatId, messageLimit, scrollToBottom]);
-
-  useEffect(() => {
-    if (!chatId) return;
-    
-    // Cleanup expired messages (24h after seen)
-    const cleanupInterval = setInterval(async () => {
-      try {
-        const now = Timestamp.now();
-        const q = query(
-          collection(db, "messages"),
-          where("expiresAt", "<=", now)
-        );
-        const snapshot = await getDocs(q);
-        const batch = writeBatch(db);
-        
-        for (const msgDoc of snapshot.docs) {
-          const data = msgDoc.data();
-          // We don't delete from ImgBB as it requires a delete hash we don't store yet
-          batch.delete(msgDoc.ref);
-        }
-        
-        if (!snapshot.empty) {
-          await batch.commit();
-          console.log(`Cleaned up ${snapshot.size} expired messages`);
-        }
-      } catch (err) {
-        console.error("Cleanup error:", err);
-      }
-    }, 60000); // Check every minute
-    
-    return () => clearInterval(cleanupInterval);
-  }, [chatId]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !auth.currentUser) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreviewUrl(reader.result as string);
-      setSelectedImageFile(file);
-    };
-    reader.readAsDataURL(file);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => setFilePreviewUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreviewUrl(null);
+    }
+    setSelectedFile(file);
+    if (e.target) e.target.value = '';
   };
 
-  // Mark images for deletion when they are seen
-  useEffect(() => {
-    if (!auth.currentUser) return;
-    
-    const unreadImages = messages.filter(m => 
-      m.receiverId === auth.currentUser?.uid && 
-      m.type === 'image' && 
-      m.isRead && 
-      !m.expiresAt
-    );
-    
-    if (unreadImages.length > 0) {
-      const batch = writeBatch(db);
-      const tomorrow = new Date();
-      tomorrow.setHours(tomorrow.getHours() + 24);
-      
-      unreadImages.forEach(msg => {
-        batch.update(doc(db, "messages", msg.id), {
-          expiresAt: Timestamp.fromDate(tomorrow)
-        });
-      });
-      
-      batch.commit().catch(err => console.error("Error setting expiration:", err));
-    }
-  }, [messages]);
-
-  const handleSendMessage = React.useCallback(async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!newMessage.trim() && !selectedImageFile) || !auth.currentUser || isSending || isUploading) return;
+    if ((!newMessage.trim() && !selectedFile) || !auth.currentUser || isSending || isUploading) return;
 
     const textToSend = newMessage;
-    const replyContext = replyingTo ? { id: replyingTo.id, text: replyingTo.text, senderId: replyingTo.senderId } : null;
+    const replyContext = replyingTo;
     const editMsg = editingMessage;
 
     setNewMessage('');
@@ -581,117 +233,51 @@ export default function ChatScreen() {
     setIsSending(true);
     try {
       if (editMsg) {
-        const msgRef = doc(db, "messages", editMsg.id);
-        await updateDoc(msgRef, {
-          text: textToSend,
-          isEdited: true
-        }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `messages/${editMsg.id}`));
-        setIsSending(false);
-      } else if (selectedImageFile) {
-        setIsUploading(true);
-        try {
-          const url = await ImageService.uploadImage(selectedImageFile, (progress) => {
-            setUploadProgress(progress);
-          });
-          
-          await addDoc(collection(db, "messages"), {
-            chatId,
-            senderId: auth.currentUser?.uid,
-            receiverId,
-            text: textToSend,
-            imageUrl: url,
-            timestamp: serverTimestamp(),
-            isRead: false,
-            type: 'image'
-          });
-          
-          setIsUploading(false);
-          setIsSending(false);
-          setSelectedImageFile(null);
-          setImagePreviewUrl(null);
-          setUploadProgress(0);
-        } catch (error) {
-          console.error("Upload error:", error);
-          setIsUploading(false);
-          setIsSending(false);
-          alert("Failed to upload image to ImgBB.");
-        }
+        await performEditMessage(editMsg.id, textToSend);
       } else {
-        await addDoc(collection(db, "messages"), {
-          chatId,
-          senderId: auth.currentUser.uid,
-          receiverId,
+        if (selectedFile) setIsUploading(true);
+        await performSendMessage({
           text: textToSend,
-          timestamp: serverTimestamp(),
-          isRead: false,
-          replyTo: replyContext
-        }).catch(err => handleFirestoreError(err, OperationType.CREATE, 'messages'));
-
-        // Cleanup: Keep only 50 messages in Firebase for this chat (Run in background)
-        setTimeout(async () => {
-          try {
-            const q = query(
-              collection(db, "messages"),
-              where("chatId", "==", chatId)
-            );
-            const snapshot = await getDocs(q);
-            if (snapshot.size > 50) {
-              const allMsgs = snapshot.docs.map(d => ({ ref: d.ref, ...d.data() })) as any[];
-              // Sort by timestamp descending (newest first)
-              allMsgs.sort((a, b) => {
-                const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-                const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-                return timeB - timeA;
-              });
-
-              const batch = writeBatch(db);
-              // Keep the newest 50 messages, delete the rest
-              const docsToDelete = allMsgs.slice(50);
-              docsToDelete.forEach(d => batch.delete(d.ref));
-              await batch.commit().catch(err => handleFirestoreError(err, OperationType.DELETE, 'messages_cleanup'));
-            }
-          } catch (err) {
-            console.error("Cleanup error:", err);
-          }
-        }, 1000);
-      }
-
-      // Send Notification
-      if (receiver?.fcmTokens && receiver.fcmTokens.length > 0 && receiverId !== 'gx-ai') {
-        fetch('/api/send-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tokens: receiver.fcmTokens,
-            title: `New message from ${auth.currentUser?.displayName || 'GxChat User'}`,
-            body: textToSend,
-            data: { chatId, senderId: auth.currentUser?.uid }
-          })
-        }).catch(err => console.error('Notification error:', err));
+          file: selectedFile,
+          replyTo: replyContext,
+          onProgress: (p) => setUploadProgress(p)
+        });
+        setSelectedFile(null);
+        setFilePreviewUrl(null);
+        setUploadProgress(0);
+        setIsUploading(false);
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      alert("Failed to send message.");
     } finally {
       setIsSending(false);
+      setIsUploading(false);
     }
-  }, [newMessage, editingMessage, replyingTo, chatId, receiverId, receiver, selectedImageFile, isSending, isUploading]);
+  };
 
-  const deleteMessage = React.useCallback(async (msgId: string) => {
-    try {
-      console.log("Attempting to delete message:", msgId);
-      await deleteDoc(doc(db, "messages", msgId)).catch(err => handleFirestoreError(err, OperationType.DELETE, `messages/${msgId}`));
-      console.log("Message deleted successfully from Firestore");
-      setActiveMessageMenu(null);
-    } catch (error) {
-      console.error("Error deleting message:", error);
+  const handleMessageTap = useCallback((e: React.MouseEvent | React.TouchEvent, msg: any) => {
+    if (e.type === 'touchstart' && e.cancelable) e.preventDefault();
+    e.stopPropagation();
+    
+    const now = Date.now();
+    if (lastTap.id === msg.id && now - lastTap.time < 300) {
+      setReplyingTo(msg);
+      setVisibleButtonsId(null);
+      setShowReactionPicker(null);
+      setLastTap({id: '', time: 0});
+      if (window.navigator.vibrate) window.navigator.vibrate(10);
+    } else {
+      setLastTap({id: msg.id, time: now});
+      setVisibleButtonsId(visibleButtonsId === msg.id ? null : msg.id);
+      setShowReactionPicker(showReactionPicker?.id === msg.id ? null : msg);
     }
-  }, []);
+  }, [lastTap, visibleButtonsId, showReactionPicker]);
 
-  const startEdit = React.useCallback((msg: any) => {
+  const startEdit = useCallback((msg: any) => {
     setEditingMessage(msg);
     setNewMessage(msg.text);
     setActiveMessageMenu(null);
-    // Focus and expand textarea
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -701,25 +287,17 @@ export default function ChatScreen() {
     }, 100);
   }, []);
 
-  const clearChat = React.useCallback(async () => {
+  const clearChat = async () => {
     if (!window.confirm("Are you sure you want to clear this chat? This will delete all messages for you.")) return;
-    try {
-      const q = query(collection(db, "messages"), where("chatId", "==", chatId));
-      const snapshot = await getDocs(q);
-      const batch = writeBatch(db);
-      snapshot.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
-      setShowOptions(false);
-    } catch (error) {
-      console.error("Error clearing chat:", error);
-    }
-  }, [chatId]);
+    await performClearChat();
+    setShowOptions(false);
+  };
 
-  const deleteChat = React.useCallback(async () => {
+  const deleteChat = async () => {
     if (!window.confirm("Delete this chat? This action cannot be undone.")) return;
-    await clearChat();
+    await performClearChat();
     navigate('/');
-  }, [clearChat, navigate]);
+  };
 
   return (
     <div className="flex flex-col h-full w-full max-w-full bg-[var(--bg-main)] overflow-hidden relative">
@@ -838,7 +416,7 @@ export default function ChatScreen() {
                       {/* Reaction Picker on Click */}
                       {showReactionPicker?.id === msg.id && (
                         <ChatMessageReactions 
-                          onReact={(emoji) => handleReact(msg.id, emoji)}
+                          onReact={(emoji) => performReactToMessage(msg.id, emoji)}
                           onClose={() => setShowReactionPicker(null)}
                           position={isMe ? 'right' : 'left'}
                         />
@@ -868,6 +446,26 @@ export default function ChatScreen() {
                                 <Clock size={10} /> Expires in 24h
                               </div>
                             )}
+                          </div>
+                        )}
+                        {msg.fileUrl && (
+                          <div className="mb-1 p-2 rounded-lg bg-black/5 border border-black/10 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
+                              <FileIcon size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-bold truncate text-[var(--text-primary)]">{msg.fileName || 'File'}</p>
+                              <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter">Direct Download</p>
+                            </div>
+                            <a 
+                              href={msg.fileUrl} 
+                              download={msg.fileName}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="p-2 hover:bg-black/5 rounded-full text-[var(--primary)] transition-colors"
+                            >
+                              <Download size={18} />
+                            </a>
                           </div>
                         )}
                         {msg.text && <p className="text-[14.5px] leading-snug break-all whitespace-pre-wrap overflow-hidden">{msg.text}</p>}
@@ -977,7 +575,7 @@ export default function ChatScreen() {
         setActiveMessageMenu={setActiveMessageMenu}
         setReplyingTo={setReplyingTo}
         startEdit={startEdit}
-        deleteMessage={deleteMessage}
+        deleteMessage={performDeleteMessage}
         currentUserUid={auth.currentUser?.uid}
         setShowReactionPicker={setShowReactionPicker}
         editingMessage={editingMessage}
@@ -988,23 +586,24 @@ export default function ChatScreen() {
         receiver={receiver}
         handleSendMessage={handleSendMessage}
         fileInputRef={fileInputRef}
+        imageInputRef={imageInputRef}
         handleFileChange={handleFileChange}
         showPlusMenu={showPlusMenu}
         setShowPlusMenu={setShowPlusMenu}
         plusMenuRef={plusMenuRef}
         chatId={chatId}
-        imagePreviewUrl={imagePreviewUrl}
+        filePreviewUrl={filePreviewUrl}
         isUploading={isUploading}
         uploadProgress={uploadProgress}
-        setSelectedImageFile={setSelectedImageFile}
-        setImagePreviewUrl={setImagePreviewUrl}
+        setSelectedFile={setSelectedFile}
+        setFilePreviewUrl={setFilePreviewUrl}
         textareaRef={textareaRef}
         handleTyping={handleTyping}
         showEmojiPicker={showEmojiPicker}
         setShowEmojiPicker={setShowEmojiPicker}
         emojiPickerRef={emojiPickerRef}
         isSending={isSending}
-        selectedImageFile={selectedImageFile}
+        selectedFile={selectedFile}
       />
     </div>
   );
