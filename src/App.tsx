@@ -57,6 +57,8 @@ const ReelWatcherScreen = React.lazy(() => import('./features/reels/ReelWatcherS
 const CallsTab = React.lazy(() => import('./features/call').then(m => ({ default: m.CallsTab })));
 const HubTab = React.lazy(() => import('./features/hub').then(m => ({ default: m.HubTab })));
 const GithubScreen = React.lazy(() => import('./features/hub/github').then(m => ({ default: m.GithubScreen })));
+const WebIDEScreen = React.lazy(() => import('./features/hub/web-ide/WebIDEScreen'));
+const BrowserScreen = React.lazy(() => import('./features/hub/browser/BrowserScreen'));
 const CameraTab = React.lazy(() => import('./features/camera').then(m => ({ default: m.CameraTab })));
 
 const PrivacySettingsScreen = React.lazy(() => import('./features/settings').then(m => ({ default: m.PrivacySettingsScreen })));
@@ -220,6 +222,8 @@ export default function App() {
                     <Route path="/chat/preview" element={user ? <ImagePreviewScreen /> : <Navigate to="/login" />} />
                     <Route path="/profile/gx-ai" element={user ? <GxChatAIProfile /> : <Navigate to="/login" />} />
                     <Route path="/hub/github" element={user ? <GithubScreen /> : <Navigate to="/login" />} />
+                    <Route path="/hub/web-ide" element={user ? <WebIDEScreen /> : <Navigate to="/login" />} />
+                    <Route path="/hub/browser" element={user ? <BrowserScreen /> : <Navigate to="/login" />} />
                   </Routes>
                 </React.Suspense>
               </div>
