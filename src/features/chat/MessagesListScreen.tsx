@@ -1,94 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Search, ArrowLeft, Edit, MessageCircle, MoreVertical } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, ArrowLeft, Edit, MessageCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { auth, db } from '../../services/firebase.ts';
-import { toDate } from '../../utils/dateUtils.ts';
-import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
+import { auth } from '../../services/firebase.ts';
+import { useConversations } from './hooks/useConversations.ts';
 
 export default function MessagesListScreen() {
   const navigate = useNavigate();
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    // Request notification permission
-    if (Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-
-    // Query messages where user is involved
-    const q = query(
-      collection(db, "messages"),
-      where("chatId", ">=", ""), // Dummy filter to allow ordering if needed, but we'll filter in-memory for simplicity
-    );
-
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const allMsgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) })) as any[];
-      
-      // Filter messages involving the current user
-      const myMsgs = allMsgs.filter(m => m.senderId === auth.currentUser?.uid || m.receiverId === auth.currentUser?.uid);
-
-      // Group by chatId
-      const chatGroups: { [key: string]: any } = {};
-      myMsgs.forEach(msg => {
-        const msgTime = toDate(msg.timestamp)?.getTime() || Date.now();
-        const existingTime = toDate(chatGroups[msg.chatId]?.timestamp)?.getTime() || 0;
-        if (!chatGroups[msg.chatId] || msgTime > existingTime) {
-          chatGroups[msg.chatId] = msg;
-        }
-      });
-
-      // Convert to array and sort by time
-      const sortedChats = Object.values(chatGroups).sort((a, b) => {
-        const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-        const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-        return timeB - timeA;
-      });
-
-      // Fetch user details for each chat
-      const chatList = await Promise.all(sortedChats.map(async (chat) => {
-        const otherUserId = chat.senderId === auth.currentUser?.uid ? chat.receiverId : chat.senderId;
-        const userDoc = await getDoc(doc(db, "users", otherUserId));
-        const userData = userDoc.exists() ? userDoc.data() : null;
-        
-        // Count unread messages from this user
-        const unreadCount = allMsgs.filter(m => 
-          m.chatId === chat.chatId && 
-          m.receiverId === auth.currentUser?.uid && 
-          !m.isRead
-        ).length;
-
-        return {
-          id: chat.chatId,
-          otherUserId,
-          user: userData?.username || 'Unknown User',
-          fullName: userData?.fullName || '',
-          lastMsg: chat.text,
-          time: toDate(chat.timestamp) ? formatTime(toDate(chat.timestamp)) : 'Recently',
-          avatar: userData?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
-          unread: unreadCount > 0,
-          unreadCount
-        };
-      }));
-
-      setConversations(chatList);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (days === 1) return 'Yesterday';
-    return date.toLocaleDateString();
-  };
+  const { conversations, loading } = useConversations('Chats');
 
   const filteredConversations = conversations.filter(c => 
     c.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
