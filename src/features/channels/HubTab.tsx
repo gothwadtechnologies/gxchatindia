@@ -1,11 +1,9 @@
 import React from 'react';
 import { 
   Github,
-  FileText,
-  Calculator,
-  Calendar,
+  Code2,
   Globe,
-  Mail,
+  Calendar,
   Music,
   Video,
   FileArchive,
@@ -36,11 +34,9 @@ export default function HubTab() {
       title: "Apps",
       items: [
         { id: 'github', name: 'Github', icon: Github, color: 'bg-zinc-900', path: 'https://github.com' },
-        { id: 'notes', name: 'Notes', icon: FileText, color: 'bg-amber-500', path: '/apps/notes' },
-        { id: 'calculator', name: 'Calculator', icon: Calculator, color: 'bg-blue-500', path: '/apps/calculator' },
+        { id: 'webide', name: 'Web IDE', icon: Code2, color: 'bg-emerald-600', path: '/hub/web-ide' },
+        { id: 'browser', name: 'Browser', icon: Globe, color: 'bg-sky-500', path: '/hub/browser' },
         { id: 'calendar', name: 'Calendar', icon: Calendar, color: 'bg-rose-500', path: '/apps/calendar' },
-        { id: 'browser', name: 'Browser', icon: Globe, color: 'bg-sky-500', path: '/apps/browser' },
-        { id: 'mail', name: 'Mail', icon: Mail, color: 'bg-indigo-500', path: '/apps/mail' },
         { id: 'music', name: 'Music', icon: Music, color: 'bg-pink-500', path: '/apps/music' },
         { id: 'video', name: 'Video', icon: Video, color: 'bg-red-500', path: '/apps/video' },
       ]
