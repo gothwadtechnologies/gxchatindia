@@ -140,7 +140,7 @@ app.get("/api/github/auth-url", (req, res) => {
   }
   
   const redirectUri = `${appUrl}/auth/github/callback`;
-  const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user`;
+  const url = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo,user,workflow`;
   res.json({ url });
 });
 
@@ -198,6 +198,64 @@ app.post("/api/github/push", async (req, res) => {
     });
     res.json(pushRes.data);
   } catch (error: any) {
+    res.status(error.response?.status || 500).json(error.response?.data || { message: error.message });
+  }
+});
+
+// GitHub Batch Push (Atomic commit for multiple files)
+app.post("/api/github/push-batch", async (req, res) => {
+  const { token, owner, repo, files, message, branch = 'main' } = req.body;
+  // files: Array<{ path: string, content: string }> (content is base64)
+  
+  try {
+    const headers = { 
+      Authorization: `token ${token}`,
+      Accept: 'application/vnd.github.v3+json'
+    };
+
+    // 1. Get the latest commit SHA of the branch
+    const branchRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/branches/${branch}`, { headers });
+    const parentSha = branchRes.data.commit.sha;
+    const baseTreeSha = branchRes.data.commit.commit.tree.sha;
+
+    // 2. Create blobs for each file
+    const blobPromises = files.map(async (file: any) => {
+      const blobRes = await axios.post(`https://api.github.com/repos/${owner}/${repo}/git/blobs`, {
+        content: file.content,
+        encoding: 'base64'
+      }, { headers });
+      return {
+        path: file.path,
+        mode: '100644',
+        type: 'blob',
+        sha: blobRes.data.sha
+      };
+    });
+
+    const treeItems = await Promise.all(blobPromises);
+
+    // 3. Create a new tree
+    const treeRes = await axios.post(`https://api.github.com/repos/${owner}/${repo}/git/trees`, {
+      base_tree: baseTreeSha,
+      tree: treeItems
+    }, { headers });
+
+    // 4. Create a new commit
+    const commitRes = await axios.post(`https://api.github.com/repos/${owner}/${repo}/git/commits`, {
+      message,
+      tree: treeRes.data.sha,
+      parents: [parentSha]
+    }, { headers });
+
+    // 5. Update the branch reference
+    const refRes = await axios.patch(`https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
+      sha: commitRes.data.sha,
+      force: false
+    }, { headers });
+
+    res.json(refRes.data);
+  } catch (error: any) {
+    console.error("Batch push error:", error.response?.data || error.message);
     res.status(error.response?.status || 500).json(error.response?.data || { message: error.message });
   }
 });
