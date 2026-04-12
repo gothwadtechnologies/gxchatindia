@@ -6,11 +6,14 @@ import {
   updateDoc, 
   deleteDoc, 
   getDoc, 
+  setDoc,
   serverTimestamp,
   writeBatch,
   query,
   where,
-  getDocs
+  getDocs,
+  orderBy,
+  increment
 } from 'firebase/firestore';
 import { db, auth } from '../../../services/firebase.ts';
 import { ImageService } from '../../../services/ImageService.ts';
@@ -49,7 +52,7 @@ export const useChatActions = (chatId: string, receiverId: string, receiver: any
         }
       }
 
-      await addDoc(collection(db, "messages"), {
+      const messageData = {
         chatId,
         senderId: auth.currentUser.uid,
         receiverId,
@@ -61,24 +64,42 @@ export const useChatActions = (chatId: string, receiverId: string, receiver: any
         isRead: false,
         type: fileType,
         replyTo: replyTo ? { id: replyTo.id, text: replyTo.text, senderId: replyTo.senderId } : null
-      });
+      };
 
-      // Cleanup: Keep only 50 messages in Firebase for this chat
+      await addDoc(collection(db, "messages"), messageData);
+
+      // Update Conversations Collection (Optimized for Chat List)
+      const conversationRef = doc(db, "conversations", chatId);
+      await setDoc(conversationRef, {
+        lastMessage: messageData.text || 'Sent an image',
+        lastMessageTimestamp: serverTimestamp(),
+        lastSenderId: auth.currentUser.uid,
+        participants: [auth.currentUser.uid, receiverId],
+        [`unreadCount_${receiverId}`]: increment(1)
+      }, { merge: true });
+
+      // Cleanup: Jab messages 50 ho jayein, to oldest 25 delete kar do (Bulk Delete)
       setTimeout(async () => {
-        const q = query(collection(db, "messages"), where("chatId", "==", chatId));
-        const snapshot = await getDocs(q);
-        if (snapshot.size > 50) {
-          const allMsgs = snapshot.docs.map(d => ({ ref: d.ref, ...d.data() })) as any[];
-          allMsgs.sort((a, b) => {
-            const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-            const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-            return timeB - timeA;
-          });
-          const batch = writeBatch(db);
-          allMsgs.slice(50).forEach(d => batch.delete(d.ref));
-          await batch.commit();
+        try {
+          const messagesRef = collection(db, "messages");
+          const q = query(
+            messagesRef, 
+            where("chatId", "==", chatId),
+            orderBy("timestamp", "asc")
+          );
+          const snapshot = await getDocs(q);
+          
+          if (snapshot.size >= 50) {
+            const batch = writeBatch(db);
+            // Sabse purane 25 messages delete karenge (Bulk Delete)
+            const oldestMsgs = snapshot.docs.slice(0, 25);
+            oldestMsgs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+          }
+        } catch (err) {
+          console.error('Cleanup error:', err);
         }
-      }, 1000);
+      }, 2000);
 
       // Send Notification
       if (receiver?.fcmTokens?.length > 0 && receiverId !== 'gx-ai') {
