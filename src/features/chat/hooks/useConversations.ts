@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, orderBy } from 'firebase/firestore';
 import { auth, db } from '../../../services/firebase.ts';
 import { toDate } from '../../../utils/dateUtils.ts';
 import { CacheService } from '../../../services/CacheService.ts';
@@ -12,43 +12,22 @@ export const useConversations = (activeFilter: string) => {
     if (!auth.currentUser) return;
     if (activeFilter === 'Calls') return;
 
-    const qSender = query(
-      collection(db, "messages"),
-      where("senderId", "==", auth.currentUser.uid)
+    const q = query(
+      collection(db, "conversations"),
+      where("participants", "array-contains", auth.currentUser.uid),
+      orderBy("lastMessageTimestamp", "desc")
     );
 
-    const qReceiver = query(
-      collection(db, "messages"),
-      where("receiverId", "==", auth.currentUser.uid)
-    );
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const convDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      const otherUserIds = Array.from(new Set(convDocs.map((conv: any) => 
+        conv.participants.find((p: string) => p !== auth.currentUser?.uid)
+      ))).filter(Boolean) as string[];
 
-    const processMessages = async (snapshot1: any, snapshot2: any) => {
-      const allMsgs = [
-        ...snapshot1.docs.map((d: any) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) })),
-        ...snapshot2.docs.map((d: any) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
-      ];
-
-      const chatGroups: { [key: string]: any } = {};
-      allMsgs.forEach(msg => {
-        const msgTime = toDate(msg.timestamp)?.getTime() || Date.now();
-        const existingTime = toDate(chatGroups[msg.chatId]?.timestamp)?.getTime() || 0;
-        if (!chatGroups[msg.chatId] || msgTime > existingTime) {
-          chatGroups[msg.chatId] = msg;
-        }
-      });
-
-      const sortedChats = Object.values(chatGroups).sort((a, b) => {
-        const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-        const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-        return timeB - timeA;
-      }).slice(0, 100);
-
-      const otherUserIds = Array.from(new Set(sortedChats.map(chat => 
-        chat.senderId === auth.currentUser?.uid ? chat.receiverId : chat.senderId
-      )));
-
-      const uncachedIds = otherUserIds.filter(id => !CacheService.getUser(id));
       const userMap = new Map();
+      const uncachedIds = otherUserIds.filter(id => !CacheService.getUser(id));
+
       otherUserIds.forEach(id => {
         const cached = CacheService.getUser(id);
         if (cached) userMap.set(id, cached);
@@ -66,25 +45,21 @@ export const useConversations = (activeFilter: string) => {
         }
       }
 
-      const chatList = sortedChats.map((chat) => {
-        const otherUserId = chat.senderId === auth.currentUser?.uid ? chat.receiverId : chat.senderId;
-        if (otherUserId === 'gx-ai') return null;
+      const chatList = convDocs.map((conv: any) => {
+        const otherUserId = conv.participants.find((p: string) => p !== auth.currentUser?.uid);
+        if (!otherUserId || otherUserId === 'gx-ai') return null;
 
         const userData = userMap.get(otherUserId);
-        const unreadCount = allMsgs.filter(m => 
-          m.chatId === chat.chatId && 
-          m.receiverId === auth.currentUser?.uid && 
-          !m.isRead
-        ).length;
+        const unreadCount = conv[`unreadCount_${auth.currentUser?.uid}`] || 0;
 
         return {
-          id: chat.chatId,
+          id: conv.id,
           otherUserId,
           user: userData?.fullName || userData?.username || 'Unknown User',
           username: userData?.username || '',
           fullName: userData?.fullName || '',
-          lastMsg: chat.text,
-          time: toDate(chat.timestamp) ? formatTime(toDate(chat.timestamp)) : 'Recently',
+          lastMsg: conv.lastMessage,
+          time: toDate(conv.lastMessageTimestamp) ? formatTime(toDate(conv.lastMessageTimestamp)) : 'Recently',
           avatar: userData?.photoURL || `https://cdn-icons-png.flaticon.com/512/149/149071.png`,
           unread: unreadCount > 0,
           unreadCount,
@@ -94,7 +69,7 @@ export const useConversations = (activeFilter: string) => {
 
       setConversations(chatList);
       setLoading(false);
-    };
+    });
 
     const formatTime = (date: Date) => {
       const now = new Date();
@@ -105,30 +80,7 @@ export const useConversations = (activeFilter: string) => {
       return date.toLocaleDateString();
     };
 
-    let snap1: any = { docs: [] };
-    let snap2: any = { docs: [] };
-    let timeout: any;
-
-    const debouncedProcess = (s1: any, s2: any) => {
-      if (timeout) clearTimeout(timeout);
-      timeout = setTimeout(() => processMessages(s1, s2), 100);
-    };
-
-    const unsub1 = onSnapshot(qSender, (s) => {
-      snap1 = s;
-      debouncedProcess(snap1, snap2);
-    });
-
-    const unsub2 = onSnapshot(qReceiver, (s) => {
-      snap2 = s;
-      debouncedProcess(snap1, snap2);
-    });
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-      unsub1();
-      unsub2();
-    };
+    return () => unsubscribe();
   }, [activeFilter]);
 
   return { conversations, loading };
