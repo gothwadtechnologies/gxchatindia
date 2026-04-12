@@ -61,6 +61,19 @@
         "expiresAt": { "type": "object" }
       },
       "required": ["chatId", "senderId", "receiverId", "timestamp"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Summary of a chat between two users for the chat list.",
+      "type": "object",
+      "properties": {
+        "lastMessage": { "type": "string" },
+        "lastMessageTimestamp": { "type": "object" },
+        "lastSenderId": { "type": "string" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "unreadCount_{userId}": { "type": "number" }
+      },
+      "required": ["participants", "lastMessageTimestamp"]
     }
   },
   "firestore": {
@@ -75,6 +88,10 @@
     "/messages/{messageId}": {
       "schema": "Message",
       "description": "Chat messages."
+    },
+    "/conversations/{chatId}": {
+      "schema": "Conversation",
+      "description": "Chat list summaries."
     },
     "/chats/{chatId}": {
       "schema": "object",
