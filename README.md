@@ -26,6 +26,14 @@ GxChat India is a comprehensive, high-performance social media and real-time mes
 - **Animations**: Motion (Framer Motion) for fluid transitions.
 - **Icons**: Lucide React.
 
+## 🚀 Firebase Optimization Roadmap
+
+To minimize Firestore reads and improve performance, we are implementing:
+1. **Conversations Collection**: Moving from message-based chat lists to a dedicated `conversations` collection.
+2. **Message Pagination**: Loading only the last 20 messages initially, with "Load More" on scroll.
+3. **Unread Count Aggregation**: Storing unread counts in the user document instead of scanning messages.
+4. **Message Cleanup**: Keeping only the last 50 messages per chat in Firestore to reduce database size and read costs.
+
 ## 📁 Project Structure
 
 - `/src`: Core application logic and main entry points.
