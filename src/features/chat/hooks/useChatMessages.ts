@@ -7,13 +7,15 @@ import {
   writeBatch, 
   doc, 
   Timestamp,
-  getDocs
+  getDocs,
+  orderBy,
+  limit,
+  updateDoc
 } from 'firebase/firestore';
 import { db, auth } from '../../../services/firebase.ts';
-import { storage } from '../../../services/StorageService';
 import { toDate } from '../../../utils/dateUtils.ts';
 
-export const useChatMessages = (chatId: string, initialLimit: number = 15) => {
+export const useChatMessages = (chatId: string, initialLimit: number = 20) => {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [messageLimit, setMessageLimit] = useState(initialLimit);
@@ -23,20 +25,13 @@ export const useChatMessages = (chatId: string, initialLimit: number = 15) => {
   useEffect(() => {
     if (!chatId || !auth.currentUser) return;
 
-    const localKey = `msgs_${chatId}`;
-    const data = storage.getItem(localKey);
-    if (data) {
-      try {
-        setMessages(JSON.parse(data));
-      } catch (e) {
-        console.warn('Error parsing cached messages');
-      }
-    }
-    setLoading(false);
+    setLoading(true);
 
     const q = query(
       collection(db, "messages"),
-      where("chatId", "==", chatId)
+      where("chatId", "==", chatId),
+      orderBy("timestamp", "desc"),
+      limit(messageLimit)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -46,31 +41,11 @@ export const useChatMessages = (chatId: string, initialLimit: number = 15) => {
       const firestoreMsgs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data({ serverTimestamps: 'estimate' })
-      })) as any[];
+      })).reverse() as any[];
       
-      const removedIds = snapshot.docChanges()
-        .filter(change => change.type === 'removed')
-        .map(change => change.doc.id);
+      setMessages(firestoreMsgs);
 
-      setMessages(prev => {
-        const msgMap = new Map();
-        prev.forEach(m => msgMap.set(m.id, m));
-        removedIds.forEach(id => msgMap.delete(id));
-        firestoreMsgs.forEach(fMsg => msgMap.set(fMsg.id, fMsg));
-
-        const merged = Array.from(msgMap.values());
-        merged.sort((a, b) => {
-          const timeA = toDate(a.timestamp)?.getTime() || Date.now();
-          const timeB = toDate(b.timestamp)?.getTime() || Date.now();
-          return timeA - timeB;
-        });
-
-        const limitedLocal = merged.slice(-5000);
-        storage.setItem(localKey, JSON.stringify(limitedLocal));
-        return limitedLocal;
-      });
-
-      // Mark as read
+      // Mark as read and Reset Unread Count in Conversations
       const unreadMsgs = snapshot.docs.filter(doc => {
         const data = doc.data();
         return data.receiverId === auth.currentUser?.uid && !data.isRead;
@@ -81,12 +56,19 @@ export const useChatMessages = (chatId: string, initialLimit: number = 15) => {
         unreadMsgs.forEach(msgDoc => {
           batch.update(msgDoc.ref, { isRead: true });
         });
+        
+        // Reset unread count for current user in this conversation
+        const conversationRef = doc(db, "conversations", chatId);
+        batch.update(conversationRef, {
+          [`unreadCount_${auth.currentUser?.uid}`]: 0
+        });
+
         batch.commit().catch(err => console.error("Error marking as read:", err));
       }
     });
 
     return () => unsubscribe();
-  }, [chatId]);
+  }, [chatId, messageLimit]);
 
   // Cleanup expired messages
   useEffect(() => {
@@ -112,17 +94,10 @@ export const useChatMessages = (chatId: string, initialLimit: number = 15) => {
   }, [chatId]);
 
   const loadMore = useCallback((currentHeight: number, scrollContainer: HTMLDivElement | null) => {
-    if (messages.length > messageLimit && !loadingMore && !loading) {
+    if (!loadingMore && !loading && messages.length >= messageLimit) {
       setLoadingMore(true);
-      setTimeout(() => {
-        setMessageLimit(prev => Math.min(prev + 15, messages.length));
-        setLoadingMore(false);
-        setTimeout(() => {
-          if (scrollContainer) {
-            scrollContainer.scrollTop = scrollContainer.scrollHeight - currentHeight;
-          }
-        }, 100);
-      }, 800);
+      setMessageLimit(prev => prev + 20);
+      // Note: onSnapshot will trigger and update messages
     }
   }, [messages.length, messageLimit, loadingMore, loading]);
 
