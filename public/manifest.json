@@ -1,5 +1,5 @@
 {
-  "id": "/",
+  "id": "com.gxchat.india",
   "name": "GxChat India",
   "short_name": "GxChat",
   "description": "GxChat India - The ultimate social messaging app. Connect, share, and chat securely.",
@@ -10,6 +10,20 @@
   "background_color": "#ffffff",
   "theme_color": "#375a7f",
   "categories": ["social", "communication"],
+  "shortcuts": [
+    {
+      "name": "Open Hub",
+      "url": "/hub",
+      "description": "Quickly open the Hub apps",
+      "icons": [{ "src": "/assets/favicon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "New Chat",
+      "url": "/chats",
+      "description": "Start a new conversation",
+      "icons": [{ "src": "/assets/favicon.png", "sizes": "192x192" }]
+    }
+  ],
   "icons": [
     {
       "src": "/assets/favicon.png",

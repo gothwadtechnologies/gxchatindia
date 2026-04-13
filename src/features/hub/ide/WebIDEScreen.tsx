@@ -17,9 +17,7 @@ import {
   Github,
   ArrowLeft,
   Layout,
-  Maximize2,
-  RefreshCw,
-  Code2
+  Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';

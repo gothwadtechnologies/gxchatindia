@@ -21,6 +21,14 @@
       "dest": "src/server/server.ts"
     },
     {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "/sw.js"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/assets/$1"
     },
