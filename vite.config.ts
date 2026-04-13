@@ -7,7 +7,6 @@ export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
     base: '/',
-    publicDir: 'src/public',
     plugins: [react(), tailwindcss()],
     define: {
     },
