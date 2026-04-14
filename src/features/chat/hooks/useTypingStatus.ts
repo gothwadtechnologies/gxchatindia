@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { doc, onSnapshot, serverTimestamp, updateDoc, setDoc } from 'firebase/firestore';
-import { db, auth } from '../../../services/firebase.ts';
+import { ref, onValue, set, serverTimestamp } from 'firebase/database';
+import { rtdb, auth } from '../../../services/firebase.ts';
 
 export const useTypingStatus = (chatId: string, receiverId: string) => {
   const [isOtherTyping, setIsOtherTyping] = useState(false);
@@ -10,12 +10,14 @@ export const useTypingStatus = (chatId: string, receiverId: string) => {
   useEffect(() => {
     if (!chatId || !receiverId) return;
 
-    const typingRef = doc(db, "typing", `${chatId}_${receiverId}`);
-    const unsubscribe = onSnapshot(typingRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const lastTyped = data.timestamp?.toMillis() || 0;
+    const typingRef = ref(rtdb, `typing/${chatId}/${receiverId}`);
+    const unsubscribe = onValue(typingRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const lastTyped = data.timestamp || 0;
         const now = Date.now();
+        // In RTDB, if we use serverTimestamp, it might be a bit different to compare locally 
+        // but usually it's fine for a 3s window
         if (data.isTyping && now - lastTyped < 3000) {
           setIsOtherTyping(true);
         } else {
@@ -31,19 +33,14 @@ export const useTypingStatus = (chatId: string, receiverId: string) => {
 
   const updateTypingStatus = async (typing: boolean) => {
     if (!auth.currentUser || !chatId) return;
-    const myTypingRef = doc(db, "typing", `${chatId}_${auth.currentUser.uid}`);
+    const myTypingRef = ref(rtdb, `typing/${chatId}/${auth.currentUser.uid}`);
     try {
-      await updateDoc(myTypingRef, {
+      await set(myTypingRef, {
         isTyping: typing,
         timestamp: serverTimestamp()
       });
     } catch (err: any) {
-      if (err.code === 'not-found') {
-        await setDoc(myTypingRef, {
-          isTyping: typing,
-          timestamp: serverTimestamp()
-        });
-      }
+      console.error("Error updating typing status in RTDB:", err);
     }
   };
 

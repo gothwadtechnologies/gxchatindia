@@ -97,10 +97,6 @@
       "schema": "object",
       "description": "Chat room metadata."
     },
-    "/typing/{typingId}": {
-      "schema": "object",
-      "description": "Real-time typing indicators."
-    },
     "/stories/{storyId}": {
       "schema": "object",
       "description": "User story updates (ephemeral)."

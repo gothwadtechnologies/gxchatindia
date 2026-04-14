@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { doc, onSnapshot, serverTimestamp, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../../services/firebase';
+import { ref, onValue, set, serverTimestamp } from 'firebase/database';
+import { rtdb } from '../../../services/firebase';
 
 export const useTyping = (chatId: string, userId: string, receiverId: string) => {
   const [isOtherTyping, setIsOtherTyping] = useState(false);
@@ -10,11 +10,11 @@ export const useTyping = (chatId: string, userId: string, receiverId: string) =>
   useEffect(() => {
     if (!chatId || !receiverId) return;
 
-    const typingRef = doc(db, "typing", `${chatId}_${receiverId}`);
-    const unsubscribe = onSnapshot(typingRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const lastTyped = data.timestamp?.toMillis() || 0;
+    const typingRef = ref(rtdb, `typing/${chatId}/${receiverId}`);
+    const unsubscribe = onValue(typingRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const lastTyped = data.timestamp || 0;
         const now = Date.now();
         if (data.isTyping && now - lastTyped < 3000) {
           setIsOtherTyping(true);
@@ -31,19 +31,14 @@ export const useTyping = (chatId: string, userId: string, receiverId: string) =>
 
   const updateTypingStatus = async (typing: boolean) => {
     if (!userId) return;
-    const myTypingRef = doc(db, "typing", `${chatId}_${userId}`);
+    const myTypingRef = ref(rtdb, `typing/${chatId}/${userId}`);
     try {
-      await updateDoc(myTypingRef, {
+      await set(myTypingRef, {
         isTyping: typing,
         timestamp: serverTimestamp()
       });
     } catch (err: any) {
-      if (err.code === 'not-found') {
-        await setDoc(myTypingRef, {
-          isTyping: typing,
-          timestamp: serverTimestamp()
-        });
-      }
+      console.error("Error updating typing status in RTDB:", err);
     }
   };
 
